@@ -7,11 +7,11 @@ Navigating course registration can be tough without enough information about con
 
 ## Framework
 
-- ReactJS
-- Python
-- FastAPI
-- Python
 - MongoDB
-- S3
-- NextJS
+- - Express
+- ReactJS
+- Node
+
+
+
 
