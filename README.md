@@ -13,4 +13,5 @@ Navigating course registration can be tough without enough information about con
 - Python
 - MongoDB
 - S3
+- NextJS
 
