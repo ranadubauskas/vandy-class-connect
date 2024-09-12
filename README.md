@@ -8,7 +8,7 @@ Navigating course registration can be tough without enough information about con
 ## Framework
 
 - MongoDB
-- - Express
+- Express
 - ReactJS
 - Node
 
