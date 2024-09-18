@@ -11,7 +11,3 @@ Navigating course registration can be tough without enough information about con
 - Express
 - ReactJS
 - Node
-
-
-
-
