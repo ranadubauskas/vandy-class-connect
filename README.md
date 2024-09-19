@@ -1,5 +1,9 @@
 # Vandy Class Connect
 
+## Starting the App:
+
+1. npm run dev
+2. Open: http://localhost:3000/login
 
 ## About
 
