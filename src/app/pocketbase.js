@@ -1,11 +1,7 @@
 import PocketBase from "pocketbase";
 
-const url = "https://vandy-class-connect.pockethost.io/";
-export const pb = new PocketBase(url)
+export const pb = new PocketBase(process.send.NEXT_PUBLIC_POCKETBASE_URL);
 
 
-// export const authData = await pb.collection('users').authWithPassword(
-//     'ranadubauskas@gmail.com',
-//     'Camberley123!',
-// );
+
 
