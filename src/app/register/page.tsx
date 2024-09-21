@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import PocketBase from 'pocketbase';
 import { useState } from 'react';
+import { register } from '../server';
 
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
 const pb = new PocketBase(`${NEXT_PUBLIC_POCKETBASE_URL}`);
@@ -18,24 +19,27 @@ export default function Register() {
     const [error, setError] = useState('');
     const router = useRouter();
 
-    const handleRegister = async (e) => {
+
+
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // Adjust the object structure to match the PocketBase schema
-            const newUser = await pb.collection('users').create({
-                email,
-                password,
-                passwordConfirm,
-                first_name: firstName, // Must match PocketBase field 'first_name'
-                last_name: lastName,   // Must match PocketBase field 'last_name'
-                graduation_year: graduationYear, // Must match PocketBase field 'graduation_year' (or grade),
-                username
-            });
-            console.log('User registered:', newUser);
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('email', email);
+            formData.append('password', password);
+            formData.append('passwordConfirm', passwordConfirm);
+            formData.append('firstName', firstName);
+            formData.append('lastName', lastName);
+            formData.append('graduationYear', graduationYear);
+            // const user = await signIn(formData);
+            const user = await register(formData);
+            console.log('User registered:', user);
             router.push('/home');
         } catch (err) {
-            setError('Registration failed. Please try again.');
-            console.error(err); // For debugging the error
+            //TODO:  Better error messages
+            console.error(err.messages);
+            setError('Login failed. Please check your credentials.');
         }
     };
 
@@ -60,7 +64,7 @@ export default function Register() {
                     />
                     <input
                         type="email"
-                        placeholder="Email"
+                        placeholder="Vanderbilt Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -100,6 +104,12 @@ export default function Register() {
                         Register
                     </button>
                 </form>
+                <p className="mt-4 text-center">
+                        <span>
+                             Already have an account?
+                        <a href = "/login" className="text-blue-500 hover:underline"> Login </a>
+                        </span>
+                </p>
                 {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
             </div>
         </div>

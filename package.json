@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "js-cookie": "^3.0.5",
     "next": "14.2.12",
     "pocketbase": "^0.21.5",
     "react": "^18",

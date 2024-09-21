@@ -12,6 +12,6 @@ Navigating course registration can be tough without enough information about con
 ## Framework
 
 - Pocketbase
-- ReactJS
+- ReactJ
 - NextJS
 - Tailwind CSS

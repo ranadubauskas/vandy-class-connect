@@ -1,7 +1,36 @@
+'use client';
+import { useContext, useEffect, useState } from 'react';
+import { AuthContext } from "../lib/contexts";
+import { getUserCookies } from '../lib/functions';
+
+
 export default function Home() {
-    return (
-        <div className="flex items-center justify-center h-screen">
-      <h1 className="text-7xl font-bold">Home Page</h1>
-    </div>
-    );
+  const [userCookies, setUserCookies] = useState(null);
+  const userVal = useContext(AuthContext);
+
+  useEffect(() => {
+      const fetchCookies = async () => {
+          try {
+              const cookies = await getUserCookies(); 
+              if (cookies) {
+                  setUserCookies(cookies); 
+              } else {
+                  console.log("No user cookies found");
+              }
+          } catch (error) {
+              console.error('Error fetching cookies:', error);
+          }
+      };
+
+      fetchCookies(); 
+  }, []); 
+
+
+  return (
+      <div className="flex items-center justify-center h-screen">
+          {userCookies && (
+              <h1 className="mt-4 text-xl">Welcome, {userCookies.firstName} {userCookies.lastName}!</h1>
+          )}
+      </div>
+  );
 }
