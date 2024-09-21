@@ -2,8 +2,9 @@
 
 ## Starting the App:
 
-1. npm run dev
-2. Open: http://localhost:3000/login
+1. npm install
+2. npm run dev
+3. Open: http://localhost:3000/login
 
 ## About
 
