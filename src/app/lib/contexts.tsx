@@ -12,7 +12,7 @@ interface AuthContextData {
     email: string;
     graduationYear: string;
     profilePic: string;
-    refetchUser: () => void;
+    getUser: () => void;
     logoutUser: () => Promise<void>;
 }
 
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
 
-    const refetchUser = () => {
+    const getUser = () => {
         setUserDataFromCookies();
     };
 
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         lastName,
         email,
         graduationYear,
-        refetchUser,
+        getUser,
         profilePic,
         logoutUser
     };

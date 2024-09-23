@@ -28,9 +28,16 @@ export default function Home() {
 
   return (
       <div className="flex items-center justify-center h-screen">
-          {userCookies && (
+        <ul>
+        <li>{userCookies && (
               <h1 className="mt-4 text-xl">Welcome, {userCookies.firstName} {userCookies.lastName}!</h1>
-          )}
+          )}</li>
+        <li> <h1> View your profile <a href="profile" style={{color: 'blue'}}>here</a> </h1> </li>
+        </ul>
+          
+        
+        
+        
       </div>
   );
 }

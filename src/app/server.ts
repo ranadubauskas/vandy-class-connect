@@ -21,16 +21,16 @@ export async function signIn(formData: FormData) {
     const user = await pb.collection('users').authWithPassword(email, password);
     // Set cookies for authenticated user
     cookies().set("id", user.record.id);
-    cookies().set("firstName", user.record.first_name);
-    cookies().set("lastName", user.record.last_name);
+    cookies().set("firstName", user.record.firstName);
+    cookies().set("lastName", user.record.lastName);
     cookies().set("email", user.record.email);
-    cookies().set("graduationYear", user.record.graduation_year);
-    cookies().set("profilePic", user.record.profile_pic);
+    cookies().set("graduationYear", user.record.graduationYear);
 
     return user;
 }
 
 export async function register(formData: FormData) {
+    try{
     const username = formData.get("username");
     const email = formData.get("email");
     const password = formData.get("password");
@@ -51,23 +51,51 @@ export async function register(formData: FormData) {
         throw new Error("Invalid input. Please provide all required fields.");
     }
 
+    console.log("REGISTERING!")
+
     const newUser = await pb.collection('users').create({
+        username,
         email,
+        emailVisibility: true,
         password,
         passwordConfirm,
-        first_name: firstName,
-        last_name: lastName,
-        graduation_year: graduationYear,
-        username
+        firstName: firstName,
+        lastName: lastName,
+        graduationYear: graduationYear
     });
 
     cookies().set("id", newUser.id);
-    cookies().set("firstName", newUser.first_name);
-    cookies().set("lastName", newUser.last_name);
+    cookies().set("firstName", newUser.firstName);
+    cookies().set("lastName", newUser.lastName);
     cookies().set("email", newUser.email);
-    cookies().set("graduationYear", newUser.graduation_year);
-    cookies().set("profilePic", newUser.profile_pic);
+    cookies().set("graduationYear", newUser.graduationYear);
+    cookies().set("profilePic", null);
    
     return newUser;
+
+    } catch (err){
+        console.error(err);
+    }
+    
 }
+
+export async function editUser(userId, data) {
+    try {
+        console.log("EDITING USER")
+        const user = await pb.collection("users").update(userId, data);
+        console.log("user", user);
+
+        cookies().set("id", user.id);
+        cookies().set("firstName", user.firstName);
+        cookies().set("lastName", user.lastName);
+        cookies().set("email", user.email);
+        cookies().set("graduationYear", user.graduationYear);
+        cookies().set("profilePic", user.profilePic);
+        return user;
+    } catch (error) {
+        console.error("Error editing user:", error);
+        return null;
+    }
+}
+
 
