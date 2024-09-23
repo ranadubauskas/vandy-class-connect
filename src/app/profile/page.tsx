@@ -5,14 +5,12 @@ import { editUser } from '../server';
 
 
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
-const defaultProfilePic = '/images/user.png';
+const defaultProfilePic = '/images/user.png'; // Default picture path
 
 export default function Profile() {
     const userVal = useContext(AuthContext);
-    console.log('name: '+ userVal.firstName);
-    console.log('email: ' + userVal.email);
 
-    const {getUser} = userVal
+    const { getUser, logoutUser } = userVal;
 
     // State to control edit mode and the user data
     const [isEditing, setIsEditing] = useState(false);
@@ -30,22 +28,15 @@ export default function Profile() {
             setLastName(userVal.lastName || '');
             setEmail(userVal.email || '');
             setGraduationYear(userVal.graduationYear || '');
-            if (userVal.profilePic){
-                setProfilePicPreviewURL(userVal.profilePic);
+            if (userVal.profilePic) {
+                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${userVal.profilePic}`);
+            } else {
+                setProfilePicPreviewURL(defaultProfilePic); // Use default profile picture if none is provided
             }
-
-            
         }
-
     }, [userVal]);
 
-
-
-
-
     const handleSave = async () => {
-        console.log("save clicked");
-        console.log("new first name " + firstName);
         const userId = userVal.id;
         const formData = new FormData();
         formData.append('firstName', firstName);
@@ -53,36 +44,36 @@ export default function Profile() {
         formData.append('email', email);
         formData.append('graduationYear', graduationYear);
 
-
         if (profilePicFile) {
             formData.append('profilePic', profilePicFile); 
         }
 
         const updatedUser = await editUser(userId, formData); 
         
-        
-
         if (updatedUser) {
             console.log("User updated successfully", updatedUser);
-            console.log("User updated successfully anme", updatedUser.firstName);
             
+            // Set the updated information
             setFirstName(updatedUser.firstName);
             setLastName(updatedUser.lastName);
             setEmail(updatedUser.email);
             setGraduationYear(updatedUser.graduationYear);
-            setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${profilePicPreviewURL}`);
             
-            //TODO: Get user data from returned user object in getUser() instead
-            await getUser();
-             setIsEditing(false);
+            if (profilePicFile) {
+                const newProfilePicURL = URL.createObjectURL(profilePicFile);
+                setProfilePicPreviewURL(newProfilePicURL);
+            } else if (updatedUser.profilePic) {
+                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userId}/${updatedUser.profilePic}`);
+            } else {
+                setProfilePicPreviewURL(defaultProfilePic); // Revert to default if no new pic is uploaded
+            }
             
+            await getUser(); // Refresh the user data
+            setIsEditing(false);            
         } else {
             console.error("Failed to update user");
         }
-
     };
-
-
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -90,62 +81,58 @@ export default function Profile() {
             setProfilePicFile(file); // Save the file for uploading
             const fileObjectURL = URL.createObjectURL(file);
             setProfilePicPreviewURL(fileObjectURL); // Show the preview of the new profile picture
-            // const picPreview = document.getElementById("profPic");
-            // picPreview.src = fileObjectURL;
-            //picPreview.src = fileObjectURL;
-            console.log("setting it to: " + profilePicPreviewURL);
         } else {
             setProfilePicFile(null);
-            setProfilePicPreviewURL('');
+            setProfilePicPreviewURL(defaultProfilePic); // Revert to default if no file is selected
         }
     };
 
-    const getProfilePicUrl = (previewURL: string | null): string => {
-        // console.log("URL: " + previewURL);
-        // if (!previewURL) {
-        //     console.log("NO");
-        //     return `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}+${encodeURIComponent(lastName)}&background=0D8ABC&color=fff`;
-        // }
-        if (previewURL && previewURL.startsWith('blob:')) {
+    const getProfilePicUrl = (): string => {
+        if (profilePicPreviewURL && profilePicPreviewURL.startsWith('blob:')) {
             // Return the blob URL for the locally selected file
-            return previewURL;
+            return profilePicPreviewURL;
         }
-        // If filename already includes the PocketBase URL, avoid double prefixing
-        return `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${profilePicPreviewURL}`;
+        // If there's a profile picture in the PocketBase, use it; otherwise, use default
+        return profilePicPreviewURL || defaultProfilePic;
     };
-    
-
 
     return (
-        <div className="flex items-center justify-center h-screen">
-            <ul>
-                <li>Profile:</li>
+        <div className="flex flex-col items-center justify-center h-screen">
+            <div className="absolute top-4 right-4">
+                <button
+                    type="button"
+                    onClick={logoutUser}
+                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 shadow-md"
+                >
+                    Log Out
+                </button>
+            </div>
+            <ul className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
+                <li className="text-2xl font-semibold mb-4 text-center">Profile</li>
                 {!isEditing ? (
-                    // Show the user information in read-only mode
                     <>
                         <li>First Name: {firstName}</li>
                         <li>Last Name: {lastName}</li>
-                        <li>Email: {email} </li>
+                        <li>Email: {email}</li>
                         <li>Graduation Year: {graduationYear}</li>
-                        <li>
+                        <li className="mt-4">
                             Profile Pic:
                             <img
-                                src= {getProfilePicUrl(profilePicPreviewURL)}
+                                src={getProfilePicUrl()}
                                 alt="Profile Picture"
                                 className="w-24 h-24 object-cover rounded-full mt-2"
                             />
                         </li>
-                        <li>
+                        <li className="mt-6">
                             <button
-                                onClick={() => setIsEditing(true)} // Enable edit mode
-                                className="bg-blue-500 text-white py-2 px-4 rounded mt-4 hover:bg-blue-600"
+                                onClick={() => setIsEditing(true)}
+                                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-md"
                             >
                                 Edit Profile
                             </button>
                         </li>
                     </>
                 ) : (
-                    // Show the input fields when in edit mode
                     <>
                         <li>
                             First Name:
@@ -153,7 +140,7 @@ export default function Profile() {
                                 type="text"
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
-                                className="border border-gray-300 rounded p-2"
+                                className="border border-gray-300 rounded p-2 w-full mt-1"
                             />
                         </li>
                         <li>
@@ -162,7 +149,7 @@ export default function Profile() {
                                 type="text"
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
-                                className="border border-gray-300 rounded p-2"
+                                className="border border-gray-300 rounded p-2 w-full mt-1"
                             />
                         </li>
                         <li>
@@ -171,7 +158,7 @@ export default function Profile() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="border border-gray-300 rounded p-2"
+                                className="border border-gray-300 rounded p-2 w-full mt-1"
                             />
                         </li>
                         <li>
@@ -180,14 +167,14 @@ export default function Profile() {
                                 type="number"
                                 value={graduationYear}
                                 onChange={(e) => setGraduationYear(e.target.value)}
-                                className="border border-gray-300 rounded p-2"
+                                className="border border-gray-300 rounded p-2 w-full mt-1"
                             />
                         </li>
-                        <li>
+                        <li className="mt-4">
                             Profile Pic:
                             <img
                                 id="profPic"
-                                src= {getProfilePicUrl(profilePicPreviewURL)}
+                                src={getProfilePicUrl()}
                                 alt="Profile Picture"
                                 className="w-24 h-24 object-cover rounded-full mt-2"
                             />
@@ -198,10 +185,10 @@ export default function Profile() {
                                 className="mt-2"
                             />
                         </li>
-                        <li>
+                        <li className="mt-6">
                             <button
-                                onClick={handleSave} // Save the changes
-                                className="bg-blue-500 text-white py-2 px-4 rounded mt-4 hover:bg-blue-600"
+                                onClick={handleSave}
+                                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-md"
                             >
                                 Save
                             </button>
@@ -212,5 +199,3 @@ export default function Profile() {
         </div>
     );
 }
-
-

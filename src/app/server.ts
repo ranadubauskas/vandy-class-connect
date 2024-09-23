@@ -81,7 +81,6 @@ export async function register(formData: FormData) {
 
 export async function editUser(userId, data) {
     try {
-        console.log("EDITING USER")
         const user = await pb.collection("users").update(userId, data);
         console.log("user", user);
 
