@@ -7,6 +7,9 @@ import { editUser } from '../server';
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
 const defaultProfilePic = '/images/user.png'; // Default picture path
 
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
+
 export default function Profile() {
     const userVal = useContext(AuthContext);
 
@@ -20,6 +23,7 @@ export default function Profile() {
     const [graduationYear, setGraduationYear] = useState(userVal.graduationYear || '');
     const [profilePicPreviewURL, setProfilePicPreviewURL] = useState(defaultProfilePic);
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
+    const [error, setError] = useState('');
 
     // Populate state with userVal data after it's loaded
     useEffect(() => {
@@ -37,41 +41,46 @@ export default function Profile() {
     }, [userVal]);
 
     const handleSave = async () => {
-        const userId = userVal.id;
-        const formData = new FormData();
-        formData.append('firstName', firstName);
-        formData.append('lastName', lastName);
-        formData.append('email', email);
-        formData.append('graduationYear', graduationYear);
-
-        if (profilePicFile) {
-            formData.append('profilePic', profilePicFile); 
-        }
-
-        const updatedUser = await editUser(userId, formData); 
-        
-        if (updatedUser) {
-            console.log("User updated successfully", updatedUser);
-            
-            // Set the updated information
-            setFirstName(updatedUser.firstName);
-            setLastName(updatedUser.lastName);
-            setEmail(updatedUser.email);
-            setGraduationYear(updatedUser.graduationYear);
-            
+        try {
+            const userId = userVal.id;
+            const formData = new FormData();
+            formData.append('firstName', firstName);
+            formData.append('lastName', lastName);
+            formData.append('email', email);
+            formData.append('graduationYear', graduationYear);
+    
             if (profilePicFile) {
-                const newProfilePicURL = URL.createObjectURL(profilePicFile);
-                setProfilePicPreviewURL(newProfilePicURL);
-            } else if (updatedUser.profilePic) {
-                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userId}/${updatedUser.profilePic}`);
-            } else {
-                setProfilePicPreviewURL(defaultProfilePic); // Revert to default if no new pic is uploaded
+                formData.append('profilePic', profilePicFile); 
             }
+    
+            const updatedUser = await editUser(userId, formData); 
             
-            await getUser(); // Refresh the user data
-            setIsEditing(false);            
-        } else {
-            console.error("Failed to update user");
+            if (updatedUser) {
+                console.log("User updated successfully", updatedUser);
+                
+                // Set the updated information from the user object
+                setFirstName(updatedUser.firstName);
+                setLastName(updatedUser.lastName);
+                setEmail(updatedUser.email);
+                setGraduationYear(updatedUser.graduationYear);
+                
+                if (profilePicFile) {
+                    const newProfilePicURL = URL.createObjectURL(profilePicFile);
+                    setProfilePicPreviewURL(newProfilePicURL);
+                } else if (updatedUser.profilePic) {
+                    setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userId}/${updatedUser.profilePic}`);
+                } else {
+                    setProfilePicPreviewURL(defaultProfilePic); // Revert to default if no new pic is uploaded
+                }
+                
+                await getUser(); // Refresh the user data
+                setIsEditing(false);            
+            } else {
+                console.error("Failed to update user");
+            }
+        } catch (error) {
+            console.error("Error updating user:", error);
+            setError("Failed to update profile. Please try again."); // Set error message to state
         }
     };
 
@@ -109,6 +118,7 @@ export default function Profile() {
             </div>
             <ul className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
                 <li className="text-2xl font-semibold mb-4 text-center">Profile</li>
+                {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
                 {!isEditing ? (
                     <>
                         <li>First Name: {firstName}</li>
@@ -163,12 +173,20 @@ export default function Profile() {
                         </li>
                         <li>
                             Graduation Year:
-                            <input
-                                type="number"
+                            <select
                                 value={graduationYear}
                                 onChange={(e) => setGraduationYear(e.target.value)}
                                 className="border border-gray-300 rounded p-2 w-full mt-1"
-                            />
+                            >
+                                <option value="" disabled hidden>
+                                    Select Graduation Year
+                                </option>
+                                {years.map(year => (
+                                    <option key={year} value={year}>
+                                        {year}
+                                    </option>
+                                ))}
+                            </select>
                         </li>
                         <li className="mt-4">
                             Profile Pic:

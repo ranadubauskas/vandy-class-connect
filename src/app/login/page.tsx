@@ -1,10 +1,11 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { authenticate } from '../lib/functions';
+// import { authenticate } from '../lib/functions';
+import { signIn } from '../server';
 
 
-export default function AuthPage() {
+export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -12,16 +13,16 @@ export default function AuthPage() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
         try {
             const formData = new FormData();
             formData.append('email', email);
             formData.append('password', password);
-            // const user = await signIn(formData);
-            const user = await authenticate(formData);
+            const user = await signIn(formData);
             console.log('User logged in:', user);
             router.push('/home');
         } catch (err) {
-            //TODO:  Better error messages
+            console.error('err occured');
             console.log(err);
             setError('Login failed. Please check your credentials.');
         }

@@ -1,11 +1,10 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import PocketBase from 'pocketbase';
 import { useState } from 'react';
 import { register } from '../server';
 
-const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
-const pb = new PocketBase(`${NEXT_PUBLIC_POCKETBASE_URL}`);
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
 
 
 export default function Register() {
@@ -37,9 +36,7 @@ export default function Register() {
             console.log('User registered:', user);
             router.push('/home');
         } catch (err) {
-            //TODO:  Better error messages
-            console.error(err.messages);
-            setError('Login failed. Please check your credentials.');
+            setError(err.message);
         }
     };
 
@@ -90,13 +87,18 @@ export default function Register() {
                         onChange={(e) => setPasswordConfirm(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <input
-                        type="text"
-                        placeholder="Graduation Year"
+                     <select
                         value={graduationYear}
                         onChange={(e) => setGraduationYear(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                        <option value="" disabled>Select Graduation Year</option>
+                        {years.map(year => (
+                            <option key={year} value={year}>
+                                {year}
+                            </option>
+                        ))}
+                    </select>
                     <button
                         type="submit"
                         className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition duration-300"
