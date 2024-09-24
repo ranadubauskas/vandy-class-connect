@@ -4,6 +4,9 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { getUserCookies, logout } from "./functions";
 
 
+
+
+
 interface AuthContextData {
     id: string;
     username: string;

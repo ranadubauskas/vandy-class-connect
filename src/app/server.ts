@@ -7,6 +7,20 @@ import PocketBase from 'pocketbase';
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
 const pb = new PocketBase(`${NEXT_PUBLIC_POCKETBASE_URL}`);
 
+
+export async function getUserReviews(userID: string){
+    try{
+        const user = await pb.collection('users').getOne(userID, {
+            expand: "reviews",
+        });
+        const expandedReviews = user.expand?.reviews || [];
+        return expandedReviews;
+    } catch(error){
+        console.error(error);
+        return [];
+    }
+}
+
 export async function signIn(formData: FormData) {
     try{
         const email = formData.get("email");
@@ -17,16 +31,16 @@ export async function signIn(formData: FormData) {
             throw new Error("Invalid email or password");
         }
     
-        // Now email and password are guaranteed to be strings
-    
         const user = await pb.collection('users').authWithPassword(email, password);
+
+        const userReviews = await getUserReviews(user.record.id);
+        console.log('userRevs: ' +  userReviews);
         // Set cookies for authenticated user
         cookies().set("id", user.record.id);
         cookies().set("firstName", user.record.firstName);
         cookies().set("lastName", user.record.lastName);
         cookies().set("email", user.record.email);
         cookies().set("graduationYear", user.record.graduationYear);
-    
         return user;
     } catch (err){
         console.error("Error in signIn:", err);
@@ -83,6 +97,7 @@ export async function register(formData: FormData) {
     cookies().set("email", newUser.email);
     cookies().set("graduationYear", newUser.graduationYear);
     cookies().set("profilePic", null);
+    cookies().set("reviews", newUser.reviews);
     return newUser;
     } catch (err){
         console.error("Error creating user:", err);
@@ -105,6 +120,39 @@ export async function editUser(userId, data) {
         return user;
     } catch (err) {
         console.error("Error editing user:", err);
+        throw err;
+    }
+}
+
+
+export async function getReviewByID(reviewId) {
+    try {
+        const review = await pb.collection("reviews").getOne(reviewId);
+        return review;
+    } catch (err) {
+        console.error("Error review:", err);
+        throw err;
+    }
+}
+
+
+export async function editReview(reviewId, data) {
+    try {
+        const review = await pb.collection("reviews").update(reviewId, data);
+        return review;
+    } catch (err) {
+        console.error("Error review:", err);
+        throw err;
+    }
+}
+
+
+export async function deleteReview(reviewId) {
+    try {
+        const deletedReview = await pb.collection("reviews").delete(reviewId);
+        return deletedReview;
+    } catch (err) {
+        console.error("Error review:", err);
         throw err;
     }
 }

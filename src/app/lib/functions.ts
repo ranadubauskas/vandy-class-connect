@@ -15,6 +15,7 @@ export async function authenticate(formData: FormData) {
 }
 
 
+
 export async function getUserCookies() {
     try {
         if (
@@ -49,4 +50,5 @@ export async function logout() {
     cookies().delete("email");
     cookies().delete("graduationYear");
     cookies().delete("profilePic");
+    cookies().delete("reviews");
 }
