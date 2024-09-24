@@ -1,7 +1,9 @@
 'use client';
 import { useContext, useEffect, useState } from 'react';
+import StarRating from '../components/StarRating';
 import { AuthContext } from "../lib/contexts";
 import { deleteReview, editReview, editUser, getUserReviews } from '../server';
+import './style.css';
 
 
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
@@ -226,21 +228,25 @@ export default function Profile() {
                                                     placeholder="Course"
                                                     className="border border-gray-300 rounded p-2 w-full"
                                                 />
-                                               <input
-    type="number"
-    value={reviewEditData.rating}
-    onChange={(e) => {
-        let value = parseFloat(e.target.value);
-        if (value > 5) value = 5; // Enforce maximum value of 5
-        if (value < 0) value = 0; // Enforce minimum value of 0
-        setReviewEditData({ ...reviewEditData, rating: value });
-    }}
-    placeholder="Rating (Out of 5)"
-    className="border border-gray-300 rounded p-2 w-full"
-    min="0"
-    max="5"
-    step="0.1"
-/>
+                                                <input
+                                                    type="number"
+                                                    value={reviewEditData.rating}
+                                                    onChange={(e) => {
+                                                        let value = parseFloat(e.target.value);
+                                                        if (value > 5) value = 5; // Enforce maximum value of 5
+                                                        if (value < 0) value = 0; // Enforce minimum value of 0
+                                                        setReviewEditData({ ...reviewEditData, rating: value });
+                                                    }}
+                                                    placeholder="Rating (Out of 5)"
+                                                    className="border border-gray-300 rounded p-2 w-full"
+                                                    min="0"
+                                                    max="5"
+                                                    step="0.1"
+                                                />
+                                                <StarRating
+                                                    rating={reviewEditData.rating}
+                                                    onRatingChange={(newRating) => setReviewEditData({ ...reviewEditData, rating: newRating })}
+                                                />
                                                 <textarea
                                                     value={reviewEditData.comment}
                                                     onChange={(e) => setReviewEditData({ ...reviewEditData, comment: e.target.value })}
@@ -257,7 +263,11 @@ export default function Profile() {
                                         ) : (
                                             <>
                                                 <p><strong>Course:</strong> {review.course}</p>
-                                                <p><strong>Rating:</strong> {review.rating}/5</p>
+                                                <div className = "rating-content">
+                                                    <p><strong>Rating:</strong> {review.rating}/5</p>
+                                                    <StarRating rating={review.rating} readOnly={true} />
+                                                </div>
+                                               
                                                 <p><strong>Comment:</strong> {review.comment}</p>
                                                 <p><strong>Created:</strong> {new Date(review.created).toLocaleString('en-US', {
                                                     year: 'numeric',
