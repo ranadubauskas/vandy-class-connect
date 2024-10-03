@@ -2,6 +2,7 @@
   "name": "vandy-class-connect",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vanderbilt/yes-api": "^1.0.5",
     "js-cookie": "^3.0.5",
     "next": "14.2.12",
     "pocketbase": "^0.21.5",
