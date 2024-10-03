@@ -34,28 +34,6 @@ export default function Profile() {
         comment: ''
     });
 
-
-    // const parseReiews = async (reviews) => {
-    //     try {
-    //         reviews[]
-    //         const fetchedReviews = await Promise.all(
-    //             reviewIds.map(async (id) => {
-    //                 const review = await getReviewByID(id);
-    //                 console.log(review);
-    //                 return review;
-    //             })
-    //         );
-    //         setReviews(fetchedReviews);
-    //     } catch (err) {
-    //         console.error("Error fetching reviews:", err);
-    //         setError("Failed to fetch reviews.");
-    //     }
-    // };
-
-
-
-
-
     // Populate state with userVal data after it's loaded
     useEffect(() => {
         async function fetchData() {

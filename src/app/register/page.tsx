@@ -33,7 +33,6 @@ export default function Register() {
             formData.append('firstName', firstName);
             formData.append('lastName', lastName);
             formData.append('graduationYear', graduationYear);
-            // const user = await signIn(formData);
             const user = await register(formData);
             console.log('User registered:', user);
             router.push('/home');
