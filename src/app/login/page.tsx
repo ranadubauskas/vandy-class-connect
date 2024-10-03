@@ -1,9 +1,8 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-// import { authenticate } from '../lib/functions';
+import NavBar from '../components/NavBar';
 import { signIn } from '../server';
-
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -22,18 +21,26 @@ export default function Login() {
             console.log('User logged in:', user);
             router.push('/home');
         } catch (err) {
-            console.error('err occured');
-            console.log(err);
+            console.error('err occurred: ' + err);
             setError('Login failed. Please check your credentials.');
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-                <h1 className="text-2xl font-bold mb-6 text-center">
-                    {'Login'}
-                </h1>
+        <div
+            className="min-h-screen p-6"
+            style={{
+                background: `linear-gradient(
+                            0deg, 
+                            #C8D2F9 0%, 
+                            #7594A4 50%, 
+                            #84969F 79%, 
+                            #999999 100%)`,
+            }}
+        >
+            <NavBar />
+            <h1 className="text-3xl font-bold mb-6 text-center text-white"> {'Login'} </h1>
+            <div className="w-full max-w-sm mx-auto bg-transparent">
                 <form onSubmit={handleLogin} className="space-y-4">
                     <input
                         type="email"
@@ -57,10 +64,14 @@ export default function Login() {
                     </button>
                 </form>
                 {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
-                <p className="mt-4 text-center">
+                <p className="mt-4 text-center text-white">
                     <span>
                         Don't have an account?
-                        <a href="/register" className="text-blue-500 hover:underline"> Register </a>
+                        <a
+                            href="/register"
+                            className="text-blue-500 hover:underline"
+                        >  Register </a>
+
                     </span>
                 </p>
             </div>

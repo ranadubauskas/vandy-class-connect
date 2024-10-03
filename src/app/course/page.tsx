@@ -70,7 +70,7 @@ export default function CourseDetailPage() {
               <div>
                 <div className="flex items-center space-x-2">
                   <h3 className="font-semibold">{review.name}</h3>
-                  <span className="text-gray-500">{review.role}</span>
+                  <span className="text-gray-500">Role</span>
                 </div>
                 {/* Star Rating */}
                 <div className="text-yellow-400 mb-2">
