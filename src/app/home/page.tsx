@@ -75,6 +75,7 @@ export default function Home() {
           </h1>
         )}
       </div>
+      <br></br>
 
       {/* Search Bar and Filter */}
       <div className="flex justify-center items-center mb-8">

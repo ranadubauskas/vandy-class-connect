@@ -18,7 +18,7 @@ export async function authenticate(formData: FormData) {
 
 export async function getUserCookies() {
     try {
-        const cookieStore = cookies();  // cookies() is already asynchronous and used to get the cookie store
+        const cookieStore = await cookies();  // cookies() is already asynchronous and used to get the cookie store
 
         const allCookies = cookieStore.getAll();  // Fetch all cookies from the cookie store
         const hasRequiredCookies = allCookies.some(cookie => 
@@ -47,7 +47,7 @@ export async function getUserCookies() {
 }
 
 export async function logout() {
-    const allCookies = cookies(); 
+    const allCookies = await cookies(); 
     //Get all cookies and loop through, deleting each one
     allCookies.delete("id");
     allCookies.delete("username");
