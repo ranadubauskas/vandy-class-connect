@@ -11,7 +11,7 @@ export default function NavBar() {
     return null;
   }
 
-  const { logoutUser, username } = userVal;
+  const { logoutUser, id } = userVal;
 
   return (
     <header className="flex items-center justify-between mb-8">
@@ -28,7 +28,7 @@ export default function NavBar() {
         <a href="/home" className="text-white hover:text-gray-300">Home</a>
         <a href="/about" className="text-white hover:text-gray-300">About</a>
         
-        {username && (
+        {id && (
           <>
             <a href="savedCourses" className="text-white hover:text-gray-300">Saved Courses</a>
             <a href="/profile" className="text-white hover:text-gray-300">Profile</a>

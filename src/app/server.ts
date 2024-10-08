@@ -43,6 +43,7 @@ export async function signIn(formData: FormData) {
         allCookies.set("lastName", user.record.lastName);
         allCookies.set("email", user.record.email);
         allCookies.set("graduationYear", user.record.graduationYear);
+        allCookies.set("username", user.record.username);
         return user;
     } catch (err){
         console.error("Error in signIn:", err);
@@ -96,6 +97,7 @@ export async function register(formData: FormData) {
     const allCookies = await cookies();
 
     allCookies.set("id", newUser.id);
+    allCookies.set("username", newUser.username);
     allCookies.set("firstName", newUser.firstName);
     allCookies.set("lastName", newUser.lastName);
     allCookies.set("email", newUser.email);
@@ -118,6 +120,7 @@ export async function editUser(userId, data) {
         const allCookies = await cookies();
 
         allCookies.set("id", user.id);
+        allCookies.set("username", user.username);
         allCookies.set("firstName", user.firstName);
         allCookies.set("lastName", user.lastName);
         allCookies.set("email", user.email);
