@@ -29,9 +29,9 @@ export default function CourseDetailPage() {
         if (fetchedCourse.syllabus) {
           fetchedCourse.syllabus = pb.files.getUrl(fetchedCourse, fetchedCourse.syllabus);
         }
-        const fetchedReviews = fetchedCourse.expand.reviews || [];
+        const fetchedReviews = fetchedCourse.expand?.reviews|| [];
         const totalRating = fetchedReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-        const avgRating = fetchedReviews.length ? totalRating / fetchedReviews.length : 0;
+        const avgRating = fetchedCourse.averageRating || (fetchedReviews.length ? totalRating / fetchedReviews.length : 0);
 
         setCourse(fetchedCourse);
         setReviews(fetchedReviews);
