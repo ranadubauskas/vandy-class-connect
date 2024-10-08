@@ -101,7 +101,7 @@ export default function Home() {
           <IoFilterOutline size={20} />
         </button>
 
-      {/* Search Button */}
+        {/* Search Button */}
         <button
           className="ml-4 bg-gray-200 px-6 py-3 rounded-full flex items-center justify-center"
           onClick={() => setSearchQuery(searchQuery)}
@@ -161,7 +161,9 @@ export default function Home() {
               <div className="text-2xl bg-gray-200 p-4 rounded-lg font-bold">
                 {course.rating || "N/A"}
               </div>
-              <div className="text-2xl font-bold">{course.name}</div>
+              <div className="text-2xl">
+                <span className="font-bold">{course.code}</span>: {course.name}
+              </div>
             </div>
             <button
               className="bg-gray-200 px-6 py-3 rounded-lg"

@@ -6,8 +6,8 @@ import { FaUsers } from 'react-icons/fa';
 import NavBar from '../components/NavBar';
 import StarRating from '../components/StarRating';
 
-
 const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
+pb.autoCancellation(false);
 
 export default function CourseDetailPage() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [averageRating, setAverageRating] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -22,11 +23,19 @@ export default function CourseDetailPage() {
     const fetchCourse = async () => {
       try {
         const fetchedCourse = await pb.collection('courses').getOne(id, {
+          $cancel: false, 
           expand: 'reviews.user',
         });
-        console.log(fetchedCourse.expand.reviews);
+        if (fetchedCourse.syllabus) {
+          fetchedCourse.syllabus = pb.files.getUrl(fetchedCourse, fetchedCourse.syllabus);
+        }
+        const fetchedReviews = fetchedCourse.expand.reviews || [];
+        const totalRating = fetchedReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+        const avgRating = fetchedReviews.length ? totalRating / fetchedReviews.length : 0;
+
         setCourse(fetchedCourse);
-        setReviews(fetchedCourse.expand.reviews || []);
+        setReviews(fetchedReviews);
+        setAverageRating(avgRating);
       } catch (error) {
         console.error('Error fetching course:', error);
       } finally {
@@ -69,26 +78,50 @@ export default function CourseDetailPage() {
         </button>
       </div>
 
-      {/* Course Title and Download Syllabus */}
+      {/* Course Code and Name as Title */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-white text-3xl font-semibold">
-          {course.name} {/* Dynamic course name */}
+          {course.code}: {course.name} {/* Dynamic course name */}
         </h1>
-        {course.syllabus && (
+
+        {/* Buttons Section */}
+        <div className="flex space-x-4">
+          {course.syllabus && (
+            <button
+              className="bg-white text-black py-2 px-6 rounded-full shadow-lg"
+              onClick={() => window.open(course.syllabus, '_blank')}
+            >
+              Download Syllabus
+            </button>
+          )}
           <button
-            className="bg-white text-indigo-700 py-2 px-6 rounded-full shadow-lg"
-            onClick={() => window.open(course.syllabus, '_blank')}
+            className="bg-white text-black py-2 px-6 rounded-full shadow-lg"
+            onClick={() =>  router.push(`/addReview?id=${course.id}`)}
           >
-            Download Syllabus
+            Add a Review
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Reviews Section */}
-      {/* Reviews Section */}
+      {/* Reviews Section with Average Rating */}
       <div className="bg-white p-6 rounded-lg shadow-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-4xl font-semibold">Reviews</h2>
+        <div className="flex justify-between items-start mb-4">
+
+          {/* Average Rating Section Left-Aligned */}
+          <div className="flex flex-col items-center">
+            <h2 className="text-3xl font-semibold mt-2">Average Rating</h2>
+
+            {/* Average Rating Number */}
+            <div className="text-5xl font-bold text-gray-900 mt-1">
+              {averageRating.toFixed(1)} {/* Display average rating */}
+            </div>
+
+            {/* Render average star rating below the rating */}
+            <div className="mt-1">
+              <StarRating rating={averageRating} readOnly={true} />
+            </div>
+          </div>
+
 
           {/* Number of reviews, icon, and centered text */}
           <div className="flex flex-col items-center space-y-1">
@@ -107,7 +140,11 @@ export default function CourseDetailPage() {
           </div>
         </div>
 
-        <div className="text-gray-600 mb-4">{`Showing ${reviews.length} of ${reviews.length}`}</div>
+
+
+        <div className="mt-6 mb-2">
+          <h2 className="text-3xl font-semibold">Reviews</h2> {/* Added subtitle */}
+        </div>
 
         {/* List of Reviews */}
         <div className="space-y-6">
@@ -131,7 +168,7 @@ export default function CourseDetailPage() {
                         : 'Anonymous'}
                     </h3>
                   </div>
-                  {/* Star Rating */}
+                  {/* Star Rating for individual review */}
                   <StarRating rating={review.rating} readOnly={true} />
                   <p className="text-gray-600">{review.comment}</p>
                 </div>
