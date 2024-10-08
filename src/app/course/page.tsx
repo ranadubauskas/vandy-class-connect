@@ -135,7 +135,7 @@ export default function CourseDetailPage() {
             </div>
             {/* Centered text below number and icon */}
             <p className="text-gray-500 text-center leading-tight">
-              Students Have Reviewed <br /> this Course
+              Reviews for <br /> this Course
             </p>
           </div>
         </div>
