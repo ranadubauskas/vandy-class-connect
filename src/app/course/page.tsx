@@ -1,11 +1,11 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import PocketBase from 'pocketbase';
-import { useContext, useEffect, useState } from 'react';
-import { FaUsers } from 'react-icons/fa';
-import { useAuth } from "../lib/contexts";
+import { useEffect, useState } from 'react';
+import { FaUsers, FaChalkboardTeacher } from 'react-icons/fa';
 import NavBar from '../components/NavBar';
 import StarRating from '../components/StarRating';
+import { useAuth } from "../lib/contexts";
 
 const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
 pb.autoCancellation(false);
@@ -106,7 +106,7 @@ export default function CourseDetailPage() {
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <h1>Loading...</h1>;
   }
 
   if (!course) {
@@ -114,17 +114,7 @@ export default function CourseDetailPage() {
   }
 
   return (
-    <div
-      className="min-h-screen p-6"
-      style={{
-        background: `linear-gradient(
-      0deg, 
-      #C8D2F9 0%, 
-      #7594A4 50%, 
-      #84969F 79%, 
-      #999999 100%)`,
-      }}
-    >
+    <div className="min-h-screen p-6">
       <NavBar />
 
       {/* Back to Search Link */}
@@ -232,7 +222,7 @@ export default function CourseDetailPage() {
                 {tutorDetails.length}
               </span>
               {/* Icon next to number */}
-              <FaUsers className="text-blue-500 text-5xl" />
+              <FaChalkboardTeacher className="text-blue-500 text-5xl" />
             </div>
             {/* Centered text below number and icon */}
             <p className="text-gray-500 text-center leading-tight">

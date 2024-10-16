@@ -25,17 +25,7 @@ export default function About() {
   ];
 
   return (
-    <div
-      className="min-h-screen p-6"
-      style={{
-        background: `linear-gradient(
-          0deg, 
-          #C8D2F9 0%, 
-          #7594A4 50%, 
-          #84969F 79%, 
-          #999999 100%)`,
-      }}
-    >
+    <div className="min-h-screen p-6">
       <NavBar />
       <div className="max-w-4xl mx-auto mt-12">
         <h1 className="text-4xl font-bold text-center text-white">About</h1>
