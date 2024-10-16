@@ -1,7 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import NavBar from '../components/NavBar';
 import { register } from '../server';
 
 const currentYear = new Date().getFullYear();
@@ -44,7 +43,6 @@ export default function Register() {
 
     return (
         <div className="min-h-screen p-6">
-            <NavBar />
             <h1 className="text-3xl font-bold mb-6 text-center text-white"> {'Register'} </h1>
             <div className="w-full max-w-sm mx-auto bg-transparent">
                 <form onSubmit={handleRegister} className="space-y-4">

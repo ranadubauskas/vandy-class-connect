@@ -1,7 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import NavBar from '../components/NavBar';
 import { signIn } from '../server';
 
 export default function Login() {
@@ -28,7 +27,6 @@ export default function Login() {
 
     return (
         <div className="min-h-screen p-6">
-            <NavBar />
             <h1 className="text-3xl font-bold mb-6 text-center text-white"> {'Login'} </h1>
             <div className="w-full max-w-sm mx-auto bg-transparent">
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -56,7 +54,7 @@ export default function Login() {
                 {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
                 <p className="mt-4 text-center text-white">
                     <span>
-                        Don't have an account?
+                        Don&apos;t have an account?
                         <a
                             href="/register"
                             className="text-blue-500 hover:underline"

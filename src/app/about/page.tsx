@@ -1,10 +1,8 @@
 "use client";
 import { Disclosure } from '@headlessui/react';
 import { ChevronUpIcon } from '@heroicons/react/24/solid';
-import NavBar from '../components/NavBar';
 
 export default function About() {
-  // Sample FAQ data
   const faqData = [
     {
       question: 'What is VandyClassConnect?',
@@ -26,7 +24,6 @@ export default function About() {
 
   return (
     <div className="min-h-screen p-6">
-      <NavBar />
       <div className="max-w-4xl mx-auto mt-12">
         <h1 className="text-4xl font-bold text-center text-white">About</h1>
         <p className="text-center text-xl mt-4 text-white">

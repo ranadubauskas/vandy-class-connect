@@ -2,11 +2,12 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import PocketBase from 'pocketbase';
 import { useEffect, useState } from 'react';
-import NavBar from '../components/NavBar';
-import StarRating from '../components/StarRating'; // Ensure this component supports partial stars
-import { useAuth } from '../lib/contexts'; // Make sure to import the auth provider
+import Loading from "../components/Loading";
+import StarRating from '../components/StarRating';
+import { useAuth } from '../lib/contexts';
 
 const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
+pb.autoCancellation(false);
 
 export default function AddReviewPage() {
     const router = useRouter();
@@ -63,6 +64,7 @@ export default function AddReviewPage() {
                 rating: parseFloat(rating), // Rating out of 5, including partial ratings
                 comment,
                 user: userId, // The user from cookies/context
+                syllabus: syllabusFile
             };
 
             const newReview = await pb.collection('reviews').create(reviewData);
@@ -75,9 +77,13 @@ export default function AddReviewPage() {
             // Append the new review ID to the existing list of review IDs
             const updatedReviews = [...(fetchedCourse.reviews || []), newReview.id];
 
+            console.log(updatedReviews);
+
+            const reviewsFromExpand = fetchedCourse.expand?.reviews || [];
+
             // Recalculate the average rating
-            const totalRating = fetchedCourse.expand.reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-            const avgRating = (totalRating + newReview.rating) / (fetchedCourse.expand.reviews.length + 1); // Increment the count
+            const totalRating = reviewsFromExpand.reduce((sum, review) => sum + (review.rating || 0), 0);
+            const avgRating = (totalRating + newReview.rating) / (reviewsFromExpand.length + 1); // Increment the count
 
             // Update the course with the new review list and average rating
             await pb.collection('courses').update(courseId, {
@@ -104,7 +110,7 @@ export default function AddReviewPage() {
     };
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <Loading />
     }
 
     if (!course) {
@@ -113,7 +119,6 @@ export default function AddReviewPage() {
 
     return (
         <div className="min-h-screen p-6">
-            <NavBar />
             {/* Back to Course Link */}
             <div className="mb-8">
                 <button
@@ -133,7 +138,7 @@ export default function AddReviewPage() {
 
             {/* Add Review Section */}
             <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h2 className="text-3xl font-semibold">Add a Review</h2>
+                <h2 className="text-3xl font-semibold hover:bg-gray-300 transition duration-300">Add a Review</h2>
 
                 {/* Rating Input Section with Stars */}
                 <div className="flex items-center mt-4">

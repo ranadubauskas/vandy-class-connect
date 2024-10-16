@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from 'next/font/google';
 import "./globals.css";
 import { AuthProvider } from "./lib/contexts";
+import NavBar from './components/NavBar'; 
 
 
 
@@ -37,7 +38,8 @@ export default function RootLayout({
                 #999999 100%)`,
             }}
           >
-            {children}
+            <NavBar /> 
+            {children} 
           </div>
         </AuthProvider>
       </body>
