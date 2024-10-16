@@ -1,13 +1,14 @@
 'use client';
-import { useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { IoIosSearch } from "react-icons/io";
 import { IoClose, IoFilterOutline } from "react-icons/io5";
 import NavBar from '../components/NavBar';
-import { AuthContext } from "../lib/contexts";
 import { getUserCookies } from '../lib/functions';
 import { getCourses } from '../server';
 
-let courseSubjects = ['CS', 'MATH', 'BSCI', 'ASTR'];
+
+const courseSubjects = ['CS', 'MATH', 'BSCI', 'ASTR'];
 
 export default function Home() {
   const [userCookies, setUserCookies] = useState(null);
@@ -19,7 +20,7 @@ export default function Home() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [loading, setLoading] = useState(true); // Loading state for courses
 
-  const userVal = useContext(AuthContext);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchCookies = async () => {
@@ -108,6 +109,7 @@ export default function Home() {
             setTempSubjectFilter(subjectFilter); // Set the temp filter based on current filter
             setShowFilterModal(true);
           }}
+          aria-label="Open filter"
         >
           <IoFilterOutline size={20} />
         </button>
@@ -132,6 +134,7 @@ export default function Home() {
             <button
               className="absolute top-2 right-2 text-gray-600"
               onClick={() => setShowFilterModal(false)}
+              aria-label="Close filter"
             >
               <IoClose size={20} />
             </button>
@@ -189,7 +192,7 @@ export default function Home() {
               </div>
               <button
                 className="bg-gray-200 px-6 py-3 rounded-lg"
-                onClick={() => (window.location.href = `/course?id=${course.id}`)}
+                onClick={() => router.push(`/course?id=${course.id}`)}
               >
                 View Course
               </button>
