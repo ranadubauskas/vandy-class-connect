@@ -32,7 +32,6 @@ export async function signIn(formData: FormData) {
         }
     
         const user = await pb.collection('users').authWithPassword(email, password);
-        console.log('user: ', user);
 
         const userReviews = await getUserReviews(user.record.id);
         console.log('userRevs: ' +  userReviews);

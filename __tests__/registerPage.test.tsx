@@ -3,7 +3,7 @@ import Register from "../src/app/register/page";
 import { register } from '../src/app/server';
 import { useRouter, usePathname } from 'next/navigation';
 
-// Mock the 'register' function and 'useRouter', 'usePathname'
+// Mock functions
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
   usePathname: jest.fn(),
@@ -20,15 +20,11 @@ describe("Register page", () => {
   beforeEach(() => {
     // Reset mocks before each test
     jest.clearAllMocks();
-
-    // Mock the router's push function and pathname
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
     });
 
     (usePathname as jest.Mock).mockReturnValue(mockPathname);
-
-    // Mock register implementation
     (register as jest.Mock).mockImplementation((formData) => {
       const email = formData.get('email');
       const password = formData.get('password');
@@ -68,8 +64,6 @@ describe("Register page", () => {
 
   it("should show error message on failed registration", async () => {
     render(<Register />);
-
-    // Simulate user input
     fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "John" } });
     fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "Doe" } });
     fireEvent.change(screen.getByPlaceholderText("Vanderbilt Email"), { target: { value: "wrong@example.com" } });
@@ -80,32 +74,29 @@ describe("Register page", () => {
     // Select graduation year
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2025' } });
     
-    // Simulate form submission
+    // Submit form
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
 
-    // Expect error message after failed registration attempt
+    // Expect error message 
     expect(await screen.findByText("Invalid registration details")).toBeInTheDocument();
   });
 
   it("should register successfully and redirect to home", async () => {
     render(<Register />);
-
-    // Simulate user input with valid details
     fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "John" } });
     fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "Doe" } });
     fireEvent.change(screen.getByPlaceholderText("Vanderbilt Email"), { target: { value: "test@vanderbilt.edu" } });
     fireEvent.change(screen.getByPlaceholderText("Username"), { target: { value: "johnDoe" } });
     fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "Testpassword123!" } });
     fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "Testpassword123!" } });
-    
-    // Select graduation year
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2025' } });
     
-    // Simulate form submission
+    // Submit form
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-
-    // Wait for router.push to be called
+    
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/home'));
+    
+    //Ensure no error message displayed
     expect(screen.queryByText("Invalid registration details")).not.toBeInTheDocument();
   });
 });
