@@ -2,12 +2,15 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { signIn } from '../server';
+import { useAuth } from '../lib/contexts';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const router = useRouter();
+
+    const { loginUser } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -18,6 +21,7 @@ export default function Login() {
             formData.append('password', password);
             const user = await signIn(formData);
             console.log('User logged in:', user);
+            loginUser(user);
             router.push('/home');
         } catch (err) {
             console.error('err occurred: ' + err);
@@ -57,8 +61,8 @@ export default function Login() {
                         Don&apos;t have an account?
                         <a
                             href="/register"
-                            className="text-blue-500 hover:underline"
-                        >  Register </a>
+                            className="text-white hover:underline hover:text-blue-500"
+                        > Register </a>
 
                     </span>
                 </p>

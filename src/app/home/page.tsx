@@ -98,6 +98,7 @@ export default function Home() {
             setShowFilterModal(true);
           }}
           aria-label="Open filter"
+          title="Filter by Subject"
         >
           <IoFilterOutline size={20} />
         </button>

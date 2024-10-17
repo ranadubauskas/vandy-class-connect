@@ -108,10 +108,10 @@ export default function Register() {
                     </button>
                 </form>
                 {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
-                <p className="mt-4 text-center">
+                <p className="mt-4 text-center text-white">
                     <span>
                         Already have an account?
-                        <a href="/login" className="text-blue-500 hover:underline"> Login </a>
+                        <a href="/login" className="text-white-500 hover:underline hover:text-blue-500"> Login </a>
                     </span>
                 </p>
             </div>

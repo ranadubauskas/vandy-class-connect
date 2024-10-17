@@ -94,6 +94,15 @@ export async function register(formData: FormData) {
         graduationYear: graduationYear
     });
 
+    const userData = {
+        id: newUser.record.id,
+        username: newUser.record.username,
+        firstName: newUser.record.firstName,
+        lastName: newUser.record.lastName,
+        email: newUser.record.email,
+        graduationYear: newUser.record.graduationYear,
+        profilePic: newUser.record.profilePic,
+    };
     const allCookies = await cookies();
 
     allCookies.set("id", newUser.id);
@@ -104,7 +113,8 @@ export async function register(formData: FormData) {
     allCookies.set("graduationYear", newUser.graduationYear);
     allCookies.set("profilePic", null);
     allCookies.set("reviews", newUser.reviews);
-    return newUser;
+    
+    return userData;
     } catch (err){
         console.error("Error creating user:", err);
         throw err;
