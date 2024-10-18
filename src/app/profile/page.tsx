@@ -179,17 +179,43 @@ export default function Profile() {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-screen">
-            <div className="absolute top-4 right-4">
-                <button
-                    type="button"
-                    onClick={logoutUser}
-                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 shadow-md"
-                >
-                    Log Out
-                </button>
+        <div className="min-h-screen bg-gradient-to-b from-indigo-300 to-indigo-900 p-6">
+            <header className="flex items-center justify-between mb-8">
+                <div className="text-3xl font-bold text-white">VandyClassConnect</div>
+                <div className="flex space-x-4">
+                <a href="#" className="text-white hover:text-gray-300" onClick = {()=> window.location.href = "/home" }>Home</a>
+                <a href="#" className="text-white hover:text-gray-300">About</a>
+                <a href="#" className="text-white hover:text-gray-300">Resources</a>
+                <a href="#" className="text-white hover:text-gray-300" onClick = {()=> window.location.href = "/profile" }>Profile</a>
+                <a className="text-white hover:text-gray-300" onClick = {()=> {logoutUser()}}>Log Out</a>
+                </div>
+            </header>
+            <div className="flex items-center justify-center h-[30vh]">
+                <div className="flex mb-4 max-w-5xl w-full">
+                    <div className="w-1/3 flex justify-start pl-2">
+                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg">
+                        View My Courses
+                        </button>
+                    </div>
+                    <div className="w-1/3 h-12 flex flex-col items-center justify-center">
+                            <img
+                                src={getProfilePicUrl()}
+                                alt="Profile Picture"
+                                className="w-28 h-28 object-cover rounded-full mt-20"
+                            />
+                            {/* use poppins font, look at shadcn */}
+                            <h2 className="text-white text-3xl font-semibold mt-10">{firstName} {lastName}</h2>
+                    </div>
+                    <div className="w-1/3 flex justify-end pr-2">
+                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg">
+                        View My Ratings
+                        </button>
+                    </div>
+                </div>
             </div>
-            <ul className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
+
+        <div className="flex flex-col items-center justify-center h-screen">
+            <ul className="bg-white shadow-lg rounded-lg p-6 w-full max-w-5xl">
                 <li className="text-2xl font-semibold mb-4 text-center">Profile</li>
                 {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
                 {!isEditing ? (
@@ -198,14 +224,6 @@ export default function Profile() {
                         <li>Last Name: {lastName}</li>
                         <li>Email: {email}</li>
                         <li>Graduation Year: {graduationYear}</li>
-                        <li className="mt-4">
-                            Profile Pic:
-                            <img
-                                src={getProfilePicUrl()}
-                                alt="Profile Picture"
-                                className="w-24 h-24 object-cover rounded-full mt-2"
-                            />
-                        </li>
                         <li className="mt-6">
                             <button
                                 onClick={() => setIsEditing(true)}
@@ -379,5 +397,96 @@ export default function Profile() {
                 )}
             </ul>
         </div>
-    );
+
+    <div className="bg-white shadow-lg rounded-lg p-6 max-w-5xl mx-auto">
+        <div className="text-2xl font-semibold mb-4 text-center">Profile</div>
+
+        {error && <p className="text-red-500 text-center">{error}</p>}
+
+        {!isEditing ? (
+            <div className="grid grid-cols-2 gap-6">
+                <div>
+                    <label className="block text-gray-700">First Name</label>
+                    <p>{firstName}</p>
+                </div>
+                <div>
+                    <label className="block text-gray-700">Last Name</label>
+                    <p>{lastName}</p>
+                </div>
+                <div>
+                    <label className="block text-gray-700">Email</label>
+                    <p>{email}</p>
+                </div>
+                <div>
+                    <label className="block text-gray-700">Graduation Year</label>
+                    <p>{graduationYear}</p>
+                </div>
+                <div className="col-span-2 mt-6">
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-md w-full"
+                    >
+                        Edit Profile
+                    </button>
+                </div>
+            </div>
+        ) : (
+            <div className="grid grid-cols-2 gap-6">
+                <div>
+                    <label className="block text-gray-700">First Name</label>
+                    <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="border border-gray-300 rounded p-2 w-full mt-1"
+                    />
+                </div>
+                <div>
+                    <label className="block text-gray-700">Last Name</label>
+                    <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="border border-gray-300 rounded p-2 w-full mt-1"
+                    />
+                </div>
+                <div>
+                    <label className="block text-gray-700">Email</label>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="border border-gray-300 rounded p-2 w-full mt-1"
+                    />
+                </div>
+                <div>
+                    <label className="block text-gray-700">Grade</label>
+                    <select
+                        value={graduationYear}
+                        onChange={(e) => setGraduationYear(e.target.value)}
+                        className="border border-gray-300 rounded p-2 w-full mt-1"
+                    >
+                        <option value="" disabled hidden>Select Grade</option>
+                        {years.map(year => (
+                            <option key={year} value={year}>
+                                {year}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                {/* add profile pic edit */}
+                <div className="col-span-2 mt-6">
+                    <button
+                        onClick={handleSave}
+                        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-md w-full"
+                    >
+                        Save Profile
+                    </button>
+                </div>
+            </div>
+        )}
+
+    </div>
+    </div>
+    )
 }

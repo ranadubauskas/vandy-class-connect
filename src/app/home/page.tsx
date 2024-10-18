@@ -31,10 +31,10 @@ export default function Home() {
       <header className="flex items-center justify-between mb-8">
         <div className="text-3xl font-bold text-white">VandyClassConnect</div>
         <div className="flex space-x-4">
-        <a href="#" className="text-white hover:text-gray-300">Home</a>
+        <a href="#" className="text-white hover:text-gray-300" onClick = {()=> window.location.href = "/home" }>Home</a>
     <a href="#" className="text-white hover:text-gray-300">About</a>
     <a href="#" className="text-white hover:text-gray-300">Resources</a>
-    <a href="#" className="text-white hover:text-gray-300">Profile</a>
+    <a href="#" className="text-white hover:text-gray-300" onClick = {()=> window.location.href = "/profile" }>Profile</a>
           <a className="text-white hover:text-gray-300" onClick = {()=> {logoutUser()}}>Log Out</a>
         </div>
       </header>
