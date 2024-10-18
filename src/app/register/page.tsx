@@ -22,6 +22,7 @@ export default function Register() {
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
         try {
             const formData = new FormData();
             formData.append('username', username);
@@ -31,19 +32,19 @@ export default function Register() {
             formData.append('firstName', firstName);
             formData.append('lastName', lastName);
             formData.append('graduationYear', graduationYear);
-            // const user = await signIn(formData);
             const user = await register(formData);
             console.log('User registered:', user);
             router.push('/home');
         } catch (err) {
+            console.log(err);
             setError(err.message);
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-                <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
+        <div className="min-h-screen p-6">
+            <h1 className="text-3xl font-bold mb-6 text-center text-white"> {'Register'} </h1>
+            <div className="w-full max-w-sm mx-auto bg-transparent">
                 <form onSubmit={handleRegister} className="space-y-4">
                     <input
                         type="text"
@@ -80,19 +81,19 @@ export default function Register() {
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                      <input
+                    <input
                         type="password"
                         placeholder="Confirm Password"
                         value={passwordConfirm}
                         onChange={(e) => setPasswordConfirm(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                     <select
+                    <select
                         value={graduationYear}
                         onChange={(e) => setGraduationYear(e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-400"
                     >
-                        <option value="" disabled>Select Graduation Year</option>
+                        <option value="" disabled className="text-gray-500">Select Graduation Year</option>
                         {years.map(year => (
                             <option key={year} value={year}>
                                 {year}
@@ -106,13 +107,13 @@ export default function Register() {
                         Register
                     </button>
                 </form>
-                <p className="mt-4 text-center">
-                        <span>
-                             Already have an account?
-                        <a href = "/login" className="text-blue-500 hover:underline"> Login </a>
-                        </span>
-                </p>
                 {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
+                <p className="mt-4 text-center text-white">
+                    <span>
+                        Already have an account?
+                        <a href="/login" className="text-white-500 hover:underline hover:text-blue-500"> Login </a>
+                    </span>
+                </p>
             </div>
         </div>
     );

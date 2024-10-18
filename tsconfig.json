@@ -13,6 +13,9 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "types": [
+      "@testing-library/jest-dom"
+    ],
     "jsx": "preserve",
     "incremental": true,
     "plugins": [
@@ -25,7 +28,8 @@
         "./src/*"
       ]
     },
-    "strict": false
+    "strict": false,
+    "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",

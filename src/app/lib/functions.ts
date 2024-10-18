@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 import { cookies } from "next/headers";
 import { signIn } from '../server';
@@ -18,37 +19,43 @@ export async function authenticate(formData: FormData) {
 
 export async function getUserCookies() {
     try {
-        if (
-            !cookies().has("id") ||
-            !cookies().has("firstName") ||
-            !cookies().has("lastName") ||
-            !cookies().has("email")
-        ) {
+        const cookieStore = await cookies();  // cookies() is already asynchronous and used to get the cookie store
+
+        const allCookies = cookieStore.getAll();  // Fetch all cookies from the cookie store
+        const hasRequiredCookies = allCookies.some(cookie => 
+            ["id", "firstName", "lastName", "email"].includes(cookie.name)
+        );
+
+        if (!hasRequiredCookies) {
             return null;
         }
-        const singleObject = cookies()
-            .getAll()
-            .reduce((acc: any, cookie: any) => {
-                acc[cookie.name] = cookie.value;
-                return acc;
-            }, {});
+
+        // Create a single object from all the cookies
+        const singleObject = allCookies.reduce((acc: any, cookie: any) => {
+            acc[cookie.name] = cookie.value;
+            return acc;
+        }, {});
 
         return singleObject;
+
     } catch (error) {
+        console.error("Error fetching user cookies:", error);
         if (error instanceof Error) {
             return error.message;
         }
+        return null;
     }
 }
 
 export async function logout() {
+    const allCookies = await cookies(); 
     //Get all cookies and loop through, deleting each one
-    cookies().delete("id");
-    cookies().delete("username");
-    cookies().delete("firstName");
-    cookies().delete("lastName");
-    cookies().delete("email");
-    cookies().delete("graduationYear");
-    cookies().delete("profilePic");
-    cookies().delete("reviews");
+    allCookies.delete("id");
+    allCookies.delete("username");
+    allCookies.delete("firstName");
+    allCookies.delete("lastName");
+    allCookies.delete("email");
+    allCookies.delete("graduationYear");
+    allCookies.delete("profilePic");
+    allCookies.delete("reviews");
 }

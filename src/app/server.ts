@@ -35,12 +35,15 @@ export async function signIn(formData: FormData) {
 
         const userReviews = await getUserReviews(user.record.id);
         console.log('userRevs: ' +  userReviews);
+
+        const allCookies = await cookies();
         // Set cookies for authenticated user
-        cookies().set("id", user.record.id);
-        cookies().set("firstName", user.record.firstName);
-        cookies().set("lastName", user.record.lastName);
-        cookies().set("email", user.record.email);
-        cookies().set("graduationYear", user.record.graduationYear);
+        allCookies.set("id", user.record.id);
+        allCookies.set("firstName", user.record.firstName);
+        allCookies.set("lastName", user.record.lastName);
+        allCookies.set("email", user.record.email);
+        allCookies.set("graduationYear", user.record.graduationYear);
+        allCookies.set("username", user.record.username);
         return user;
     } catch (err){
         console.error("Error in signIn:", err);
@@ -91,14 +94,27 @@ export async function register(formData: FormData) {
         graduationYear: graduationYear
     });
 
-    cookies().set("id", newUser.id);
-    cookies().set("firstName", newUser.firstName);
-    cookies().set("lastName", newUser.lastName);
-    cookies().set("email", newUser.email);
-    cookies().set("graduationYear", newUser.graduationYear);
-    cookies().set("profilePic", null);
-    cookies().set("reviews", newUser.reviews);
-    return newUser;
+    const userData = {
+        id: newUser.record.id,
+        username: newUser.record.username,
+        firstName: newUser.record.firstName,
+        lastName: newUser.record.lastName,
+        email: newUser.record.email,
+        graduationYear: newUser.record.graduationYear,
+        profilePic: newUser.record.profilePic,
+    };
+    const allCookies = await cookies();
+
+    allCookies.set("id", newUser.id);
+    allCookies.set("username", newUser.username);
+    allCookies.set("firstName", newUser.firstName);
+    allCookies.set("lastName", newUser.lastName);
+    allCookies.set("email", newUser.email);
+    allCookies.set("graduationYear", newUser.graduationYear);
+    allCookies.set("profilePic", null);
+    allCookies.set("reviews", newUser.reviews);
+    
+    return userData;
     } catch (err){
         console.error("Error creating user:", err);
         throw err;
@@ -111,12 +127,15 @@ export async function editUser(userId, data) {
         const user = await pb.collection("users").update(userId, data);
         console.log("user", user);
 
-        cookies().set("id", user.id);
-        cookies().set("firstName", user.firstName);
-        cookies().set("lastName", user.lastName);
-        cookies().set("email", user.email);
-        cookies().set("graduationYear", user.graduationYear);
-        cookies().set("profilePic", user.profilePic);
+        const allCookies = await cookies();
+
+        allCookies.set("id", user.id);
+        allCookies.set("username", user.username);
+        allCookies.set("firstName", user.firstName);
+        allCookies.set("lastName", user.lastName);
+        allCookies.set("email", user.email);
+        allCookies.set("graduationYear", user.graduationYear);
+        allCookies.set("profilePic", user.profilePic);
         return user;
     } catch (err) {
         console.error("Error editing user:", err);
@@ -156,5 +175,37 @@ export async function deleteReview(reviewId) {
         throw err;
     }
 }
+
+
+export async function getCourses(subject = '') {
+    try {
+        // If subject is provided, filter by subject, otherwise get all courses
+        const filter = subject ? `subject="${subject}"` : '';
+        const resultList = await pb.collection('courses').getFullList({
+            filter: filter,
+            sort: '-created', // Sort by latest created courses
+        });
+        return resultList;
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        return [];
+    }
+}
+
+
+export async function getCourseAndReviews(courseID: string) {
+    try {
+        const fetchedCourse = await pb.collection('courses').getOne(courseID, {
+            expand: 'reviews',
+        });
+        const expandedReviews = fetchedCourse.expand?.reviews || [];
+        return {course: fetchedCourse, reviews: expandedReviews};
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        return null;
+    }
+}
+
+
 
 
