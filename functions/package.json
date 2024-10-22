@@ -1,0 +1,21 @@
+{
+  "name": "functions",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "jest": "^29.7.0"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "test": "jest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@vanderbilt/yes-api": "^1.0.8",
+    "nanoid": "^5.0.7",
+    "pocketbase": "^0.21.5"
+  }
+}
