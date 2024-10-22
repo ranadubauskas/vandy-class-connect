@@ -12,5 +12,5 @@ export interface IFunction<Arguments, Result> {
    * @param args Arguments
    * @returns Result
    */
-  execute: ((args: Arguments) => Promise<Result>) | ((args: Arguments) => Result)
+  execute: (args: Arguments) => Promise<Result>
 }

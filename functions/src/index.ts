@@ -1,11 +1,13 @@
 import { parseArgs } from "util";
 import courseScraper from "./functions/course-scraper";
 import subjectScraper from "./functions/subject-scraper";
+import termScraper from "./functions/term-scraper";
 
 //  Define the functions that can be run
 const functions = {
   'courses': courseScraper,
   'subjects': subjectScraper,
+  'terms': termScraper,
 } as const
 
 //  Parse the arguments for the CLI to figure out which function to run
