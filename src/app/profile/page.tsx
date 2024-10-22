@@ -1,6 +1,5 @@
 'use client';
 import { useContext, useEffect, useState } from 'react';
-import StarRating from '../components/StarRating';
 import { AuthContext } from "../lib/contexts";
 import { deleteReview, editReview, editUser, getUserReviews } from '../server';
 import './style.css';
@@ -15,14 +14,14 @@ const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
 export default function Profile() {
     const userVal = useContext(AuthContext);
 
-    const { getUser, logoutUser } = userVal;
+    const { getUser, logoutUser } = userVal || {};
 
     // State to control edit mode and the user data
     const [isEditing, setIsEditing] = useState(false);
-    const [firstName, setFirstName] = useState(userVal.firstName || '');
-    const [lastName, setLastName] = useState(userVal.lastName || '');
-    const [email, setEmail] = useState(userVal.email || '');
-    const [graduationYear, setGraduationYear] = useState(userVal.graduationYear || '');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [graduationYear, setGraduationYear] = useState('');
     const [profilePicPreviewURL, setProfilePicPreviewURL] = useState(defaultProfilePic);
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
     const [error, setError] = useState('');
@@ -36,29 +35,35 @@ export default function Profile() {
 
     // Populate state with userVal data after it's loaded
     useEffect(() => {
-        async function fetchData() {
-            if (userVal) {
-                setFirstName(userVal.firstName || '');
-                setLastName(userVal.lastName || '');
-                setEmail(userVal.email || '');
-                setGraduationYear(userVal.graduationYear || '');
-                try {
-                    const revs = await getUserReviews(userVal.id);
-                    setReviews(revs);
-                } catch (err) {
-                    console.error(err);
-                }
-                if (userVal.profilePic) {
-                    setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${userVal.profilePic}`);
-                } else {
-                    setProfilePicPreviewURL(defaultProfilePic); // Use default profile picture if none is provided
-                }
+        if (!userVal) return; // Wait until userVal is available
+
+        setFirstName(userVal.firstName || '');
+        setLastName(userVal.lastName || '');
+        setEmail(userVal.email || '');
+        setGraduationYear(userVal.graduationYear || '');
+
+        // Fetch user reviews asynchronously
+        const fetchData = async () => {
+            try {
+                const revs = await getUserReviews(userVal.id);
+                setReviews(revs);
+            } catch (err) {
+                console.error(err);
             }
-        }
+
+            if (userVal.profilePic) {
+                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${userVal.profilePic}`);
+            } else {
+                setProfilePicPreviewURL(defaultProfilePic); // Use default profile picture if none is provided
+            }
+        };
+
         fetchData();
     }, [userVal]);
 
     const handleSave = async () => {
+        if (!userVal) return; // Ensure userVal is available
+
         try {
             const userId = userVal.id;
             const formData = new FormData();
@@ -74,9 +79,6 @@ export default function Profile() {
             const updatedUser = await editUser(userId, formData);
 
             if (updatedUser) {
-                console.log("User updated successfully", updatedUser);
-
-                // Set the updated information from the user object
                 setFirstName(updatedUser.firstName);
                 setLastName(updatedUser.lastName);
                 setEmail(updatedUser.email);
@@ -88,7 +90,7 @@ export default function Profile() {
                 } else if (updatedUser.profilePic) {
                     setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userId}/${updatedUser.profilePic}`);
                 } else {
-                    setProfilePicPreviewURL(defaultProfilePic); // Revert to default if no new pic is uploaded
+                    setProfilePicPreviewURL(defaultProfilePic);
                 }
 
                 await getUser(); // Refresh the user data
@@ -98,21 +100,23 @@ export default function Profile() {
             }
         } catch (error) {
             console.error("Error updating user:", error);
-            setError("Failed to update profile. Please try again."); // Set error message to state
+            setError("Failed to update profile. Please try again.");
         }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setProfilePicFile(file); // Save the file for uploading
+            setProfilePicFile(file);
             const fileObjectURL = URL.createObjectURL(file);
-            setProfilePicPreviewURL(fileObjectURL); // Show the preview of the new profile picture
+            setProfilePicPreviewURL(fileObjectURL);
         } else {
             setProfilePicFile(null);
-            setProfilePicPreviewURL(defaultProfilePic); // Revert to default if no file is selected
+            setProfilePicPreviewURL(defaultProfilePic);
         }
     };
+
+    // Rest of the code remains the same...
 
     const handleEditReview = (review) => {
         setIsEditingReview(review.id);
@@ -161,22 +165,22 @@ export default function Profile() {
             <div className="flex items-center justify-center h-[30vh]">
                 <div className="flex mb-4 max-w-5xl w-full">
                     <div className="w-1/3 flex justify-start pl-2">
-                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg">
-                        View My Courses
+                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
+                            View My Courses
                         </button>
                     </div>
                     <div className="w-1/3 h-12 flex flex-col items-center justify-center">
-                            <img
-                                src={getProfilePicUrl()}
-                                alt="Profile Picture"
-                                className="w-28 h-28 object-cover rounded-full mt-20"
-                            />
-                            {/* use poppins font, look at shadcn */}
-                            <h2 className="text-white text-3xl font-semibold mt-10">{firstName} {lastName}</h2>
+                        <img
+                            src={getProfilePicUrl()}
+                            alt="Profile Picture"
+                            className="w-28 h-28 object-cover rounded-full mt-20"
+                        />
+                        {/* use poppins font, look at shadcn */}
+                        <h2 className="text-white text-3xl font-semibold mt-10">{firstName} {lastName}</h2>
                     </div>
                     <div className="w-1/3 flex justify-end pr-2">
-                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg">
-                        View My Ratings
+                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
+                            View My Ratings
                         </button>
                     </div>
                 </div>
@@ -191,19 +195,19 @@ export default function Profile() {
                     <div className="grid grid-cols-2 gap-6">
                         <div>
                             <label className="block text-gray-700">First Name</label>
-                            <div className='p-1 mt-1 bg-gray-500 bg-opacity-20 rounded-md'> {firstName} </div>
+                            <div>{firstName}</div>
                         </div>
                         <div>
                             <label className="block text-gray-700">Last Name</label>
-                            <div className='p-1 mt-1 bg-gray-500 bg-opacity-20 rounded-md'> {lastName} </div>
+                            <div>{lastName}</div>
                         </div>
                         <div>
                             <label className="block text-gray-700">Email</label>
-                            <div className='p-1 mt-1 bg-gray-500 bg-opacity-20 rounded-md'> {email} </div>
+                            <div>{email}</div>
                         </div>
                         <div>
                             <label className="block text-gray-700">Graduation Year</label>
-                            <div className='p-1 mt-1 bg-gray-500 bg-opacity-20 rounded-md'> {graduationYear} </div>
+                            <div>{graduationYear}</div>
                         </div>
                         <div className="col-span-2 mt-6">
                             <button
@@ -259,22 +263,22 @@ export default function Profile() {
                             </select>
                         </div>
                         <div className='col-span-2 flex flex-col items-center'>
-                                    Profile Pic:
-                                    <img
-                                        id="profPic"
-                                        src={getProfilePicUrl()}
-                                        alt="Profile Picture"
-                                        className="w-24 h-24 object-cover rounded-full mt-2"
-                                    />
-                                    <label className="mt-2 block bg-blue-500 text-white py-2 px-4 rounded cursor-pointer">
-                                            Choose File
-                                            <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleFileChange}
-                                            className="hidden"
-                                            />
-                                        </label>
+                            Profile Pic:
+                            <img
+                                id="profPic"
+                                src={getProfilePicUrl()}
+                                alt="Profile Picture"
+                                className="w-24 h-24 object-cover rounded-full mt-2"
+                            />
+                            <label className="mt-2 block bg-blue-500 text-white py-2 px-4 rounded cursor-pointer hover:bg-blue-600 shadow-md">
+                                Choose File
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
+                            </label>
                         </div>
                         <div className="col-span-2 mt-6">
                             <button
