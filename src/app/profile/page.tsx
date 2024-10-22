@@ -42,12 +42,12 @@ export default function Profile() {
                 setLastName(userVal.lastName || '');
                 setEmail(userVal.email || '');
                 setGraduationYear(userVal.graduationYear || '');
-                try {
-                    const revs = await getUserReviews(userVal.id);
-                    setReviews(revs);
-                } catch (err) {
-                    console.error(err);
-                }
+                // try {
+                //     const revs = await getUserReviews(userVal.id);
+                //     setReviews(revs);
+                // } catch (err) {
+                //     console.error(err);
+                // }
                 if (userVal.profilePic) {
                     setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${userVal.profilePic}`);
                 } else {
@@ -169,10 +169,8 @@ export default function Profile() {
                             <img
                                 src={getProfilePicUrl()}
                                 alt="Profile Picture"
-                                className="w-28 h-28 object-cover rounded-full mt-20"
+                                className="w-28 h-28 object-cover rounded-full mt-20 mb-10"
                             />
-                            {/* use poppins font, look at shadcn */}
-                            <h2 className="text-white text-3xl font-semibold mt-10">{firstName} {lastName}</h2>
                     </div>
                     <div className="w-1/3 flex justify-end pr-2">
                         <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg">
