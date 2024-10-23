@@ -16,6 +16,7 @@ export default function Home() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [courseSubjects, setCourseSubjects] = useState<string[]>([]);
+  const [ratingFilter, setRatingFilter] = useState<number | null>(null);
 
   const router = useRouter();
 
@@ -58,6 +59,12 @@ export default function Home() {
         filtered = filtered.filter(course => subjectFilters.includes(course.subject));
       }
 
+      //Apply rating filter
+      if (ratingFilter !== null) {
+        filtered = filtered.filter(course => course.averageRating >= ratingFilter);
+      }
+
+
       // Apply search query filter
       if (searchQuery) {
         const queryWords = searchQuery.toLowerCase().split(' '); // Split search query into words
@@ -74,7 +81,7 @@ export default function Home() {
     };
 
     filterCourses(); // Call the filtering logic whenever filters or search query changes
-  }, [subjectFilters, searchQuery, courses]);
+  }, [subjectFilters, ratingFilter, searchQuery, courses]);
 
   const applyFilter = () => {
     setSubjectFilters(tempSubjectFilters); // Apply selected filters
@@ -149,13 +156,24 @@ export default function Home() {
             </button>
           </div>
         ))}
+        {ratingFilter && (
+          <div className="flex items-center bg-gray-200 px-3 py-1 rounded-full">
+            <span className="mr-2">Rating: {ratingFilter}+</span>
+            <button
+              onClick={() => setRatingFilter(null)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <IoClose size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Filter Modal */}
       {showFilterModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 ">
           <div className="bg-white p-6 rounded-lg shadow-lg w-80 relative">
-            <h2 className="text-2xl font-semibold mb-4">Select Subjects</h2>
+            <h2 className="text-2xl font-semibold mb-4">Select Filters</h2>
 
             {/* Close Button */}
             <button
@@ -178,6 +196,23 @@ export default function Home() {
                   <span>{subject}</span>
                 </label>
               ))}
+            </div>
+
+            {/* Rating Filter */}
+            <div className="mb-4">
+              <label className="block mb-2">Filter by Minimum Rating:</label>
+              <select
+                value={ratingFilter || ''}
+                onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
+                className="p-2 rounded border border-gray-300"
+              >
+                <option value=""> 0+</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+                <option value="4">5</option>
+              </select>
             </div>
 
             {/* Save Button */}
