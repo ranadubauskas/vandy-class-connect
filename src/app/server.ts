@@ -177,7 +177,21 @@ export async function deleteReview(reviewId) {
 }
 
 
-export async function getCourses(subject = '') {
+export async function getAllCourses() {
+    try {
+        // If subject is provided, filter by subject, otherwise get all courses
+        const resultList = await pb.collection('courses').getFullList({
+            sort: '-created', // Sort by latest created courses
+        });
+        return resultList;
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        return [];
+    }
+}
+
+
+export async function getCoursesBySubject(subject = '') {
     try {
         // If subject is provided, filter by subject, otherwise get all courses
         const filter = subject ? `subject="${subject}"` : '';

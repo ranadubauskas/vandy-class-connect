@@ -23,29 +23,45 @@ export default function NavBar() {
 
       {/* Navigation Links */}
       <div className="flex flex-wrap justify-center sm:justify-end space-x-0 sm:space-x-4 space-y-2 sm:space-y-0">
-        {pathname !== '/login' && pathname !== '/register' && (
-          <Link href="/home" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
-            Home
-          </Link>
-        )}
         <Link href="/about" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
           About
         </Link>
 
-        {pathname !== '/login' && pathname !== '/register' && (
+        {/* Conditionally render links based on login status */}
+        {isLoggedIn ? (
           <>
-            <Link href="/savedCourses" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
-              Saved Courses
-            </Link>
-            <Link href="/profile" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
-              Profile
-            </Link>
-            <button
-              className="text-white hover:text-gray-300 text-lg sm:text-2xl"
-              onClick={userVal.logoutUser}  // Directly call logoutUser from context
-            >
-              Log Out
-            </button>
+            {pathname !== '/login' && pathname !== '/register' && (
+              <>
+              <Link href="/" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
+                  Home
+                </Link>
+                <Link href="/savedCourses" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
+                  Saved Courses
+                </Link>
+                <Link href="/profile" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
+                  Profile
+                </Link>
+                <button
+                  className="text-white hover:text-gray-300 text-lg sm:text-2xl"
+                  onClick={userVal.logoutUser}  // Directly call logoutUser from context
+                >
+                  Log Out
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            {pathname !== '/login' && pathname !== '/register' && (
+              <Link href="/login" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
+                Log In
+              </Link>
+            )}
+            {pathname !== '/register' && (
+              <Link href="/register" className="text-white hover:text-gray-300 text-lg sm:text-2xl">
+                Register
+              </Link>
+            )}
           </>
         )}
       </div>

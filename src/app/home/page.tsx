@@ -4,19 +4,18 @@ import { useEffect, useState } from 'react';
 import { IoIosSearch } from "react-icons/io";
 import { IoClose, IoFilterOutline } from "react-icons/io5";
 import { getUserCookies } from '../lib/functions';
-import { getCourses } from '../server';
-
+import { getAllCourses } from '../server';
 
 export default function Home() {
   const [userCookies, setUserCookies] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [subjectFilter, setSubjectFilter] = useState("");
-  const [tempSubjectFilter, setTempSubjectFilter] = useState("");
+  const [subjectFilters, setSubjectFilters] = useState<string[]>([]); // Store multiple filters
+  const [tempSubjectFilters, setTempSubjectFilters] = useState<string[]>([]); // Temporary selection for filters in the modal
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [loading, setLoading] = useState(true); 
-  const [courseSubjects, setCourseSubjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [courseSubjects, setCourseSubjects] = useState<string[]>([]);
 
   const router = useRouter();
 
@@ -37,29 +36,63 @@ export default function Home() {
     fetchCookies();
   }, []);
 
+  // Get all courses 1x on page load
   useEffect(() => {
     const fetchCourses = async () => {
-      setLoading(true); // Set loading to true before fetching courses
-      const fetchedCourses = await getCourses(subjectFilter);
-      setCourses(fetchedCourses);
-      setFilteredCourses(fetchedCourses);
-      const subjects = Array.from(new Set(fetchedCourses.map(course => course.subject)));
+      const courses = await getAllCourses();
+      setCourses(courses);
+      const subjects = Array.from(new Set(courses.map(course => course.subject)));
       setCourseSubjects(subjects);
-      setLoading(false); // Set loading to false once courses are fetched
+      setLoading(false);
     };
     fetchCourses();
-  }, [subjectFilter]);
+  }, []);
 
+  // Apply filters
   useEffect(() => {
-    const filtered = courses.filter((course) =>
-      course.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredCourses(filtered);
-  }, [searchQuery, courses]);
+    const filterCourses = () => {
+      let filtered = courses;
+
+      // Apply subject filters if any are selected
+      if (subjectFilters.length > 0) {
+        filtered = filtered.filter(course => subjectFilters.includes(course.subject));
+      }
+
+      // Apply search query filter
+      if (searchQuery) {
+        const queryWords = searchQuery.toLowerCase().split(' '); // Split search query into words
+        filtered = filtered.filter(course => {
+          // Check if any of the words match either the course code or course name
+          return queryWords.every(word =>
+            course.code.toLowerCase().includes(word) ||
+            course.name.toLowerCase().includes(word)
+          );
+        });
+      }
+
+      setFilteredCourses(filtered); // Set the filtered list
+    };
+
+    filterCourses(); // Call the filtering logic whenever filters or search query changes
+  }, [subjectFilters, searchQuery, courses]);
 
   const applyFilter = () => {
-    setSubjectFilter(tempSubjectFilter); // Apply the temporary filter to the actual filter
+    setSubjectFilters(tempSubjectFilters); // Apply selected filters
     setShowFilterModal(false); // Close modal after saving
+  };
+
+  const toggleTempFilter = (subject: string) => {
+    setTempSubjectFilters((prevFilters) =>
+      prevFilters.includes(subject)
+        ? prevFilters.filter((filter) => filter !== subject) // Remove filter if it's already selected
+        : [...prevFilters, subject] // Add filter if it's not already selected
+    );
+  };
+
+  const removeFilter = (filterToRemove: string) => {
+    setSubjectFilters((prevFilters) =>
+      prevFilters.filter((filter) => filter !== filterToRemove) // Remove the selected filter
+    );
   };
 
   return (
@@ -79,24 +112,15 @@ export default function Home() {
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            const filtered = courses.filter((course) =>
-              course.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setFilteredCourses(filtered);
-          }}
-          className="p-4 w-[40rem] rounded-full border border-gray-300" // Increased width of search bar
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="p-4 w-[40rem] rounded-full border border-gray-300"
           placeholder="Course Name"
         />
 
         {/* Filter Button */}
         <button
           className="ml-4 bg-gray-200 p-3 rounded-full hover:bg-gray-300 transition duration-300"
-          onClick={() => {
-            setTempSubjectFilter(subjectFilter); // Set the temp filter based on current filter
-            setShowFilterModal(true);
-          }}
+          onClick={() => setShowFilterModal(true)}
           aria-label="Open filter"
           title="Filter by Subject"
         >
@@ -108,18 +132,32 @@ export default function Home() {
           className="ml-4 bg-gray-200 px-6 py-3 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-300"
           onClick={() => setSearchQuery(searchQuery)}
         >
-          <IoIosSearch size={24} className="mr-2" /> {/* Icon size and margin */}
-          Search
+          <IoIosSearch size={24} className="mr-2" /> Search
         </button>
+      </div>
+
+      {/* Display selected filters */}
+      <div className="mb-4 flex space-x-2">
+        {subjectFilters.map((filter) => (
+          <div key={filter} className="flex items-center bg-gray-200 px-3 py-1 rounded-full">
+            <span className="mr-2">{filter}</span>
+            <button
+              onClick={() => removeFilter(filter)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <IoClose size={16} />
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* Filter Modal */}
       {showFilterModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 ">
           <div className="bg-white p-6 rounded-lg shadow-lg w-80 relative">
-            <h2 className="text-2xl font-semibold mb-4">Select Subject</h2>
+            <h2 className="text-2xl font-semibold mb-4">Select Subjects</h2>
 
-            {/* Close Button using "X" Icon */}
+            {/* Close Button */}
             <button
               className="absolute top-2 right-2 text-gray-600"
               onClick={() => setShowFilterModal(false)}
@@ -128,25 +166,24 @@ export default function Home() {
               <IoClose size={20} />
             </button>
 
-            <select
-              className="p-4 w-full rounded-full border border-gray-300"
-              value={tempSubjectFilter} // Bind to temporary filter state
-              onChange={(e) => setTempSubjectFilter(e.target.value)} // Update the temp filter value
-            >
-               <option className="text-gray-400" value="">
-                All Subjects
-              </option>
+            {/* Display subjects with checkboxes */}
+            <div className="mb-4">
               {courseSubjects.map((subject) => (
-                <option key={subject} value={subject}>
-                  {subject}
-                </option>
+                <label key={subject} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={tempSubjectFilters.includes(subject)} // Check if it's selected
+                    onChange={() => toggleTempFilter(subject)}
+                  />
+                  <span>{subject}</span>
+                </label>
               ))}
-            </select>
+            </div>
 
             {/* Save Button */}
             <button
               className="mt-4 w-full bg-blue-500 text-white py-2 rounded-full"
-              onClick={applyFilter} // Apply the filter when clicked
+              onClick={applyFilter}
             >
               Save
             </button>
@@ -163,7 +200,7 @@ export default function Home() {
 
       {/* Course List */}
       <div className="space-y-6">
-        {loading ? ( // Display "Loading..." if still fetching courses
+        {loading ? (
           <div className="text-white text-center text-2xl">Loading...</div>
         ) : (
           filteredCourses.map((course) => (
@@ -173,7 +210,7 @@ export default function Home() {
             >
               <div className="flex items-center space-x-4">
                 <div className="text-2xl bg-gray-200 p-4 rounded-lg font-bold">
-                  {course.averageRating.toFixed(1)  || "N/A"}
+                  {course.averageRating.toFixed(1) || "N/A"}
                 </div>
                 <div className="text-2xl">
                   <span className="font-bold">{course.code}</span>: {course.name}

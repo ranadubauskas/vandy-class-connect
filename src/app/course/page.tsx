@@ -25,10 +25,12 @@ export default function CourseDetailPage() {
   const [tutorDetails, setTutorDetails] = useState([]);
   const [showTutors, setShowTutors] = useState(false);
   const [isTutor, setIsTutor] = useState(false);
+  const [popupMessage, setPopupMessage] = useState('');
 
   useEffect(() => {
     if (!id || !currentUserId) return;
     const fetchCourse = async () => {
+      console.log("FETCHING");
       try {
         const fetchedCourse = await pb.collection('courses').getOne(id, {
           $cancel: false,
@@ -69,7 +71,7 @@ export default function CourseDetailPage() {
     };
 
     fetchCourse();
-  }, [id, currentUserId]);
+  }, []);
 
   //Function to copy tutor email to clipboard
   const copyEmail = (email) => {
@@ -84,6 +86,10 @@ export default function CourseDetailPage() {
 
   const addTutor = async () => {
     if (!currentUserId || !course) return;
+    if (isTutor) {
+      setPopupMessage('You have already added yourself as a tutor for this course.');
+      return;
+    }
     try {
       //Update course to include new tutor
       await pb.collection('courses').update(id, {
@@ -100,6 +106,7 @@ export default function CourseDetailPage() {
 
       setIsTutor(true);
       setTutorDetails((prevTutors) => [...(prevTutors || []), curUser]);
+      setPopupMessage('Successfully added as tutor for this course.');
     } catch (error) {
       console.error('Error adding tutor:', error);
     }
@@ -219,8 +226,17 @@ export default function CourseDetailPage() {
             </button>
           </div>
         </div>
-
-
+        {popupMessage && (
+          <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg">
+            <p>{popupMessage}</p>
+            <button
+              className="mt-2 text-sm underline"
+              onClick={() => setPopupMessage('')} // Close the popup
+            >
+              Close
+            </button>
+          </div>
+        )}
         {/* Reviews Section with Average Rating */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
           <div className="flex justify-between items-start mb-4">
@@ -335,7 +351,7 @@ export default function CourseDetailPage() {
           </div>
         </div>
       </div>
-      
+
     </>
   );
 }
