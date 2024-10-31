@@ -2,7 +2,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import PocketBase from 'pocketbase';
 import { useEffect, useState } from 'react';
-import { FaChalkboardTeacher, FaFileDownload, FaUsers } from 'react-icons/fa';
+import { FaChalkboardTeacher, FaFileDownload, FaFlag, FaUsers } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
 import Loading from "../components/Loading";
 import StarRating from '../components/StarRating';
@@ -12,7 +12,6 @@ const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
 pb.autoCancellation(false);
 
 export default function CourseDetailPage() {
-
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -25,10 +24,13 @@ export default function CourseDetailPage() {
   const [tutorDetails, setTutorDetails] = useState([]);
   const [showTutors, setShowTutors] = useState(false);
   const [isTutor, setIsTutor] = useState(false);
+  const [popupMessage, setPopupMessage] = useState('');
 
   useEffect(() => {
+    console.log("FETCHING!");
     if (!id || !currentUserId) return;
     const fetchCourse = async () => {
+      console.log("FETCHING");
       try {
         const fetchedCourse = await pb.collection('courses').getOne(id, {
           $cancel: false,
@@ -61,15 +63,34 @@ export default function CourseDetailPage() {
         //Wait for all user fetch promises to resolve
         const fetchedTutorDetails = await Promise.all(tutorPromises);
         setTutorDetails(fetchedTutorDetails);
+        console.log("FETICHING2")
       } catch (error) {
         console.error('Error fetching course:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchCourse();
   }, [id, currentUserId]);
+
+  const reportReview = async (reviewId) => {
+    try {
+      // Create the data object using the correct relation record IDs
+      const data = {
+        review: reviewId,
+        reporter: currentUserId
+      };
+
+      // Create the review report entry in PocketBase
+      await pb.collection('reviewReports').create(data);
+
+      // Set the popup message
+      setPopupMessage('Review has been reported and will be reviewed further.');
+    } catch (error) {
+      console.error('Error reporting review:', error);
+    }
+  };
+
 
   //Function to copy tutor email to clipboard
   const copyEmail = (email) => {
@@ -84,6 +105,10 @@ export default function CourseDetailPage() {
 
   const addTutor = async () => {
     if (!currentUserId || !course) return;
+    if (isTutor) {
+      setPopupMessage('You have already added yourself as a tutor for this course.');
+      return;
+    }
     try {
       //Update course to include new tutor
       await pb.collection('courses').update(id, {
@@ -100,6 +125,7 @@ export default function CourseDetailPage() {
 
       setIsTutor(true);
       setTutorDetails((prevTutors) => [...(prevTutors || []), curUser]);
+      setPopupMessage('Successfully added as tutor for this course.');
     } catch (error) {
       console.error('Error adding tutor:', error);
     }
@@ -219,53 +245,52 @@ export default function CourseDetailPage() {
             </button>
           </div>
         </div>
-
-
+        {popupMessage && (
+          <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg">
+            <p>{popupMessage}</p>
+            <button
+              className="mt-2 text-sm underline"
+              onClick={() => setPopupMessage('')} // Close the popup
+            >
+              Close
+            </button>
+          </div>
+        )}
         {/* Reviews Section with Average Rating */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
           <div className="flex justify-between items-start mb-4">
             {/* Number of tutors for the course */}
             <div className="flex flex-col items-center space-y-1">
               <div className="flex items-center space-x-2">
-                {/* Number of reviews */}
                 <span className="text-5xl font-bold text-gray-900">
                   {tutorDetails.length}
                 </span>
-                {/* Icon next to number */}
                 <FaChalkboardTeacher className="text-blue-500 text-5xl" />
               </div>
-              {/* Centered text below number and icon */}
               <p className="text-gray-500 text-center leading-tight">
                 Tutors for <br /> this Course
               </p>
             </div>
 
-            {/* Average Rating Section Center-Aligned */}
+            {/* Average Rating Section */}
             <div className="flex flex-col items-center flex-grow">
               <h2 className="text-3xl font-semibold mt-2">Average Rating</h2>
-
-              {/* Average Rating Number */}
               <div className="text-5xl font-bold text-gray-900 mt-1">
-                {averageRating.toFixed(1)} {/* Display average rating */}
+                {averageRating.toFixed(1)}
               </div>
-
-              {/* Render average star rating below the rating */}
               <div className="mt-1">
                 <StarRating rating={averageRating} readOnly={true} />
               </div>
             </div>
 
-            {/* Number of reviews, icon, and centered text */}
+            {/* Number of reviews */}
             <div className="flex flex-col items-center space-y-1">
               <div className="flex items-center space-x-2">
-                {/* Number of reviews */}
                 <span className="text-5xl font-bold text-gray-900">
                   {reviews.length}
                 </span>
-                {/* Icon next to number */}
                 <FaUsers className="text-blue-500 text-5xl" />
               </div>
-              {/* Centered text below number and icon */}
               <p className="text-gray-500 text-center leading-tight">
                 Reviews for <br /> this Course
               </p>
@@ -273,23 +298,24 @@ export default function CourseDetailPage() {
           </div>
 
           <div className="mt-6 mb-2">
-            <h2 className="text-3xl font-semibold">Reviews</h2> {/* Added subtitle */}
+            <h2 className="text-3xl font-semibold">Reviews</h2>
           </div>
 
-          {/* List of Reviews */}
           <div className="space-y-6">
             {reviews.length === 0 ? (
               <p className="text-gray-600 text-lg">No reviews yet.</p>
             ) : (
               reviews.map((review, index) => {
-                const user = review.expand?.user || {}; // Access the expanded user field
-                const profilePicture = user.profilePicture || '/images/user.png'; // Default profile picture if none exists
-                const syllabusUrl = review.syllabus ? pb.files.getUrl(review, review.syllabus) : null; // Get the syllabus URL if it exists
+                const user = review.expand?.user || {};
+                const profilePicture = user.profilePicture || '/images/user.png';
+                const syllabusUrl = review.syllabus
+                  ? pb.files.getUrl(review, review.syllabus)
+                  : null;
 
                 return (
                   <div key={index}>
-                    {/* Review content */}
-                    <div className="flex items-start space-x-4 justify-between">
+                    <div className="flex items-start justify-between">
+                      {/* Left Section: User Info and Review */}
                       <div className="flex items-start space-x-4">
                         <img
                           src={profilePicture}
@@ -304,29 +330,36 @@ export default function CourseDetailPage() {
                                 : 'Anonymous'}
                             </h3>
                           </div>
-                          {/* Star Rating for individual review */}
                           <StarRating rating={review.rating} readOnly={true} />
                           <p className="text-gray-600">{review.comment}</p>
                         </div>
                       </div>
 
-                      {/* Syllabus Download Button */}
-                      {syllabusUrl && (
-                        <div className="flex flex-col items-center space-y-2">
-                          <span className="text-gray-700 font-bold">Download Syllabus:</span>
+                      {/* Right Section: Buttons */}
+                      <div className="flex items-center space-x-4">
+                        {/* Syllabus Download Button */}
+                        {syllabusUrl && (
                           <button
-                            className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300 flex items-center justify-center"
+                            className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300 flex items-center"
                             onClick={() => window.open(syllabusUrl, '_blank')}
                           >
-                            <FaFileDownload />
+                            <FaFileDownload className="mr-2" /> Download Syllabus
                           </button>
-                        </div>
-                      )}
+                        )}
+
+                        {/* Report Review Button */}
+                        <button
+                          onClick={() => reportReview(review.id)}
+                          className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
+                        >
+                          <FaFlag className="mr-2 hover:text-red-700 transition duration-300" /> Report
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Divider line */}
+                    {/* Divider Line */}
                     {index < reviews.length - 1 && (
-                      <hr className="my-6 border-t border-gray-300" /> // Divider between reviews
+                      <hr className="my-6 border-t border-gray-300" />
                     )}
                   </div>
                 );
@@ -335,7 +368,6 @@ export default function CourseDetailPage() {
           </div>
         </div>
       </div>
-      
     </>
   );
 }

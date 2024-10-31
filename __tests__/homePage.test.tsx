@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import Home from "../src/app/home/page";
 import { AuthContext } from "../src/app/lib/contexts";
 import { getUserCookies } from '../src/app/lib/functions';
-import { getCourses } from '../src/app/server';
+import { getAllCourses } from '../src/app/server';
 
 // Mock dependencies
 jest.mock('next/navigation', () => ({
@@ -16,7 +16,22 @@ jest.mock('../src/app/lib/functions', () => ({
 }));
 
 jest.mock('../src/app/server', () => ({
-    getCourses: jest.fn(),
+    getAllCourses: jest.fn().mockResolvedValue([
+        {
+            id: "1",
+            name: "Program Design and Data Structures",
+            code: "CS 2201",
+            subject: "Computer Science",
+            averageRating: 4.5,
+        },
+        {
+            id: "2",
+            name: "Methods of Linear Algebra",
+            code: "MATH 2410",
+            subject: "Mathematics",
+            averageRating: 4.0,
+        },
+    ]),
 }));
 
 describe("Home page", () => {
@@ -36,8 +51,8 @@ describe("Home page", () => {
             lastName: "Smith",
         });
 
-        // Mock getCourses
-        (getCourses as jest.Mock).mockResolvedValue([
+        // Mock getAllCourses
+        (getAllCourses as jest.Mock).mockResolvedValue([
             {
                 id: "1",
                 name: "Program Design and Data Structures",
@@ -82,7 +97,7 @@ describe("Home page", () => {
                 </AuthContext.Provider>
             );
         });
-        await waitFor(() => expect(getCourses).toHaveBeenCalled());
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
         // Check if courses are displayed
         expect(screen.getByText("CS 2201")).toBeInTheDocument();
@@ -90,12 +105,14 @@ describe("Home page", () => {
     });
 
     it("should filter courses based on search query", async () => {
-        render(
-            <AuthContext.Provider value={null}>
-                <Home />
-            </AuthContext.Provider>
-        );
-        await waitFor(() => expect(getCourses).toHaveBeenCalled());
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={null}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
         await act(async () => {
             // Simulate user typing in the search bar
@@ -104,9 +121,7 @@ describe("Home page", () => {
             });
         });
         await waitFor(() => {
-            expect(
-                screen.queryByText("CS 2201")
-            ).not.toBeInTheDocument();
+            expect(screen.queryByText("CS 2201")).not.toBeInTheDocument();
         });
 
         // Check that only the matching course is displayed
@@ -114,21 +129,26 @@ describe("Home page", () => {
     });
 
     it("should open and close the filter modal", async () => {
-        render(
-            <AuthContext.Provider value={null}>
-                <Home />
-            </AuthContext.Provider>
-        );
-        await waitFor(() => expect(getCourses).toHaveBeenCalled());
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={null}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
         // Open filter modal
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /filter/i }));
         });
-        expect(screen.getByText("Select Subject")).toBeInTheDocument();
+        expect(screen.getByText("Select Filters")).toBeInTheDocument();
+
+        // Close filter modal
         await act(async () => {
             fireEvent.click(screen.getByRole("button", { name: /close filter/i }));
         });
-        expect(screen.queryByText("Select Subject")).not.toBeInTheDocument();
+        expect(screen.queryByText("Select Filters")).not.toBeInTheDocument();
     });
 
     it("should navigate to course page when 'View Course' is clicked", async () => {
@@ -140,7 +160,7 @@ describe("Home page", () => {
             );
         });
 
-        await waitFor(() => expect(getCourses).toHaveBeenCalled());
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
         // Clicking on 'View Course' button for the first course
         await act(async () => {

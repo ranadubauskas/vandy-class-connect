@@ -1,11 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import Login from "../src/app/login/page";
 import { signIn } from '../src/app/server';
+import { AuthProvider } from "../src/app/lib/contexts";
 
 // Mock the 'signIn' function globally before all tests
 jest.mock('../src/app/server', () => ({
   signIn: jest.fn(),
 }));
+
+const renderWithAuthProvider = (ui: React.ReactElement, options = {}) => {
+  return render(<AuthProvider>{ui}</AuthProvider>, options);
+};
 
 describe("Login page", () => {
   beforeEach(() => {
@@ -29,14 +34,14 @@ describe("Login page", () => {
   });
 
   it("should render the login form", () => {
-    render(<Login />);
+    renderWithAuthProvider(<Login />);
     expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
   });
 
   it("should show error message on failed login", async () => {
-    render(<Login />);
+    renderWithAuthProvider(<Login />);
         fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "invalidemail@example.com" } });
     fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "invalidpassword" } });
     
