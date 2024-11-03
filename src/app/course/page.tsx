@@ -27,10 +27,8 @@ export default function CourseDetailPage() {
   const [popupMessage, setPopupMessage] = useState('');
 
   useEffect(() => {
-    console.log("FETCHING!");
     if (!id || !currentUserId) return;
     const fetchCourse = async () => {
-      console.log("FETCHING");
       try {
         const fetchedCourse = await pb.collection('courses').getOne(id, {
           $cancel: false,
