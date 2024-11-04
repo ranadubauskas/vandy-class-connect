@@ -9,10 +9,9 @@ import Loading from "../components/Loading";
 import StarRating from '../components/StarRating';
 import { useAuth } from "../lib/contexts";
 
-import "./style.css";
-
 const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
 pb.autoCancellation(false);
+
 
 export default function CourseDetailPage() {
 
