@@ -1,0 +1,21 @@
+tooltip { 
+    position: relative; /* Required for the tooltip to be positioned relative to the button */ 
+  } 
+   
+  .tooltip::after { 
+    content: "This is a tooltip text"; /* The text to show in the tooltip */ 
+    display: none; /* Hide the tooltip by default */ 
+    position: absolute; /* Position the tooltip relative to the button */ 
+    bottom: 100%; /* Position the tooltip above the button */ 
+    left: 50%; /* Center the tooltip horizontally */ 
+    transform: translateX(-50%); /* Center the tooltip horizontally */ 
+    background-color: #000; /* Tooltip background color */ 
+    color: #fff; /* Tooltip text color */ 
+    padding: 5px; /* Add some padding to the tooltip */ 
+    border-radius: 5px; /* Add rounded corners to the tooltip */ 
+    white-space: nowrap; /* Prevent line breaks in tooltip text */ 
+  } 
+   
+  .tooltip:hover::after { 
+    display: block; /* Show the tooltip when hovering over the button */ 
+  } 

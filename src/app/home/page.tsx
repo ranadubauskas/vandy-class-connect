@@ -9,8 +9,8 @@ import { getAllCourses } from '../server';
 export default function Home() {
   const [userCookies, setUserCookies] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [subjectFilters, setSubjectFilters] = useState<string[]>([]); // Store multiple filters
-  const [tempSubjectFilters, setTempSubjectFilters] = useState<string[]>([]); // Temporary selection for filters in the modal
+  const [subjectFilters, setSubjectFilters] = useState<string[]>([]);
+  const [tempSubjectFilters, setTempSubjectFilters] = useState<string[]>([]);
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -24,11 +24,7 @@ export default function Home() {
     const fetchCookies = async () => {
       try {
         const cookies = await getUserCookies();
-        if (cookies) {
-          setUserCookies(cookies);
-        } else {
-          console.log("No user cookies found");
-        }
+        setUserCookies(cookies || null);
       } catch (error) {
         console.error('Error fetching cookies:', error);
       }
@@ -37,7 +33,10 @@ export default function Home() {
     fetchCookies();
   }, []);
 
-  // Get all courses 1x on page load
+  useEffect(() => {
+    setTempSubjectFilters(subjectFilters);
+  }, [subjectFilters]);
+
   useEffect(() => {
     const fetchCourses = async () => {
       const courses = await getAllCourses();
@@ -49,104 +48,94 @@ export default function Home() {
     fetchCourses();
   }, []);
 
-  // Apply filters
   useEffect(() => {
     const filterCourses = () => {
       let filtered = courses;
 
-      // Apply subject filters if any are selected
       if (subjectFilters.length > 0) {
         filtered = filtered.filter(course => subjectFilters.includes(course.subject));
       }
-
-      //Apply rating filter
       if (ratingFilter !== null) {
         filtered = filtered.filter(course => course.averageRating >= ratingFilter);
       }
-
-
-      // Apply search query filter
       if (searchQuery) {
-        const queryWords = searchQuery.toLowerCase().split(' '); // Split search query into words
-        filtered = filtered.filter(course => {
-          // Check if any of the words match either the course code or course name
-          return queryWords.every(word =>
+        const queryWords = searchQuery.toLowerCase().split(' ');
+        filtered = filtered.filter(course => 
+          queryWords.every(word =>
             course.code.toLowerCase().includes(word) ||
             course.name.toLowerCase().includes(word)
-          );
-        });
+          )
+        );
       }
 
-      setFilteredCourses(filtered); // Set the filtered list
+      setFilteredCourses(filtered);
     };
 
-    filterCourses(); // Call the filtering logic whenever filters or search query changes
+    filterCourses();
   }, [subjectFilters, ratingFilter, searchQuery, courses]);
 
   const applyFilter = () => {
-    setSubjectFilters(tempSubjectFilters); // Apply selected filters
-    setShowFilterModal(false); // Close modal after saving
+    setSubjectFilters(tempSubjectFilters);
+    setShowFilterModal(false);
   };
 
   const toggleTempFilter = (subject: string) => {
     setTempSubjectFilters((prevFilters) =>
       prevFilters.includes(subject)
-        ? prevFilters.filter((filter) => filter !== subject) // Remove filter if it's already selected
-        : [...prevFilters, subject] // Add filter if it's not already selected
+        ? prevFilters.filter((filter) => filter !== subject)
+        : [...prevFilters, subject]
     );
   };
 
   const removeFilter = (filterToRemove: string) => {
     setSubjectFilters((prevFilters) =>
-      prevFilters.filter((filter) => filter !== filterToRemove) // Remove the selected filter
+      prevFilters.filter((filter) => filter !== filterToRemove)
     );
   };
 
   return (
-    <div className="min-h-screen p-6">
-      {/* User Info and Logout Button */}
+    <div className="min-h-screen p-4 sm:p-6">
+      {/* User Info */}
       <div className="flex items-center justify-start mt-2">
         {userCookies && (
-          <h1 className="mt-0 mb- text-2xl text-white">
+          <h1 className="text-xl sm:text-2xl text-white">
             Welcome, {userCookies.firstName} {userCookies.lastName}!
           </h1>
         )}
       </div>
-      <br></br>
 
-      {/* Search Bar and Filter */}
-      <div className="flex justify-center items-center mb-8">
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 mb-8">
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="p-4 w-[40rem] rounded-full border border-gray-300"
-          placeholder="Course Name"
+          className="p-3 w-full sm:w-80 lg:w-[40rem] rounded-full border border-gray-300"
+          placeholder="Search for a course"
         />
-
-        {/* Filter Button */}
         <button
-          className="ml-4 bg-gray-200 p-3 rounded-full hover:bg-gray-300 transition duration-300"
+          className="bg-gray-200 p-3 rounded-full hover:bg-gray-300 transition duration-300"
           onClick={() => setShowFilterModal(true)}
           aria-label="Open filter"
           title="Filter by Subject"
         >
           <IoFilterOutline size={20} />
         </button>
-
-        {/* Search Button */}
         <button
-          className="ml-4 bg-gray-200 px-6 py-3 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-300"
+          className="bg-gray-200 px-6 py-3 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-300 w-full sm:w-auto"
           onClick={() => setSearchQuery(searchQuery)}
         >
           <IoIosSearch size={24} className="mr-2" /> Search
         </button>
       </div>
 
-      {/* Display selected filters */}
-      <div className="mb-4 flex space-x-2">
+           {/* Display Selected Filters */}
+           <div className="mb-4 flex flex-wrap gap-2">
         {subjectFilters.map((filter) => (
-          <div key={filter} className="flex items-center bg-gray-200 px-3 py-1 rounded-full">
+          <div
+            key={filter}
+            className="flex items-center bg-gray-200 px-4 py-2 rounded-full text-sm sm:text-base lg:text-lg"
+          >
             <span className="mr-2">{filter}</span>
             <button
               onClick={() => removeFilter(filter)}
@@ -157,7 +146,7 @@ export default function Home() {
           </div>
         ))}
         {ratingFilter && (
-          <div className="flex items-center bg-gray-200 px-3 py-1 rounded-full">
+          <div className="flex items-center bg-gray-200 px-4 py-2 rounded-full text-sm sm:text-base lg:text-lg">
             <span className="mr-2">Rating: {ratingFilter}+</span>
             <button
               onClick={() => setRatingFilter(null)}
@@ -171,11 +160,9 @@ export default function Home() {
 
       {/* Filter Modal */}
       {showFilterModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 ">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80 relative">
-            <h2 className="text-2xl font-semibold mb-4">Select Filters</h2>
-
-            {/* Close Button */}
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-72 sm:w-80 relative">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4">Select Filters</h2>
             <button
               className="absolute top-2 right-2 text-gray-600"
               onClick={() => setShowFilterModal(false)}
@@ -184,13 +171,14 @@ export default function Home() {
               <IoClose size={20} />
             </button>
 
-            {/* Display subjects with checkboxes */}
+            {/* Subject Filters */}
             <div className="mb-4">
+              <label className="flex items-center space-x-2 font-bold">Filter by Subject:</label>
               {courseSubjects.map((subject) => (
                 <label key={subject} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={tempSubjectFilters.includes(subject)} // Check if it's selected
+                    checked={tempSubjectFilters.includes(subject)}
                     onChange={() => toggleTempFilter(subject)}
                   />
                   <span>{subject}</span>
@@ -200,22 +188,21 @@ export default function Home() {
 
             {/* Rating Filter */}
             <div className="mb-4">
-              <label className="block mb-2">Filter by Minimum Rating:</label>
+              <label className="block mb-2 font-bold">Minimum Rating:</label>
               <select
                 value={ratingFilter || ''}
                 onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
-                className="p-2 rounded border border-gray-300"
+                className="p-2 rounded border border-gray-300 w-full"
               >
-                <option value=""> 0+</option>
+                <option value="">All Ratings</option>
                 <option value="1">1+</option>
                 <option value="2">2+</option>
                 <option value="3">3+</option>
                 <option value="4">4+</option>
-                <option value="4">5</option>
+                <option value="5">5</option>
               </select>
             </div>
 
-            {/* Save Button */}
             <button
               className="mt-4 w-full bg-blue-500 text-white py-2 rounded-full"
               onClick={applyFilter}
@@ -227,39 +214,39 @@ export default function Home() {
       )}
 
       {/* Search Results */}
-      <div className="text-white text-center mb-6 text-2xl">
+      <div className="text-white text-center mb-6 text-lg sm:text-2xl">
         {searchQuery
           ? `Showing ${filteredCourses.length} results for "${searchQuery}"`
           : `Showing ${filteredCourses.length} courses`}
       </div>
 
       {/* Course List */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {loading ? (
-          <div className="text-white text-center text-2xl">Loading...</div>
+          <div className="text-white text-center text-lg sm:text-2xl">Loading...</div>
         ) : (
           filteredCourses.map((course) => (
             <div
               key={course.id}
-              className="flex items-center justify-between bg-white text-black p-6 rounded-lg shadow-lg"
+              className="flex flex-col sm:flex-row items-center justify-between bg-white text-black p-4 sm:p-6 rounded-lg shadow-lg"
             >
               <div className="flex items-center space-x-4">
-                <div className="text-2xl bg-gray-200 p-4 rounded-lg font-bold">
+                <div className="text-lg sm:text-2xl bg-gray-200 p-3 rounded-lg font-bold">
                   {course.averageRating.toFixed(1) || "N/A"}
                 </div>
-                <div className="text-2xl">
+                <div className="text-lg sm:text-2xl">
                   <span className="font-bold">{course.code}</span>: {course.name}
                 </div>
               </div>
               <button
-                className="bg-gray-200 px-6 py-3 rounded-lg"
+                className="mt-4 sm:mt-0 bg-gray-200 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-300 transition duration-300"
                 onClick={() => router.push(`/course?id=${course.id}`)}
               >
                 View Course
               </button>
             </div>
           ))
-        )}
+        )} 
       </div>
     </div>
   );
