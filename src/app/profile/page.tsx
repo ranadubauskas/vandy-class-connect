@@ -2,6 +2,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../lib/contexts";
 import { deleteReview, editReview, editUser, getUserReviews } from '../server';
+import { useRouter } from 'next/navigation';
 import './style.css';
 
 
@@ -17,6 +18,7 @@ export default function Profile() {
     const { getUser, logoutUser } = userVal || {};
 
     // State to control edit mode and the user data
+    const router = useRouter();
     const [isEditing, setIsEditing] = useState(false);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -165,7 +167,9 @@ export default function Profile() {
             <div className="flex items-center justify-center h-[30vh]">
                 <div className="flex mb-4 max-w-5xl w-full">
                     <div className="w-1/3 flex justify-start pl-2">
-                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
+                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out"
+                            onClick={() => router.push('/savedCourses')}
+                        >
                             View My Courses
                         </button>
                     </div>

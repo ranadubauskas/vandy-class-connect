@@ -3,11 +3,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { IoIosSearch } from "react-icons/io";
 import { IoClose, IoFilterOutline } from "react-icons/io5";
+import { FaRegBookmark, FaBookmark } from 'react-icons/fa';
 import { getUserCookies } from '../lib/functions';
 import { getAllCourses } from '../server';
+import PocketBase from 'pocketbase';
 
 export default function Home() {
   const [userCookies, setUserCookies] = useState(null);
+  const [savedCourses, setSavedCourses] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [subjectFilters, setSubjectFilters] = useState<string[]>([]); // Store multiple filters
   const [tempSubjectFilters, setTempSubjectFilters] = useState<string[]>([]); // Temporary selection for filters in the modal
@@ -20,12 +23,16 @@ export default function Home() {
 
   const router = useRouter();
 
+  const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
+  pb.autoCancellation(false);
+
   useEffect(() => {
     const fetchCookies = async () => {
       try {
         const cookies = await getUserCookies();
         if (cookies) {
           setUserCookies(cookies);
+          setSavedCourses(cookies.savedCourses);
         } else {
           console.log("No user cookies found");
         }
@@ -93,6 +100,40 @@ export default function Home() {
       prevFilters.includes(subject)
         ? prevFilters.filter((filter) => filter !== subject) // Remove filter if it's already selected
         : [...prevFilters, subject] // Add filter if it's not already selected
+    );
+  };
+
+  const updateSaved = async (userId, courseId, isSaved) => {
+      try {
+        const userRecord = await pb.collection('users').getOne(userId);
+
+        let updatedSavedCourses;
+
+        if(isSaved) { //Remove course from savedCourses
+          updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
+        } else { //Add course to savedCourses
+          updatedSavedCourses = [...userRecord.savedCourses, courseId];
+        }
+
+        //Update user record in database
+        await pb.collection('users').update(userId, {
+          savedCourses: updatedSavedCourses,
+        });
+        console.log(updatedSavedCourses);
+
+        setSavedCourses(updatedSavedCourses);
+      } catch (error) {
+        console.error("Error saving course:", error);
+      }
+  };
+  const toggleSaveCourse = (courseId) => {
+    const isSaved = savedCourses.includes(courseId);
+
+    updateSaved(userCookies.id, courseId, isSaved);
+    setSavedCourses((prevSavedCourses) =>
+      isSaved
+        ? prevSavedCourses.filter(id => id !== courseId)
+        : [...prevSavedCourses, courseId]
     );
   };
 
@@ -238,7 +279,9 @@ export default function Home() {
         {loading ? (
           <div className="text-white text-center text-2xl">Loading...</div>
         ) : (
-          filteredCourses.map((course) => (
+          filteredCourses.map((course) => {
+            const isSaved = savedCourses.includes(course.id);
+            return (
             <div
               key={course.id}
               className="flex items-center justify-between bg-white text-black p-6 rounded-lg shadow-lg"
@@ -257,8 +300,15 @@ export default function Home() {
               >
                 View Course
               </button>
+              <div
+                className="text-xl cursor-pointer"
+                onClick={() => toggleSaveCourse(course.id)}
+                aria-label={isSaved ? "Remove from saved courses" : "Add to saved courses"}
+                >
+                  {isSaved ? <FaBookmark /> : <FaRegBookmark />}
+              </div>
             </div>
-          ))
+          )})
         )}
       </div>
     </div>
