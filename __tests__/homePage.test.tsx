@@ -1,3 +1,5 @@
+// __tests__/homePage.test.tsx
+
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useRouter } from 'next/navigation';
 import Home from "../src/app/home/page";
@@ -115,8 +117,8 @@ describe("Home page", () => {
         await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
         await act(async () => {
-            // Simulate user typing in the search bar
-            fireEvent.change(screen.getByPlaceholderText("Course Name"), {
+            // Updated placeholder text to match the component
+            fireEvent.change(screen.getByPlaceholderText("Search for a course"), {
                 target: { value: "Linear" },
             });
         });
@@ -140,7 +142,7 @@ describe("Home page", () => {
 
         // Open filter modal
         await act(async () => {
-            fireEvent.click(screen.getByRole("button", { name: /filter/i }));
+            fireEvent.click(screen.getByRole("button", { name: /open filter/i }));
         });
         expect(screen.getByText("Select Filters")).toBeInTheDocument();
 
