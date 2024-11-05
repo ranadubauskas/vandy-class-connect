@@ -99,6 +99,18 @@ export default function AddReviewPage() {
                 await pb.collection('courses').update(courseId, formData);
             }
 
+            // Step 4: Add the review to a user profile
+            const fetchedUserReviews = await pb.collection('users').getOne(userId, {
+                expand: 'reviews'
+            });
+
+            const userReviews = [...(fetchedUserReviews.reviews || []), newReview.id];
+
+            await pb.collection('users').update(userId, {
+                reviews: userReviews
+            })
+            console.log(userReviews);
+
             // Redirect back to the course detail page
             router.push(`/course?id=${courseId}`);
         } catch (error) {

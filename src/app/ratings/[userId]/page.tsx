@@ -1,0 +1,95 @@
+'use client';
+import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from "../../lib/contexts";
+import { deleteReview, editReview, getUserReviews } from '../../server';
+import RatingCard from './ratingCard';
+
+export default function Ratings() {
+    const router = useRouter();
+    const params = useParams();
+    const userVal = useContext(AuthContext);
+
+    const { userId } = params;
+
+    const [reviews, setReviews] = useState([]);
+    const [isEditingReview, setIsEditingReview] = useState<string | null>(null);
+    const [reviewEditData, setReviewEditData] = useState<{ course: string, rating: number, comment: string }>({
+        course: '',
+        rating: 0,
+        comment: ''
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (!userId) return; // Wait until userVal is available
+
+        // Fetch user reviews asynchronously
+        const fetchData = async () => {
+            try {
+                const revs = await getUserReviews(userId as string);
+                setReviews(revs);
+                setLoading(false);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchData();
+    }, [userId]);
+
+    const handleEditReview = (review) => {
+        setIsEditingReview(review.id);
+        setReviewEditData({
+            course: review.course,
+            rating: review.rating,
+            comment: review.comment
+        });
+    };
+
+    const handleSaveReview = async (reviewId: string) => {
+        try {
+            const updatedReview = await editReview(reviewId, reviewEditData);
+            // Refresh the reviews list after updating
+            const updatedReviews = reviews.map((rev) => (rev.id === updatedReview.id ? updatedReview : rev));
+            setReviews(updatedReviews);
+            setIsEditingReview(null);
+        } catch (error) {
+            console.error("Error saving review:", error);
+            setError("Failed to update review.");
+        }
+    };
+
+    const handleDeleteReview = async (reviewId: string) => {
+        try {
+            await deleteReview(reviewId);
+            const updatedReviews = reviews.filter((review) => review.id !== reviewId);
+            setReviews(updatedReviews);
+        } catch (error) {
+            console.error("Error deleting review:", error);
+            setError("Failed to delete review.");
+        }
+    };
+
+    return (
+        <>
+            <div className="min-h-screen p-10">
+                {loading ? (<div className="text-white text-center text-2xl">Loading...</div>) 
+                : (
+                    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10'>
+                        {reviews.length > 0 ? (
+                            reviews.map((rev) => (
+                                <RatingCard key={rev.id} rating={rev} />
+                            ))
+                        ) : (
+                            <p className="text-center col-span-full">
+                                No reviews available.
+                            </p>
+                        )}
+                    </div>
+                    )}
+            </div>
+        </>
+    );
+}

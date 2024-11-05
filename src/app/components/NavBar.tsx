@@ -35,7 +35,7 @@ export default function NavBar() {
                 <Link href="/savedCourses" className="text-white hover:text-gray-300 text-sm sm:text-lg">
                   Saved Courses
                 </Link>
-                <Link href="/profile" className="text-white hover:text-gray-300 text-sm sm:text-lg">
+                <Link href= {`/profile/${userVal.id}`}className="text-white hover:text-gray-300 text-sm sm:text-lg">
                   Profile
                 </Link>
                 <button
