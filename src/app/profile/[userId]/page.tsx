@@ -220,7 +220,8 @@ export default function Profile() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="border border-gray-300 rounded p-2 w-full mt-1"
+                                readOnly
+                                className="border border-gray-300 rounded p-2 w-full mt-1 bg-gray-100 cursor-not-allowed"
                             />
                         </div>
                         <div>

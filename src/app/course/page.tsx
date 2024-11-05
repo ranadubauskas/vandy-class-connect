@@ -228,6 +228,8 @@ export default function CourseDetailPage() {
                         key={index}
                         className="flex flex-col sm:flex-row items-center justify-between mb-4"
                       >
+                        <Link href={`/profile/${tutor.id}`} className="transform hover:scale-110 transition-transform duration-200 hover:text-blue-700 hover:underline">
+
                         <div className="flex items-center">
                           <img
                             src={tutor.profilePicture || '/images/user.png'}
@@ -241,7 +243,9 @@ export default function CourseDetailPage() {
                                 : 'Anonymous'}
                             </span>
                           </div>
+                          
                         </div>
+                        </Link>
                         <button
                           onClick={() => copyEmail(tutor.email)}
                           className="mt-2 sm:mt-0 text-blue-500 hover:text-blue-900 transition duration-300"
@@ -323,17 +327,20 @@ export default function CourseDetailPage() {
                     <div className="flex flex-col md:flex-row items-start justify-between">
                       {/* Left Section: User Info and Review */}
                       <div className="flex items-start space-x-4">
-                      <Link href={`/profile/${user.id}`} className="w-12 h-12 rounded-full object-cover">
+                      <Link href={`/profile/${user.id}`} className="w-12 h-12 rounded-full object-cover transform hover:scale-110 transition-transform duration-200">
                         <img src={profilePicture} alt="User Profile" className="w-16 h-12" />
                       </Link>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <h3 className="font-semibold">
-                              {user.firstName && user.lastName
-                                ? `${user.firstName} ${user.lastName}`
-                                : 'Anonymous'}
-                            </h3>
+                            <Link href={`/profile/${user.id}`}>
+                              <h3 className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
+                                {user.firstName && user.lastName
+                                  ? `${user.firstName} ${user.lastName}`
+                                  : 'Anonymous'}
+                              </h3>
+                            </Link>
                           </div>
+                          
                           <StarRating rating={review.rating} readOnly={true} />
                           <p className="text-gray-600">{review.comment}</p>
                         </div>

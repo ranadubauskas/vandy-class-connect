@@ -4,6 +4,7 @@ import { useEffect, useState, useContext } from "react";
 import { getUserByID, editReview, deleteReview } from "../../server";
 import StarRating from "../../components/StarRating";
 import { AuthContext } from "../../lib/contexts";
+import Link from "next/link";
 
 export default function RatingCard({ rating, onDelete }) {
     const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
@@ -15,6 +16,7 @@ export default function RatingCard({ rating, onDelete }) {
     const[user, setUser] = useState(null);
     const[isEditing, setEditing] = useState(false);
     const[comment, setComment] = useState(rating.comment);
+    const [starRating, setStarRating] = useState(rating.rating);
 
     useEffect(() => {
         const fetchReview = async () => {
@@ -36,8 +38,9 @@ export default function RatingCard({ rating, onDelete }) {
 
         editReview(rating.id, {
             comment: comment,
+            rating: starRating,
         })
-        setComment(comment)
+        setComment(comment);
     }
 
     const handleDelete = async () => {
@@ -49,7 +52,7 @@ export default function RatingCard({ rating, onDelete }) {
     return (
         <div className="relative min-h-64 min-w-64 bg-white rounded-lg shadow-md p-6 my-4">
             <div className='flex justify-center items-center'>
-                <StarRating rating={rating.rating} readOnly={true} />
+                <StarRating rating={starRating} readOnly={!isEditing} size={36} onRatingChange={(newRating) => {setStarRating(newRating)}}/>
             </div>
 
             <div className='flex justify-center items-center text-center'>
@@ -97,15 +100,19 @@ export default function RatingCard({ rating, onDelete }) {
                 </button>) : (<></>)}
 
                 <div className="flex items-center justify-center">
+                <Link href={`/profile/${user?.id}`} className="w-12 h-12 rounded-full object-cover transform hover:scale-110 transition-transform duration-200">
                     <img
                         src={user ? `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${user.id}/${user.profilePic}` : '/images/user.png'}
                         alt="User Profile"
                         className="w-12 h-12 rounded-full object-cover"
                     />
+                </Link>
                 </div>
 
                 <div className="flex items-center justify-center">
-                    <div className="text-lg font-semibold">{user ? user.firstName + " " + user.lastName : "Loading..."}</div>
+                    <Link href={`/profile/${user?.id}`} className="transform hover:text-blue-700 hover:scale-110 transition-transform duration-200 hover:underline">
+                        <div className="text-lg font-semibold">{user ? user.firstName + " " + user.lastName : "Loading..."}</div>
+                    </Link>
                 </div>
 
                 <p className="text-gray-700 break-words whitespace-normal h-24 overflow-y-auto">{comment}</p>
