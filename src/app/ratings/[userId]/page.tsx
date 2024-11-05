@@ -39,15 +39,6 @@ export default function Ratings() {
         fetchData();
     }, [userId]);
 
-    const handleEditReview = (review) => {
-        setIsEditingReview(review.id);
-        setReviewEditData({
-            course: review.course,
-            rating: review.rating,
-            comment: review.comment
-        });
-    };
-
     const handleSaveReview = async (reviewId: string) => {
         try {
             const updatedReview = await editReview(reviewId, reviewEditData);
@@ -61,15 +52,8 @@ export default function Ratings() {
         }
     };
 
-    const handleDeleteReview = async (reviewId: string) => {
-        try {
-            await deleteReview(reviewId);
-            const updatedReviews = reviews.filter((review) => review.id !== reviewId);
-            setReviews(updatedReviews);
-        } catch (error) {
-            console.error("Error deleting review:", error);
-            setError("Failed to delete review.");
-        }
+    const handleDeleteReview = (reviewId: string) => {
+        setReviews(reviews.filter((review) => review.id !== reviewId));
     };
 
     return (
@@ -80,7 +64,7 @@ export default function Ratings() {
                     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10'>
                         {reviews.length > 0 ? (
                             reviews.map((rev) => (
-                                <RatingCard key={rev.id} rating={rev} />
+                                <RatingCard key={rev.id} rating={rev} onDelete={() => {handleDeleteReview(rev.id)}}/>
                             ))
                         ) : (
                             <p className="text-center col-span-full">
