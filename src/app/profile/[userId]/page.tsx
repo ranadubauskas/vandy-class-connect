@@ -155,7 +155,7 @@ export default function Profile() {
                     </div>
                     <div className="w-1/3 flex justify-end pr-2">
                         <button onClick={() => handleViewRatings()} className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
-                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Ratings
+                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Reviews
                         </button>
                     </div>
                 </div>

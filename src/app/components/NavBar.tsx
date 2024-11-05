@@ -13,7 +13,7 @@ export default function NavBar() {
     <header className="flex items-center justify-between mb-4 p-4 sm:p-0 space-x-2 sm:space-x-4">
       {/* Logo and Title - Reduced size on smaller screens */}
       <Link href="/home" className="flex items-center space-x-2 sm:space-x-4">
-        <img src="images/v-logo.png" alt="Logo" className="w-8 h-8 sm:w-12 sm:h-12" />
+        <img src="/images/v-logo.png" alt="Logo" className="w-8 h-8 sm:w-12 sm:h-12" />
         <div className="text-lg sm:text-3xl font-bold text-white truncate">
           VandyClassConnect
         </div>
