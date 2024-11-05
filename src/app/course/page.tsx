@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PocketBase from 'pocketbase';
 import { useEffect, useState } from 'react';
@@ -317,11 +318,9 @@ export default function CourseDetailPage() {
                     <div className="flex items-start justify-between">
                       {/* Left Section: User Info and Review */}
                       <div className="flex items-start space-x-4">
-                        <img
-                          src={profilePicture}
-                          alt="User Profile"
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
+                      <Link href={`/profile/${user.id}`} className="w-12 h-12 rounded-full object-cover">
+                        <img src={profilePicture} alt="User Profile" className="w-16 h-12" />
+                      </Link>
                         <div>
                           <div className="flex items-center space-x-2">
                             <h3 className="font-semibold">

@@ -11,7 +11,7 @@ const pb = new PocketBase(`${NEXT_PUBLIC_POCKETBASE_URL}`);
 export async function getUserReviews(userID: string){
     try{
         const user = await pb.collection('users').getOne(userID, {
-            expand: "reviews",
+            expand: "reviews.course",
         });
         const expandedReviews = user.expand?.reviews || [];
         return expandedReviews;

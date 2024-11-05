@@ -1,29 +1,25 @@
 'use client';
 
 import { useEffect, useState, useContext } from "react";
-import { getUserByID, getCourseByID } from "../server";
-import StarRating from "../components/StarRating";
-import { AuthContext } from "../lib/contexts";
+import { getUserByID, getCourseByID } from "../../server";
+import StarRating from "../../components/StarRating";
+import { AuthContext } from "../../lib/contexts";
 
 export default function RatingCard({ rating }) {
     const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
     const userVal = useContext(AuthContext);
 
     if(!userVal) return;
-
     console.log(userVal)
 
     const[user, setUser] = useState(null);
-    const[course, setCourse] = useState(null);
-
     useEffect(() => {
         const fetchReview = async () => {
             try {
                 const fetchedUser = await getUserByID(rating.user)
                 setUser(fetchedUser);
 
-                const fetchedCourse = await getCourseByID(rating.course);
-                setCourse(fetchedCourse);
+                console.log("course: ", rating.expand.course.name);
             }
             catch (error) {
                 console.log("Error fetching review: ", error);
@@ -49,8 +45,8 @@ export default function RatingCard({ rating }) {
 
             <div className='flex justify-center items-center text-center'>
                 <div className="text-lg font-semibold">
-                    <div>{course ? course.code : "Loading"}</div>
-                    <div className=" text-md font-medium">{course ? course.name : "Loading"}</div>
+                    <div>{rating ? rating.expand.course.code : "Loading"}</div>
+                    <div className=" text-md font-medium">{rating ? rating.expand.course.name : "Loading"}</div>
                 </div>
             </div>
 

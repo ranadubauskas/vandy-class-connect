@@ -24,7 +24,6 @@ export default function Profile() {
 
     const { getUser, logoutUser } = userVal || {};
 
-    // State to control edit mode and the user data
     const [isEditing, setIsEditing] = useState(false);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -36,40 +35,42 @@ export default function Profile() {
 
     const [otherUser, setOtherUser] = useState(null);
 
-    const isMyProfile = userVal.id === userId;
-
-    if(!isMyProfile) {
+    const [isMyProfile, setIsMyProfile] = useState(false);
+    
+    useEffect(() => {
         const fetchUser = async () => {
             const fetchedUser = await getUserByID(userId as string);
             setOtherUser(fetchedUser);
-            console.log(otherUser);
-        }
-        fetchUser();
-    }
+            console.log("other user: ", fetchedUser);
     
-    // Populate state with userVal data after it's loaded
-    useEffect(() => {
-
-        setFirstName(userVal.firstName || '');
-        setLastName(userVal.lastName || '');
-        setEmail(userVal.email || '');
-        setGraduationYear(userVal.graduationYear || '');
-
-        // Fetch user reviews asynchronously
-        const fetchData = async () => {
-            if (userVal.profilePic) {
-                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${userVal.profilePic}`);
+            const isProfileMine = userId === userVal.id;
+            setIsMyProfile(isProfileMine);
+    
+            setFirstName(isProfileMine ? userVal.firstName : fetchedUser.firstName);
+            setLastName(isProfileMine ? userVal.lastName : fetchedUser.lastName);
+            setEmail(isProfileMine ? userVal.email : fetchedUser.email);
+            setGraduationYear(isProfileMine ? userVal.graduationYear : fetchedUser.graduationYear);
+    
+            const profilePicId = isProfileMine ? userVal.id : fetchedUser.id;
+            const profilePicName = isProfileMine ? userVal.profilePic : fetchedUser.profilePic;
+    
+            if (profilePicName) {
+                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
             } else {
-                setProfilePicPreviewURL(defaultProfilePic); // Use default profile picture if none is provided
+                setProfilePicPreviewURL(defaultProfilePic);
             }
         };
-
-        fetchData();
-    }, [userVal]);
+    
+        if (userVal && userId) {
+            fetchUser();
+        }
+    }, [userVal, userId]);
+    
 
     const handleViewRatings = () => {
         if (typeof window !== 'undefined') {
-            router.push("/ratings");
+
+            router.push(`/ratings/${otherUser.id}`);
         }
     };
 

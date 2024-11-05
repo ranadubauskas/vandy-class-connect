@@ -1,14 +1,16 @@
 'use client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect, useContext } from 'react';
-import { AuthContext } from "../lib/contexts";
-import { deleteReview, editReview, getUserReviews } from '../server';
+import { AuthContext } from "../../lib/contexts";
+import { deleteReview, editReview, getUserReviews } from '../../server';
 import RatingCard from './ratingCard';
 
 export default function Ratings() {
     const router = useRouter();
+    const params = useParams();
     const userVal = useContext(AuthContext);
 
+    const { userId } = params;
 
     const [reviews, setReviews] = useState([]);
     const [isEditingReview, setIsEditingReview] = useState<string | null>(null);
@@ -21,12 +23,12 @@ export default function Ratings() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (!userVal) return; // Wait until userVal is available
+        if (!userId) return; // Wait until userVal is available
 
         // Fetch user reviews asynchronously
         const fetchData = async () => {
             try {
-                const revs = await getUserReviews(userVal.id);
+                const revs = await getUserReviews(userId as string);
                 setReviews(revs);
                 setLoading(false);
             } catch (err) {
@@ -35,7 +37,7 @@ export default function Ratings() {
         };
 
         fetchData();
-    }, [userVal]);
+    }, [userId]);
 
     const handleEditReview = (review) => {
         setIsEditingReview(review.id);
@@ -76,9 +78,15 @@ export default function Ratings() {
                 {loading ? (<div className="text-white text-center text-2xl">Loading...</div>) 
                 : (
                     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10'>
-                        {reviews.map((rev) => (
-                            <RatingCard key={rev.id} rating ={rev} />
-                        ))}
+                        {reviews.length > 0 ? (
+                            reviews.map((rev) => (
+                                <RatingCard key={rev.id} rating={rev} />
+                            ))
+                        ) : (
+                            <p className="text-center col-span-full">
+                                No reviews available.
+                            </p>
+                        )}
                     </div>
                     )}
             </div>

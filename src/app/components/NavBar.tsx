@@ -15,7 +15,7 @@ export default function NavBar() {
     <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 p-4 sm:p-0">
       {/* Logo and Title */}
       <Link href="/home" className="flex items-center space-x-4 mb-4 sm:mb-0">
-        <img src="images/v-logo.png" alt="Logo" className="w-16 h-12" />
+        <img src="/images/v-logo.png" alt="Logo" className="w-16 h-12" />
         <div className="text-3xl sm:text-4xl font-bold text-white">
           VandyClassConnect
         </div>
