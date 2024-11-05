@@ -1,4 +1,5 @@
 'use client';
+import { Tooltip } from "@mui/material";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PocketBase from 'pocketbase';
@@ -11,6 +12,7 @@ import { useAuth } from "../lib/contexts";
 
 const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
 pb.autoCancellation(false);
+
 
 export default function CourseDetailPage() {
 
@@ -28,10 +30,8 @@ export default function CourseDetailPage() {
   const [popupMessage, setPopupMessage] = useState('');
 
   useEffect(() => {
-    console.log("FETCHING!");
     if (!id || !currentUserId) return;
     const fetchCourse = async () => {
-      console.log("FETCHING");
       try {
         const fetchedCourse = await pb.collection('courses').getOne(id, {
           $cancel: false,
@@ -43,10 +43,7 @@ export default function CourseDetailPage() {
         const fetchedReviews = fetchedCourse.expand?.reviews || [];
         const fetchedTutors = fetchedCourse.tutors || [];
         const totalRating = fetchedReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-        console.log('totalRating: ', totalRating);
         const avgRating = fetchedReviews.length ? totalRating / fetchedReviews.length : fetchedCourse.averageRating || 0;
-        console.log('len: ', fetchedReviews.length);
-        console.log('avgRating: ', avgRating);
         setCourse(fetchedCourse);
         setReviews(fetchedReviews);
         setAverageRating(avgRating);
@@ -64,7 +61,6 @@ export default function CourseDetailPage() {
         //Wait for all user fetch promises to resolve
         const fetchedTutorDetails = await Promise.all(tutorPromises);
         setTutorDetails(fetchedTutorDetails);
-        console.log("FETICHING2")
       } catch (error) {
         console.error('Error fetching course:', error);
       } finally {
@@ -137,16 +133,16 @@ export default function CourseDetailPage() {
   }
 
   if (!course) {
-    return <div>Course not found</div>;
+    return <div className="flex items-center justify-center h-screen">Course not found</div>;
   }
 
   return (
     <>
-      <div className="min-h-screen p-6">
+      <div className="min-h-screen p-6 sm:p-8 lg:p-10">
         {/* Back to Search Link */}
         <div className="mb-8">
           <button
-            className="text-white text-xl hover:bg-gray-400 transition duration-300"
+            className="text-white text-xl hover:bg-gray-400 transition duration-300 px-2 py-1 rounded"
             onClick={() => router.push('/home')}
           >
             ← Back to Search Page
@@ -154,13 +150,13 @@ export default function CourseDetailPage() {
         </div>
 
         {/* Course Code and Name as Title */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-white text-3xl font-semibold">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">
             {course.code}: {course.name} {/* Dynamic course name */}
           </h1>
 
           {/* Buttons Section */}
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap sm:flex-nowrap space-y-4 sm:space-y-0 sm:space-x-4">
             {course.syllabus && (
               <button
                 className="bg-white text-black py-2 px-6 rounded-full shadow-lg hover:bg-gray-300 transition duration-300"
@@ -182,62 +178,6 @@ export default function CourseDetailPage() {
               Find a Tutor
             </button>
 
-            {/* Dropdown list for tutors */}
-            {showTutors && (
-              <>
-                {/* Backdrop Overlay */}
-                <div
-                  className="fixed inset-0 bg-black opacity-50 z-40"
-                  onClick={() => setShowTutors(false)} // Clicking outside closes the modal
-                />
-
-                {/* Popup Modal */}
-                <div className="fixed inset-0 flex items-center justify-center z-50">
-                  <div className="relative bg-white w-full max-w-lg p-6 rounded-lg shadow-lg">
-                    <div className="flex justify-between">
-                      <h3 className="font-semibold">Tutors</h3>
-                      <button
-                        onClick={() => setShowTutors(false)}
-                        className="text-gray-600 hover:text-gray-900 transition duration-300"
-                      >
-                        <IoClose size={20} />
-                      </button>
-                    </div>
-                    <div className="p-4">
-                      {tutorDetails.length > 0 ? (
-                        tutorDetails.map((tutor, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between mb-2"
-                          >
-                            <img
-                              src={tutor.profilePicture || '/images/user.png'}
-                              alt="Tutor Profile"
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                            <div className="flex-grow ml-2">
-                              <span className="font-semibold">
-                                {tutor.firstName && tutor.lastName
-                                  ? `${tutor.firstName} ${tutor.lastName}`
-                                  : 'Anonymous'}
-                              </span>
-                            </div>
-                            <button
-                              onClick={() => copyEmail(tutor.email)}
-                              className="text-blue-500 hover:text-blue-900 transition duration-300"
-                            >
-                              Copy Email
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <p>No tutors available for this course</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
             <button
               className="bg-white text-black py-2 px-6 rounded-full shadow-lg hover:bg-gray-300 transition duration-300"
               onClick={addTutor}
@@ -246,6 +186,8 @@ export default function CourseDetailPage() {
             </button>
           </div>
         </div>
+
+        {/* Popup Message */}
         {popupMessage && (
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg">
             <p>{popupMessage}</p>
@@ -257,11 +199,74 @@ export default function CourseDetailPage() {
             </button>
           </div>
         )}
+
+        {/* Dropdown list for tutors */}
+        {showTutors && (
+          <>
+            {/* Backdrop Overlay */}
+            <div
+              className="fixed inset-0 bg-black opacity-50 z-40"
+              onClick={() => setShowTutors(false)} // Clicking outside closes the modal
+            />
+
+            {/* Popup Modal */}
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+              <div className="relative bg-white w-full max-w-lg p-6 rounded-lg shadow-lg overflow-auto">
+                <div className="flex justify-between">
+                  <h3 className="font-semibold text-lg">Tutors</h3>
+                  <button
+                    onClick={() => setShowTutors(false)}
+                    className="text-gray-600 hover:text-gray-900 transition duration-300"
+                  >
+                    <IoClose size={20} />
+                  </button>
+                </div>
+                <div className="p-4">
+                  {tutorDetails.length > 0 ? (
+                    tutorDetails.map((tutor, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-col sm:flex-row items-center justify-between mb-4"
+                      >
+                        <div className="flex items-center">
+                          <img
+                            src={tutor.profilePicture || '/images/user.png'}
+                            alt="Tutor Profile"
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div className="flex-grow ml-2">
+                            <span className="font-semibold">
+                              {tutor.firstName && tutor.lastName
+                                ? `${tutor.firstName} ${tutor.lastName}`
+                                : 'Anonymous'}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => copyEmail(tutor.email)}
+                          className="mt-2 sm:mt-0 text-blue-500 hover:text-blue-900 transition duration-300"
+                        >
+                          Copy Email
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No tutors available for this course</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Reviews Section with Average Rating */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
-          <div className="flex justify-between items-start mb-4">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
             {/* Number of tutors for the course */}
-            <div className="flex flex-col items-center space-y-1">
+            <button
+              onClick={toggleTutors}
+              className="flex flex-col items-center space-y-1 focus:outline-none mb-4 lg:mb-0"
+            >
               <div className="flex items-center space-x-2">
                 <span className="text-5xl font-bold text-gray-900">
                   {tutorDetails.length}
@@ -271,10 +276,10 @@ export default function CourseDetailPage() {
               <p className="text-gray-500 text-center leading-tight">
                 Tutors for <br /> this Course
               </p>
-            </div>
+            </button>
 
             {/* Average Rating Section */}
-            <div className="flex flex-col items-center flex-grow">
+            <div className="flex flex-col items-center flex-grow mb-4 lg:mb-0">
               <h2 className="text-3xl font-semibold mt-2">Average Rating</h2>
               <div className="text-5xl font-bold text-gray-900 mt-1">
                 {averageRating.toFixed(1)}
@@ -315,7 +320,7 @@ export default function CourseDetailPage() {
 
                 return (
                   <div key={index}>
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col md:flex-row items-start justify-between">
                       {/* Left Section: User Info and Review */}
                       <div className="flex items-start space-x-4">
                       <Link href={`/profile/${user.id}`} className="w-12 h-12 rounded-full object-cover">
@@ -335,24 +340,29 @@ export default function CourseDetailPage() {
                       </div>
 
                       {/* Right Section: Buttons */}
-                      <div className="flex items-center space-x-4">
-                        {/* Syllabus Download Button */}
-                        {syllabusUrl && (
-                          <button
-                            className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300 flex items-center"
-                            onClick={() => window.open(syllabusUrl, '_blank')}
-                          >
-                            <FaFileDownload className="mr-2" /> Download Syllabus
-                          </button>
-                        )}
+                      <div className="flex items-center space-x-4 mt-4 md:mt-0">
+                        <Tooltip title="Download Syllabus">
+                          {/* Syllabus Download Button */}
+                          {syllabusUrl && (
+                            <button
+                              title="Download Syllabus"
+                              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
+                              onClick={() => window.open(syllabusUrl, '_blank')}
+                            >
+                              <FaFileDownload className="text-xl" />
+                            </button>
+                          )}
+                        </Tooltip>
 
                         {/* Report Review Button */}
-                        <button
-                          onClick={() => reportReview(review.id)}
-                          className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
-                        >
-                          <FaFlag className="mr-2 hover:text-red-700 transition duration-300" /> Report
-                        </button>
+                        <Tooltip title="Report review">
+                          <button
+                            onClick={() => reportReview(review.id)}
+                            className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
+                          >
+                            <FaFlag className="text-2xl" />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
 

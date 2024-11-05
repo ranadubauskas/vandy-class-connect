@@ -26,4 +26,89 @@ body {
   }
 }
 
+/* CourseDetailPage.css */
+
+/* Basic Responsive Layout for All Screens */
+.min-h-screen {
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+/* Small Devices */
+@media (max-width: 530px) {
+  /* Container padding adjustment */
+  .min-h-screen {
+    padding: 1rem;
+  }
+
+  /* Heading adjustments */
+  .text-3xl {
+    font-size: 1.5rem;
+  }
+
+  .text-xl {
+    font-size: 1.25rem;
+  }
+
+  /* Adjust button spacing */
+  .flex.space-x-4 > * {
+    margin-right: 0.5rem;
+  }
+
+  /* Popup modal styling */
+  .fixed.inset-0 .max-w-lg {
+    width: 90%;
+    margin: auto;
+  }
+
+  /* Adjustments for buttons */
+  .py-2.px-6 {
+    padding: 0.5rem 1rem;
+  }
+
+  /* Tutor and Review Section Adjustments */
+  .text-5xl {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .text-gray-500 {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  /* Avatar and icon sizes */
+  .w-10.h-10 {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .flex.items-start.space-x-4 {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Adjust modal close button */
+  .flex.justify-between button {
+    margin-top: -10px;
+    margin-right: -10px;
+  }
+
+  /* Review button adjustments */
+  .py-2.px-4 {
+    padding: 0.5rem 1rem;
+  }
+
+  /* Responsive popup message */
+  .fixed.bottom-4.right-4 {
+    bottom: 1rem;
+    right: 1rem;
+    width: calc(100% - 2rem);
+  }
+}
 
