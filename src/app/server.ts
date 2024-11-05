@@ -220,6 +220,24 @@ export async function getCourseAndReviews(courseID: string) {
     }
 }
 
+export async function getCourseByID(courseID: string) {
+    try {
+        const fetchedCourse = await pb.collection('courses').getOne(courseID);
+        return fetchedCourse;
+    } catch (error) {
+        console.error('Error fetching course:', error);
+        return null;
+    }
+}
 
+export async function getUserByID(userID: string) {
+    try {
+        const fetchedUser = await pb.collection('users').getOne(userID);
+        return fetchedUser
+    } catch (error) {
+        console.error('Error fetching review:', error);
+        return null;
+    }
+}
 
 

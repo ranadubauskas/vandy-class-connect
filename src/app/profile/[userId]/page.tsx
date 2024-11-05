@@ -1,7 +1,9 @@
 'use client';
+
+import { useRouter, useParams } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
-import { AuthContext } from "../lib/contexts";
-import { deleteReview, editReview, editUser, getUserReviews } from '../server';
+import { AuthContext } from "../../lib/contexts";
+import { editUser, getUserByID } from '../../server';
 import './style.css';
 
 
@@ -12,7 +14,13 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
 
 export default function Profile() {
+    const router = useRouter();
+    const params = useParams();
+
+    const { userId } = params;
+
     const userVal = useContext(AuthContext);
+    if(!userVal) return;
 
     const { getUser, logoutUser } = userVal || {};
 
@@ -25,17 +33,22 @@ export default function Profile() {
     const [profilePicPreviewURL, setProfilePicPreviewURL] = useState(defaultProfilePic);
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
     const [error, setError] = useState('');
-    const [reviews, setReviews] = useState([]);
-    const [isEditingReview, setIsEditingReview] = useState<string | null>(null);
-    const [reviewEditData, setReviewEditData] = useState<{ course: string, rating: number, comment: string }>({
-        course: '',
-        rating: 0,
-        comment: ''
-    });
 
+    const [otherUser, setOtherUser] = useState(null);
+
+    const isMyProfile = userVal.id === userId;
+
+    if(!isMyProfile) {
+        const fetchUser = async () => {
+            const fetchedUser = await getUserByID(userId as string);
+            setOtherUser(fetchedUser);
+            console.log(otherUser);
+        }
+        fetchUser();
+    }
+    
     // Populate state with userVal data after it's loaded
     useEffect(() => {
-        if (!userVal) return; // Wait until userVal is available
 
         setFirstName(userVal.firstName || '');
         setLastName(userVal.lastName || '');
@@ -44,13 +57,6 @@ export default function Profile() {
 
         // Fetch user reviews asynchronously
         const fetchData = async () => {
-            try {
-                const revs = await getUserReviews(userVal.id);
-                setReviews(revs);
-            } catch (err) {
-                console.error(err);
-            }
-
             if (userVal.profilePic) {
                 setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${userVal.profilePic}`);
             } else {
@@ -61,9 +67,13 @@ export default function Profile() {
         fetchData();
     }, [userVal]);
 
-    const handleSave = async () => {
-        if (!userVal) return; // Ensure userVal is available
+    const handleViewRatings = () => {
+        if (typeof window !== 'undefined') {
+            router.push("/ratings");
+        }
+    };
 
+    const handleSave = async () => {
         try {
             const userId = userVal.id;
             const formData = new FormData();
@@ -116,41 +126,6 @@ export default function Profile() {
         }
     };
 
-    // Rest of the code remains the same...
-
-    const handleEditReview = (review) => {
-        setIsEditingReview(review.id);
-        setReviewEditData({
-            course: review.course,
-            rating: review.rating,
-            comment: review.comment
-        });
-    };
-
-    const handleSaveReview = async (reviewId: string) => {
-        try {
-            const updatedReview = await editReview(reviewId, reviewEditData);
-            // Refresh the reviews list after updating
-            const updatedReviews = reviews.map((rev) => (rev.id === updatedReview.id ? updatedReview : rev));
-            setReviews(updatedReviews);
-            setIsEditingReview(null);
-        } catch (error) {
-            console.error("Error saving review:", error);
-            setError("Failed to update review.");
-        }
-    };
-
-    const handleDeleteReview = async (reviewId: string) => {
-        try {
-            await deleteReview(reviewId);
-            const updatedReviews = reviews.filter((review) => review.id !== reviewId);
-            setReviews(updatedReviews);
-        } catch (error) {
-            console.error("Error deleting review:", error);
-            setError("Failed to delete review.");
-        }
-    };
-
     const getProfilePicUrl = (): string => {
         if (profilePicPreviewURL && profilePicPreviewURL.startsWith('blob:')) {
             // Return the blob URL for the locally selected file
@@ -166,7 +141,7 @@ export default function Profile() {
                 <div className="flex mb-4 max-w-5xl w-full">
                     <div className="w-1/3 flex justify-start pl-2">
                         <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
-                            View My Courses
+                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Courses
                         </button>
                     </div>
                     <div className="w-1/3 h-12 flex flex-col items-center justify-center">
@@ -175,12 +150,11 @@ export default function Profile() {
                             alt="Profile Picture"
                             className="w-28 h-28 object-cover rounded-full mt-20"
                         />
-                        {/* use poppins font, look at shadcn */}
                         <h2 className="text-white text-3xl font-semibold mt-10">{firstName} {lastName}</h2>
                     </div>
                     <div className="w-1/3 flex justify-end pr-2">
-                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
-                            View My Ratings
+                        <button onClick={() => handleViewRatings()} className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
+                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Ratings
                         </button>
                     </div>
                 </div>
@@ -210,12 +184,13 @@ export default function Profile() {
                             <div>{graduationYear}</div>
                         </div>
                         <div className="col-span-2 mt-6">
-                            <button
+                            {isMyProfile ? (<button
                                 onClick={() => setIsEditing(true)}
                                 className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-md w-full"
                             >
                                 Edit Profile
-                            </button>
+                            </button>) : (<></>)}
+                            
                         </div>
                     </div>
                 ) : (
