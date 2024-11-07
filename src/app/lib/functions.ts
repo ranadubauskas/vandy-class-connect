@@ -1,21 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 import { cookies } from "next/headers";
-import { signIn } from '../server';
-
-
-export async function authenticate(formData: FormData) {
-    try {
-        await signIn(formData);
-    } catch (error) {
-        if (error instanceof Error) {
-            return error.message;
-        }
-        throw error;
-    }
-}
-
-
 
 export async function getUserCookies() {
     try {

@@ -15,13 +15,13 @@ export default function Login() {
         e.preventDefault();
         setError('');
         try {
-            const formData = new FormData();
-            formData.append('email', email);
-            formData.append('password', password);
-            const user = await signIn(formData);
+            const user = await signIn(email, password);
+            console.log('user: ', user);
             loginUser(user);
+            console.log('routing');
             router.push('/home');
         } catch (err) {
+            console.error(err);
             setError('Login failed. Please check your credentials.');
         }
     };
@@ -40,7 +40,7 @@ export default function Login() {
                     />
                     <input
                         type="password"
-                        placeholder="Password"
+                        placeholder="Vanderbilt Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -55,7 +55,7 @@ export default function Login() {
                 {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
                 <p className="mt-4 text-center text-white">
                     Don’t have an account?{' '}
-                    <a href="/register" className="text-blue-400 hover:underline">
+                    <a href="/register" className="text-white-500 underline hover:text-blue-500">
                         Register
                     </a>
                 </p>

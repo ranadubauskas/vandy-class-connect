@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useAuth } from '../lib/contexts';
 import { register } from '../server';
 
 const currentYear = new Date().getFullYear();
@@ -17,6 +18,7 @@ export default function Register() {
     const [graduationYear, setGraduationYear] = useState(''); // Adjusted field name to match 'year'
     const [error, setError] = useState('');
     const router = useRouter();
+    const { loginUser } = useAuth();
 
 
 
@@ -34,6 +36,7 @@ export default function Register() {
             formData.append('graduationYear', graduationYear);
             const user = await register(formData);
             console.log('User registered:', user);
+            loginUser(user);
             router.push('/home');
         } catch (err) {
             console.log(err);
@@ -110,8 +113,7 @@ export default function Register() {
                 {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
                 <p className="mt-4 text-center text-white">
                     <span>
-                        Already have an account?
-                        <a href="/login" className="text-white-500 hover:underline hover:text-blue-500"> Login </a>
+                        Already have an account? <a href="/login" className="text-white-500 underline hover:text-blue-500">Login </a>
                     </span>
                 </p>
             </div>

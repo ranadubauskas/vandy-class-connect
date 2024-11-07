@@ -2,6 +2,7 @@
 'use server'
 import { cookies } from 'next/headers';
 import PocketBase from 'pocketbase';
+import { UserInfoType } from './lib/contexts';
 
 
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
@@ -21,35 +22,48 @@ export async function getUserReviews(userID: string){
     }
 }
 
-export async function signIn(formData: FormData) {
-    try{
-        const email = formData.get("email");
-        const password = formData.get("password");
-    
-        // Check if email or password is null, and throw an error if they are
-        if (typeof email !== 'string' || typeof password !== 'string') {
-            throw new Error("Invalid email or password");
-        }
-    
-        const user = await pb.collection('users').authWithPassword(email, password);
+export async function signIn(email: string, password: string): Promise<UserInfoType> {
+    console.log("IN SIGN IN");
+    try {
+      // Authenticate the user
+      const userAuthData = await pb.collection('users').authWithPassword(email, password);
 
-        const userReviews = await getUserReviews(user.record.id);
+      //Set user cookies
+      const userReviews = await getUserReviews(userAuthData.record.id);
         console.log('userRevs: ' +  userReviews);
 
         const allCookies = await cookies();
         // Set cookies for authenticated user
-        allCookies.set("id", user.record.id);
-        allCookies.set("firstName", user.record.firstName);
-        allCookies.set("lastName", user.record.lastName);
-        allCookies.set("email", user.record.email);
-        allCookies.set("graduationYear", user.record.graduationYear);
-        allCookies.set("username", user.record.username);
-        return user;
-    } catch (err){
-        console.error("Error in signIn:", err);
-        throw err; 
+        allCookies.set("id", userAuthData.record.id);
+        allCookies.set("firstName", userAuthData.record.firstName);
+        allCookies.set("lastName", userAuthData.record.lastName);
+        allCookies.set("email", userAuthData.record.email);
+        allCookies.set("graduationYear", userAuthData.record.graduationYear);
+        allCookies.set("username", userAuthData.record.username);
+  
+      // Extract the user record
+      const userRecord = userAuthData.record;
+      console.log("IN SIGN I2");
+  
+      // Create a UserInfoType object
+      const userInfo: UserInfoType = {
+        id: userRecord.id,
+        username: userRecord.username,
+        firstName: userRecord.firstName,
+        lastName: userRecord.lastName,
+        email: userRecord.email,
+        graduationYear: userRecord.graduationYear,
+        profilePic: userRecord.profilePic,
+      };
+  
+      console.log('userInfo: ', userInfo);
+      // Optionally set cookies here if needed
+  
+      return userInfo;
+    } catch (err) {
+      console.error("Error in signIn:", err);
+      throw err;
     }
-   
 }
 
 export async function register(formData: FormData) {
@@ -93,15 +107,16 @@ export async function register(formData: FormData) {
         lastName: lastName,
         graduationYear: graduationYear
     });
-
+    console.log('newUser: ', newUser);
+    
     const userData = {
-        id: newUser.record.id,
-        username: newUser.record.username,
-        firstName: newUser.record.firstName,
-        lastName: newUser.record.lastName,
-        email: newUser.record.email,
-        graduationYear: newUser.record.graduationYear,
-        profilePic: newUser.record.profilePic,
+        id: newUser.id,
+        username: newUser.username,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        graduationYear: newUser.graduationYear,
+        profilePic: newUser.profilePic,
     };
     const allCookies = await cookies();
 
