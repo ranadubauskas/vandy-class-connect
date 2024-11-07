@@ -68,12 +68,6 @@ export default function Profile() {
     }, [userVal, userId]);
     
 
-    const handleViewRatings = () => {
-        if (typeof window !== 'undefined') {
-
-            router.push(`/ratings/${otherUser.id}`);
-        }
-    };
 
     const handleViewRatings = () => {
         if (typeof window !== 'undefined') {
