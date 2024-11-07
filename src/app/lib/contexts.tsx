@@ -1,3 +1,4 @@
+// lib/contexts.js
 'use client';
 import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -14,13 +15,7 @@ interface UserInfoType {
 }
 
 interface AuthContextData {
-  id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  graduationYear: string;
-  profilePic: string;
+  userData: UserInfoType | null;
   getUser: () => void;
   logoutUser: () => Promise<void>;
   loginUser: (userInfo: UserInfoType) => void;
@@ -38,25 +33,13 @@ export function useAuth(): AuthContextData {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [id, setId] = useState<string | null>(null);
-  const [username, setUsername] = useState("");
-  const [profilePic, setProfilePic] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [graduationYear, setGraduationYear] = useState("");
+  const [userData, setUserData] = useState<UserInfoType | null>(null);
 
   async function setUserDataFromCookies() {
     try {
       const userInfo = await getUserCookies();
       if (userInfo) {
-        setId(userInfo.id);
-        setUsername(userInfo.username);
-        setFirstName(userInfo.firstName);
-        setLastName(userInfo.lastName);
-        setEmail(userInfo.email);
-        setGraduationYear(userInfo.graduationYear);
-        setProfilePic(userInfo.profilePic);
+        setUserData(userInfo);
       }
     } catch (error) {
       console.error("Error setting user data:", error);
@@ -68,14 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginUser = (userInfo: UserInfoType) => {
-    console.log("CALLED");
-    setId(userInfo.id);
-    setUsername(userInfo.username);
-    setFirstName(userInfo.firstName);
-    setLastName(userInfo.lastName);
-    setEmail(userInfo.email);
-    setGraduationYear(userInfo.graduationYear);
-    setProfilePic(userInfo.profilePic);
+    setUserData(userInfo);
   };
 
   useEffect(() => {
@@ -83,26 +59,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function logoutUser(): Promise<void> {
-    setId("");
-    setUsername("");
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setGraduationYear("");
-    setProfilePic("");
-    logout();
+    setUserData(null);
+    await logout();
     router.push("/login");
   }
 
   const value = {
-    id,
-    username,
-    firstName,
-    lastName,
-    email,
-    graduationYear,
+    userData,
     getUser,
-    profilePic,
     logoutUser,
     loginUser,
   };

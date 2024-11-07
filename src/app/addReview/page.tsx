@@ -99,6 +99,18 @@ export default function AddReviewPage() {
                 await pb.collection('courses').update(courseId, formData);
             }
 
+            // Step 4: Add the review to a user profile
+            const fetchedUserReviews = await pb.collection('users').getOne(userId, {
+                expand: 'reviews'
+            });
+
+            const userReviews = [...(fetchedUserReviews.reviews || []), newReview.id];
+
+            await pb.collection('users').update(userId, {
+                reviews: userReviews
+            })
+            console.log(userReviews);
+
             // Redirect back to the course detail page
             router.push(`/course?id=${courseId}`);
         } catch (error) {
@@ -143,19 +155,19 @@ export default function AddReviewPage() {
                 {/* Rating Input Section with Stars */}
                 <div className="flex items-center mt-4">
                     {/* Input for Rating */}
+                    
+                    {/* Dynamically render larger stars based on the input */}
+                    <StarRating rating={rating} readOnly={false} size={40} onRatingChange={(newRating) => {setRating(newRating)}}/> {/* Make the stars larger */}
                     <input
                         type="number"
-                        className="w-20 p-2 border border-gray-300 rounded mr-4"
+                        className="w-20 p-2 border border-gray-300 rounded ml-4 bg-gray-100 cursor-not-allowed"
                         max="5"
                         min="0"
                         step="0.1" // Allows for partial ratings like 3.4
                         value={rating}
-                        onChange={(e) => setRating(e.target.value)}
+                        readOnly
                         placeholder="Rating"
                     />
-                    {/* Dynamically render larger stars based on the input */}
-                    <StarRating rating={rating} readOnly={true} size={40} /> {/* Make the stars larger */}
-
                     {/* Upload Syllabus Section */}
                     <div className="ml-8">
                         <label htmlFor="syllabus-upload" className="text-lg font-semibold mr-3">

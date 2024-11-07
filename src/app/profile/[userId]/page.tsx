@@ -1,8 +1,9 @@
 'use client';
+
+import { useRouter, useParams } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
-import { AuthContext } from "../lib/contexts";
-import { deleteReview, editReview, editUser, getUserReviews } from '../server';
-import { useRouter } from 'next/navigation';
+import { AuthContext } from "../../lib/contexts";
+import { editUser, getUserByID } from '../../server';
 import './style.css';
 
 
@@ -13,12 +14,16 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
 
 export default function Profile() {
+    const router = useRouter();
+    const params = useParams();
+
+    const { userId } = params;
+
     const userVal = useContext(AuthContext);
+    if(!userVal) return;
 
     const { getUser, logoutUser } = userVal || {};
 
-    // State to control edit mode and the user data
-    const router = useRouter();
     const [isEditing, setIsEditing] = useState(false);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -27,45 +32,56 @@ export default function Profile() {
     const [profilePicPreviewURL, setProfilePicPreviewURL] = useState(defaultProfilePic);
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
     const [error, setError] = useState('');
-    const [reviews, setReviews] = useState([]);
-    const [isEditingReview, setIsEditingReview] = useState<string | null>(null);
-    const [reviewEditData, setReviewEditData] = useState<{ course: string, rating: number, comment: string }>({
-        course: '',
-        rating: 0,
-        comment: ''
-    });
 
-    // Populate state with userVal data after it's loaded
+    const [otherUser, setOtherUser] = useState(null);
+
+    const [isMyProfile, setIsMyProfile] = useState(false);
+    
     useEffect(() => {
-        if (!userVal) return; // Wait until userVal is available
-
-        setFirstName(userVal.firstName || '');
-        setLastName(userVal.lastName || '');
-        setEmail(userVal.email || '');
-        setGraduationYear(userVal.graduationYear || '');
-
-        // Fetch user reviews asynchronously
-        const fetchData = async () => {
-            try {
-                const revs = await getUserReviews(userVal.id);
-                setReviews(revs);
-            } catch (err) {
-                console.error(err);
-            }
-
-            if (userVal.profilePic) {
-                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userVal.id}/${userVal.profilePic}`);
+        const fetchUser = async () => {
+            const fetchedUser = await getUserByID(userId as string);
+            setOtherUser(fetchedUser);
+            console.log("other user: ", fetchedUser);
+    
+            const isProfileMine = userId === userVal.id;
+            setIsMyProfile(isProfileMine);
+    
+            setFirstName(isProfileMine ? userVal.firstName : fetchedUser.firstName);
+            setLastName(isProfileMine ? userVal.lastName : fetchedUser.lastName);
+            setEmail(isProfileMine ? userVal.email : fetchedUser.email);
+            setGraduationYear(isProfileMine ? userVal.graduationYear : fetchedUser.graduationYear);
+    
+            const profilePicId = isProfileMine ? userVal.id : fetchedUser.id;
+            const profilePicName = isProfileMine ? userVal.profilePic : fetchedUser.profilePic;
+    
+            if (profilePicName) {
+                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
             } else {
-                setProfilePicPreviewURL(defaultProfilePic); // Use default profile picture if none is provided
+                setProfilePicPreviewURL(defaultProfilePic);
             }
         };
+    
+        if (userVal && userId) {
+            fetchUser();
+        }
+    }, [userVal, userId]);
+    
 
-        fetchData();
-    }, [userVal]);
+    const handleViewRatings = () => {
+        if (typeof window !== 'undefined') {
+
+            router.push(`/ratings/${otherUser.id}`);
+        }
+    };
+
+    const handleViewRatings = () => {
+        if (typeof window !== 'undefined') {
+
+            router.push(`/ratings/${otherUser.id}`);
+        }
+    };
 
     const handleSave = async () => {
-        if (!userVal) return; // Ensure userVal is available
-
         try {
             const userId = userVal.id;
             const formData = new FormData();
@@ -118,41 +134,6 @@ export default function Profile() {
         }
     };
 
-    // Rest of the code remains the same...
-
-    const handleEditReview = (review) => {
-        setIsEditingReview(review.id);
-        setReviewEditData({
-            course: review.course,
-            rating: review.rating,
-            comment: review.comment
-        });
-    };
-
-    const handleSaveReview = async (reviewId: string) => {
-        try {
-            const updatedReview = await editReview(reviewId, reviewEditData);
-            // Refresh the reviews list after updating
-            const updatedReviews = reviews.map((rev) => (rev.id === updatedReview.id ? updatedReview : rev));
-            setReviews(updatedReviews);
-            setIsEditingReview(null);
-        } catch (error) {
-            console.error("Error saving review:", error);
-            setError("Failed to update review.");
-        }
-    };
-
-    const handleDeleteReview = async (reviewId: string) => {
-        try {
-            await deleteReview(reviewId);
-            const updatedReviews = reviews.filter((review) => review.id !== reviewId);
-            setReviews(updatedReviews);
-        } catch (error) {
-            console.error("Error deleting review:", error);
-            setError("Failed to delete review.");
-        }
-    };
-
     const getProfilePicUrl = (): string => {
         if (profilePicPreviewURL && profilePicPreviewURL.startsWith('blob:')) {
             // Return the blob URL for the locally selected file
@@ -167,10 +148,8 @@ export default function Profile() {
             <div className="flex items-center justify-center h-[30vh]">
                 <div className="flex mb-4 max-w-5xl w-full">
                     <div className="w-1/3 flex justify-start pl-2">
-                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out"
-                            onClick={() => router.push('/savedCourses')}
-                        >
-                            View My Courses
+                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
+                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Courses
                         </button>
                     </div>
                     <div className="w-1/3 h-12 flex flex-col items-center justify-center">
@@ -179,12 +158,11 @@ export default function Profile() {
                             alt="Profile Picture"
                             className="w-28 h-28 object-cover rounded-full mt-20"
                         />
-                        {/* use poppins font, look at shadcn */}
                         <h2 className="text-white text-3xl font-semibold mt-10">{firstName} {lastName}</h2>
                     </div>
                     <div className="w-1/3 flex justify-end pr-2">
-                        <button className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
-                            View My Ratings
+                        <button onClick={() => handleViewRatings()} className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
+                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Reviews
                         </button>
                     </div>
                 </div>
@@ -214,12 +192,13 @@ export default function Profile() {
                             <div>{graduationYear}</div>
                         </div>
                         <div className="col-span-2 mt-6">
-                            <button
+                            {isMyProfile ? (<button
                                 onClick={() => setIsEditing(true)}
                                 className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-md w-full"
                             >
                                 Edit Profile
-                            </button>
+                            </button>) : (<></>)}
+                            
                         </div>
                     </div>
                 ) : (
@@ -248,7 +227,8 @@ export default function Profile() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="border border-gray-300 rounded p-2 w-full mt-1"
+                                readOnly
+                                className="border border-gray-300 rounded p-2 w-full mt-1 bg-gray-100 cursor-not-allowed"
                             />
                         </div>
                         <div>
