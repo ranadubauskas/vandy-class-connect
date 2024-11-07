@@ -64,7 +64,7 @@ export default function RatingCard({ rating, onDelete }) {
 
             {isEditing ? 
             (<div> 
-                {userVal.id === user?.id && isEditing ? (
+                {userVal.userData.id === user?.id && isEditing ? (
                     <button
                         className="absolute bottom-2 right-2 text-green-500 hover:text-green-700 transform hover:scale-110 transition-transform duration-200"
                         onClick={() => handleSave()}
@@ -92,7 +92,7 @@ export default function RatingCard({ rating, onDelete }) {
             </div>) 
             : 
             (<div>
-                {userVal.id === user?.id ? (<button
+                {userVal.userData.id === user?.id ? (<button
                 className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 transform hover:scale-110 transition-transform duration-200"
                 onClick={() => setEditing(true)} 
                 aria-label="Edit review">

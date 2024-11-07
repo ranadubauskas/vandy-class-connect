@@ -1,12 +1,22 @@
-// __tests__/courseDetailPage.test.tsx
-
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CourseDetailPage from '../src/app/course/page';
 import { useAuth } from '../src/app/lib/contexts';
 import pb from '../src/app/lib/pocketbaseClient';
 
-// Mock dependencies
+beforeAll(() => {
+  Object.defineProperty(navigator, 'clipboard', {
+    value: {
+      writeText: jest.fn().mockResolvedValue(undefined), // Mock resolved promise
+    },
+    writable: true,
+  });
+});
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
+
 jest.mock('next/navigation', () => ({
   __esModule: true,
   useRouter: jest.fn(),
@@ -47,7 +57,6 @@ describe('CourseDetailPage Component', () => {
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (useSearchParams as jest.Mock).mockReturnValue({ get: mockGet });
 
-    // Mock useAuth with sample user data
     (useAuth as jest.Mock).mockReturnValue({
       userData: {
         id: 'currentUserId',
@@ -58,7 +67,6 @@ describe('CourseDetailPage Component', () => {
       },
     });
 
-    // Create mock collections and store references
     mockCoursesCollection = {
       getOne: jest.fn(),
       update: jest.fn(),
@@ -73,7 +81,6 @@ describe('CourseDetailPage Component', () => {
       create: jest.fn(),
     };
 
-    // Mock PocketBase instance and its methods
     pb.collection = jest.fn().mockImplementation((collectionName: string) => {
       if (collectionName === 'courses') {
         return mockCoursesCollection;
@@ -114,18 +121,18 @@ describe('CourseDetailPage Component', () => {
     };
 
     mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
-    pb.files.getUrl = jest.fn() as jest.MockedFunction<typeof pb.files.getUrl>;
+    pb.files.getUrl.mockReturnValue('http://example.com/syllabus.pdf');
 
     await act(async () => {
       render(<CourseDetailPage />);
     });
 
-    // Wrap assertions that involve state updates in waitFor
     await waitFor(() => {
       expect(screen.getByText('CS101: Introduction to Computer Science')).toBeInTheDocument();
     });
 
     expect(screen.getByText('Add a Review')).toBeInTheDocument();
+    expect(screen.getByText('Download Syllabus')).toBeInTheDocument();
   });
 
   it('should handle "Add a Review" button click', async () => {
@@ -199,6 +206,154 @@ describe('CourseDetailPage Component', () => {
       expect(screen.getByText('Tutors')).toBeInTheDocument();
       expect(screen.getByText('Tutor One')).toBeInTheDocument();
       expect(screen.getByText('Tutor Two')).toBeInTheDocument();
+    });
+  });
+
+  it('should toggle popup message on action', async () => {
+    mockGet.mockReturnValue('courseId');
+
+    const mockCourseData = {
+      id: 'courseId',
+      code: 'CS101',
+      name: 'Introduction to Computer Science',
+      expand: { reviews: [], professors: [] },
+      tutors: [],
+    };
+
+    mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+    mockCoursesCollection.update.mockResolvedValue({
+      ...mockCourseData,
+      tutors: ['currentUserId'],
+    });
+
+    await act(async () => {
+      render(<CourseDetailPage />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('CS101: Introduction to Computer Science')).toBeInTheDocument();
+    });
+
+    // Trigger tutor addition
+    fireEvent.click(screen.getByText('Tutor this Course'));
+  });
+
+  it('should display error message when adding tutor fails', async () => {
+    mockGet.mockReturnValue('courseId');
+
+    const mockCourseData = {
+      id: 'courseId',
+      code: 'CS101',
+      name: 'Introduction to Computer Science',
+      expand: { reviews: [], professors: [] },
+      tutors: [],
+    };
+
+    mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+    mockCoursesCollection.update.mockRejectedValue(new Error('Update failed'));
+
+    await act(async () => {
+      render(<CourseDetailPage />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('CS101: Introduction to Computer Science')).toBeInTheDocument();
+    });
+  });
+
+  it('should display reviews when they exist', async () => {
+    mockGet.mockReturnValue('courseId');
+
+    const mockCourseData = {
+      id: 'courseId',
+      code: 'CS101',
+      name: 'Introduction to Computer Science',
+      expand: {
+        reviews: [
+          {
+            id: 'review1',
+            rating: 5,
+            comment: 'Excellent course!',
+            professor: 'prof1',
+            expand: {
+              professor: { id: 'prof1', firstName: 'John', lastName: 'Smith' },
+              user: { id: 'user1', firstName: 'Alice', lastName: 'Doe' },
+            },
+          },
+        ],
+        professors: [{ id: 'prof1', firstName: 'John', lastName: 'Smith' }],
+      },
+      tutors: [],
+    };
+
+    mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+
+    await act(async () => {
+      render(<CourseDetailPage />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Excellent course!')).toBeInTheDocument();
+      expect(screen.getByText('John Smith')).toBeInTheDocument();
+      expect(screen.getByText('Alice Doe')).toBeInTheDocument();
+    });
+  });
+
+  it('should filter reviews by professor', async () => {
+    mockGet.mockReturnValue('courseId');
+
+    const mockCourseData = {
+      id: 'courseId',
+      code: 'CS101',
+      name: 'Introduction to Computer Science',
+      expand: {
+        reviews: [
+          {
+            id: 'review1',
+            rating: 5,
+            comment: 'Great course!',
+            professor: 'prof1',
+            expand: {
+              professor: { id: 'prof1', firstName: 'John', lastName: 'Smith' },
+              user: { id: 'user1', firstName: 'Alice', lastName: 'Doe' },
+            },
+          },
+          {
+            id: 'review2',
+            rating: 4,
+            comment: 'Not bad.',
+            professor: 'prof2',
+            expand: {
+              professor: { id: 'prof2', firstName: 'Emily', lastName: 'Johnson' },
+              user: { id: 'user2', firstName: 'Bob', lastName: 'Smith' },
+            },
+          },
+        ],
+        professors: [
+          { id: 'prof1', firstName: 'John', lastName: 'Smith' },
+          { id: 'prof2', firstName: 'Emily', lastName: 'Johnson' },
+        ],
+      },
+      tutors: [],
+    };
+
+    mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+
+    await act(async () => {
+      render(<CourseDetailPage />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Filter by Professor:')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Filter by Professor:'), {
+      target: { value: 'prof1' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Great course!')).toBeInTheDocument();
+      expect(screen.queryByText('Not bad.')).toBeInTheDocument();
     });
   });
 });

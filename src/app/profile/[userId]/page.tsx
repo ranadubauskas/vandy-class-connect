@@ -21,9 +21,8 @@ export default function Profile() {
     
 
     const userVal = useContext(AuthContext);
-    if(!userVal) return;
 
-    const { userData, getUser, logoutUser } = userVal || {};
+    const { userData, getUser } = userVal || {};
 
     const [isEditing, setIsEditing] = useState(false);
     const [firstName, setFirstName] = useState('');
@@ -68,6 +67,9 @@ export default function Profile() {
     }, [userVal, userId]);
     
 
+    if (!userVal) {
+        return <div>Loading...</div>; // Render a fallback UI if context is missing
+    }
 
     const handleViewRatings = () => {
         if (typeof window !== 'undefined') {

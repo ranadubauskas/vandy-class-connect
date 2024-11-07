@@ -2,18 +2,17 @@
 import { Tooltip } from "@mui/material";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import PocketBase from 'pocketbase';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { FaChalkboardTeacher, FaFileDownload, FaFlag, FaUsers } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
 import Loading from "../components/Loading";
 import StarRating from '../components/StarRating';
 import { useAuth } from "../lib/contexts";
+import pb from "../lib/pocketbaseClient";
 
-const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
 pb.autoCancellation(false);
 
-export default function CourseDetailPage() {
+function CourseDetailPageComponent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -132,7 +131,7 @@ export default function CourseDetailPage() {
 
       setIsTutor(true);
       setTutorDetails((prevTutors) => [...(prevTutors || []), curUser]);
-      setPopupMessage('Successfully added as tutor for this course.');
+      setPopupMessage('Successfully added as a tutor for this course.');
     } catch (error) {
       console.error('Error adding tutor:', error);
     }
@@ -444,5 +443,13 @@ export default function CourseDetailPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function CourseDetailPage() {
+  return (
+      <Suspense fallback={<Loading />}>
+          <CourseDetailPageComponent />
+      </Suspense>
   );
 }

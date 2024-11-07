@@ -39,6 +39,17 @@ jest.mock('../src/app/server', () => ({
 describe("Home page", () => {
     const mockPush = jest.fn();
 
+    const mockAuthContextValue = {
+        userData: {
+            firstName: "John",
+            lastName: "Smith",
+            id: "123",
+        },
+        getUser: jest.fn(),
+        logoutUser: jest.fn(),
+        loginUser: jest.fn(),
+    };
+
     beforeEach(() => {
         jest.clearAllMocks();
 
@@ -73,7 +84,7 @@ describe("Home page", () => {
     it("should render the Home component and display user name", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -84,7 +95,7 @@ describe("Home page", () => {
 
     it("should display loading state initially", () => {
         render(
-            <AuthContext.Provider value={null}>
+            <AuthContext.Provider value={mockAuthContextValue}>
                 <Home />
             </AuthContext.Provider>
         );
@@ -94,7 +105,7 @@ describe("Home page", () => {
     it("should display courses after loading", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -109,7 +120,7 @@ describe("Home page", () => {
     it("should filter courses based on search query", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -133,7 +144,7 @@ describe("Home page", () => {
     it("should open and close the filter modal", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -156,7 +167,7 @@ describe("Home page", () => {
     it("should navigate to course page when 'View Course' is clicked", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );

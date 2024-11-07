@@ -21,10 +21,13 @@ export async function getUserCookies() {
             return acc;
         }, {});
 
-        singleObject.savedCourses = singleObject.savedCourses ? JSON.parse(singleObject.savedCourses) : [];
+        try {
+            singleObject.savedCourses = singleObject.savedCourses ? JSON.parse(singleObject.savedCourses) : [];
+        } catch {
+            singleObject.savedCourses = [];  // Default to empty array if parsing fails
+        }
 
         return singleObject;
-
     } catch (error) {
         console.error("Error fetching user cookies:", error);
         if (error instanceof Error) {

@@ -1,13 +1,15 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import { Tooltip } from "@mui/material";
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import { IoIosSearch } from "react-icons/io";
 import { IoClose, IoFilterOutline } from "react-icons/io5";
-import { FaRegBookmark, FaBookmark } from 'react-icons/fa';
 import { getUserCookies } from '../lib/functions';
+import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
-import PocketBase from 'pocketbase';
+
+pb.autoCancellation(false);
 
 export default function Home() {
   const [userCookies, setUserCookies] = useState(null);
@@ -23,9 +25,6 @@ export default function Home() {
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
 
   const router = useRouter();
-
-  const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
-  pb.autoCancellation(false);
 
   useEffect(() => {
     const fetchCookies = async () => {

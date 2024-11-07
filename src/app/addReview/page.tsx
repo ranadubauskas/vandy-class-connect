@@ -1,15 +1,12 @@
 'use client';
 import { useRouter, useSearchParams } from 'next/navigation';
-import PocketBase from 'pocketbase';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Loading from "../components/Loading";
 import StarRating from '../components/StarRating';
 import { useAuth } from '../lib/contexts';
+import pb from "../lib/pocketbaseClient";
 
-const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
-pb.autoCancellation(false);
-
-export default function AddReviewPage() {
+function AddReviewComponent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const courseId = searchParams.get('id');
@@ -247,5 +244,13 @@ export default function AddReviewPage() {
                 {error && <div className="text-red-500 mt-2 mb-1">{error}</div>}
             </div>
         </div>
+    );
+}
+
+export default function AddReviewPage() {
+    return (
+        <Suspense fallback={<Loading />}>
+            <AddReviewComponent />
+        </Suspense>
     );
 }

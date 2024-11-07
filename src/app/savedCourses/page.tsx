@@ -1,15 +1,16 @@
 'use client';
-import { useEffect, useState } from 'react';
+
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip } from "@mui/material";
 import { useRouter } from 'next/navigation';
-import { Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton } from "@mui/material";
-import { FiX } from "react-icons/fi";
-import PocketBase from 'pocketbase';
+import { useEffect, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
+import { FiX } from "react-icons/fi";
 import { getUserCookies } from '../lib/functions';
+import pb from "../lib/pocketbaseClient";
 
+pb.autoCancellation(false);
 
-
-export default function savedCourses() {
+export default function SavedCourses() {
   const [userCookies, setUserCookies] = useState(null);
   const [savedCourses, setSavedCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,9 +19,6 @@ export default function savedCourses() {
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const router = useRouter();
-
-  const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
-  pb.autoCancellation(false);
 
   useEffect(() => {
     const fetchCookies = async () => {
