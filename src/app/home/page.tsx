@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import { Tooltip } from "@mui/material";
 import { useEffect, useState } from 'react';
 import { IoIosSearch } from "react-icons/io";
 import { IoClose, IoFilterOutline } from "react-icons/io5";
@@ -32,7 +33,6 @@ export default function Home() {
         const cookies = await getUserCookies();
         if (cookies) {
           setUserCookies(cookies);
-          setSavedCourses(cookies.savedCourses);
         } else {
           console.log("No user cookies found");
         }
@@ -43,6 +43,24 @@ export default function Home() {
 
     fetchCookies();
   }, []);
+
+  useEffect(() => {
+    const fetchSavedCourses = async () => {
+      if(!userCookies) return;
+
+      try {
+        const userRecord = await pb.collection('users').getOne(userCookies.id);
+        if (userRecord && userRecord.savedCourses) {
+          setSavedCourses(userRecord.savedCourses);
+        } else {
+          console.log("No save courses found");
+        }
+      } catch (error) {
+        console.error('Error fetching saved courses:', error);
+      }
+    };
+    fetchSavedCourses();
+  }, [userCookies]);
 
   useEffect(() => {
     setTempSubjectFilters(subjectFilters);
@@ -114,42 +132,6 @@ export default function Home() {
         await pb.collection('users').update(userId, {
           savedCourses: updatedSavedCourses,
         });
-        console.log(updatedSavedCourses);
-
-        setSavedCourses(updatedSavedCourses);
-      } catch (error) {
-        console.error("Error saving course:", error);
-      }
-  };
-  const toggleSaveCourse = (courseId) => {
-    const isSaved = savedCourses.includes(courseId);
-
-    updateSaved(userCookies.id, courseId, isSaved);
-    setSavedCourses((prevSavedCourses) =>
-      isSaved
-        ? prevSavedCourses.filter(id => id !== courseId)
-        : [...prevSavedCourses, courseId]
-    );
-  };
-
-  const updateSaved = async (userId, courseId, isSaved) => {
-      try {
-        const userRecord = await pb.collection('users').getOne(userId);
-
-        let updatedSavedCourses;
-
-        if(isSaved) { //Remove course from savedCourses
-          updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
-        } else { //Add course to savedCourses
-          updatedSavedCourses = [...userRecord.savedCourses, courseId];
-        }
-
-        //Update user record in database
-        await pb.collection('users').update(userId, {
-          savedCourses: updatedSavedCourses,
-        });
-        console.log(updatedSavedCourses);
-
         setSavedCourses(updatedSavedCourses);
       } catch (error) {
         console.error("Error saving course:", error);
@@ -319,18 +301,22 @@ export default function Home() {
                   <span className="font-bold">{course.code}</span>: {course.name}
                 </div>
               </div>
-              <button
-                className="mt-4 sm:mt-0 bg-gray-200 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-300 transition duration-300"
-                onClick={() => router.push(`/course?id=${course.id}`)}
-              >
-                View Course
-              </button>
-              <div
-                className="text-xl cursor-pointer"
-                onClick={() => toggleSaveCourse(course.id)}
-                aria-label={isSaved ? "Remove from saved courses" : "Add to saved courses"}
+              <div className="flex items-center space-x-4">
+                <button
+                  className="mt-4 sm:mt-0 bg-gray-200 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-300 transition duration-300"
+                  onClick={() => router.push(`/course?id=${course.id}`)}
                 >
-                  {isSaved ? <FaBookmark /> : <FaRegBookmark />}
+                  View Course
+                </button>
+
+                <Tooltip title={isSaved ? "Unsave Course" : "Save Course"}>
+                  <button
+                    onClick={() => toggleSaveCourse(course.id)}
+                    className="text-black-500 hover:text-black-700 transition duration-300 flex items-center"
+                  >
+                    {isSaved ? <FaBookmark size={24}/> : <FaRegBookmark size={24}/>}
+                  </button>
+                </Tooltip>
               </div>
             </div>
           )})
