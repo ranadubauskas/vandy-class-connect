@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { usePathname, useRouter } from 'next/navigation';
+import { AuthProvider } from "../src/app/lib/contexts";
 import Register from "../src/app/register/page";
 import { register } from '../src/app/server';
-import { useRouter, usePathname } from 'next/navigation';
 
 // Mock functions
 jest.mock('next/navigation', () => ({
@@ -12,6 +13,14 @@ jest.mock('next/navigation', () => ({
 jest.mock('../src/app/server', () => ({
   register: jest.fn(),
 }));
+
+jest.mock('../src/app/lib/functions', () => ({
+  getUserCookies: jest.fn().mockResolvedValue(null),
+}));
+
+const renderWithAuthProvider = (ui, options = {}) => {
+  return render(<AuthProvider>{ui}</AuthProvider>, options);
+};
 
 describe("Register page", () => {
   const mockPush = jest.fn();
@@ -48,8 +57,10 @@ describe("Register page", () => {
     });
   });
 
-  it("should render the registration form", () => {
-    render(<Register />);
+  it("should render the registration form", async () => {
+    await act(async () => {
+      renderWithAuthProvider(<Register />);
+    });
     
     // Check if the form inputs are rendered
     expect(screen.getByPlaceholderText("First Name")).toBeInTheDocument();
@@ -63,26 +74,29 @@ describe("Register page", () => {
   });
 
   it("should show error message on failed registration", async () => {
-    render(<Register />);
+    await act(async () => {
+      renderWithAuthProvider(<Register />);
+    });
+
     fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "John" } });
     fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "Doe" } });
     fireEvent.change(screen.getByPlaceholderText("Vanderbilt Email"), { target: { value: "wrong@example.com" } });
     fireEvent.change(screen.getByPlaceholderText("Username"), { target: { value: "johnDoe" } });
     fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "wrongpassword" } });
     fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "wrongpassword" } });
-    
     // Select graduation year
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2025' } });
-    
     // Submit form
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-
-    // Expect error message 
+    // Expect error message
     expect(await screen.findByText("Invalid registration details")).toBeInTheDocument();
   });
 
   it("should register successfully and redirect to home", async () => {
-    render(<Register />);
+    await act(async () => {
+      renderWithAuthProvider(<Register />);
+    });
+
     fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "John" } });
     fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "Doe" } });
     fireEvent.change(screen.getByPlaceholderText("Vanderbilt Email"), { target: { value: "test@vanderbilt.edu" } });
@@ -90,13 +104,10 @@ describe("Register page", () => {
     fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "Testpassword123!" } });
     fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "Testpassword123!" } });
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '2025' } });
-    
     // Submit form
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-    
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/home'));
-    
-    //Ensure no error message displayed
+    // Ensure no error message displayed
     expect(screen.queryByText("Invalid registration details")).not.toBeInTheDocument();
   });
 });

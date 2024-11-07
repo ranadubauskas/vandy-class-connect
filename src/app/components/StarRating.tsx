@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 
 interface StarRatingProps {
   rating: number;
-  onRatingChange?: (newRating: number) => void; 
+  onRatingChange?: (newRating: number) => void;
   readOnly?: boolean;
-  size?: number; 
+  size?: number;
 }
 
 const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnly = false, size = 24 }) => {
@@ -12,6 +12,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
   const [selectedRating, setSelectedRating] = useState<number>(rating);
 
   const handleMouseEnter = (event: React.MouseEvent, star: number) => {
+    console.log("MOUSE ENTER");
     if (!readOnly) {
       const { offsetX } = event.nativeEvent;
       const isHalf = offsetX < size / 2; // Check if cursor is in the left half of the star
@@ -20,6 +21,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
   };
 
   const handleClick = (star: number, isHalf: boolean) => {
+    console.log("CLICKED");
     if (!readOnly && onRatingChange) {
       const newRating = isHalf ? star - 0.5 : star;
       setSelectedRating(newRating);
@@ -46,7 +48,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
       >
         {/* Full star background */}
         <span style={{ color: '#ccc', position: 'absolute', left: 0, width: '100%', overflow: 'hidden' }}>★</span>
-        
+
         {/* Partial star fill based on active rating */}
         <span
           style={{
@@ -59,7 +61,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
         >
           ★
         </span>
-        
+
         <span style={{ opacity: 0 }}>★</span> {/* Invisible star for spacing */}
       </span>
     );

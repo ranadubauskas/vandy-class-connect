@@ -16,6 +16,7 @@ export default function savedCourses() {
   const [editMode, setEditMode] = useState(false);
   const [courseToRemove, setCourseToRemove] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const router = useRouter();
 
   const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
@@ -70,6 +71,7 @@ export default function savedCourses() {
 
   const handleRemoveCourse = async () => {
     if (!courseToRemove) return;
+    setIsRemoving(true);
     try {
       const updatedSavedCourses = savedCourses.filter((course) => course.id !== courseToRemove);
       await pb.collection('users').update(userCookies.id, { savedCourses: updatedSavedCourses.map(c => c.id) });
@@ -78,6 +80,8 @@ export default function savedCourses() {
       setConfirmationOpen(false);
     } catch (error) {
       console.error('Error unsaving course:', error);
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -156,12 +160,18 @@ export default function savedCourses() {
       )}
     </div>
     {/*Confirmation Dialog*/}
-    <Dialog open={confirmationOpen} onClose={() => setConfirmationOpen(false)}>
+    <Dialog 
+      open={confirmationOpen} 
+      onClose={() => setConfirmationOpen(false)}
+      maxWidth="xs"
+      fullWidth
+    >
       <DialogTitle>
         Remove Course
         <IconButton
           aria-label="close"
-          onClick={() => setConfirmationOpen(false)}
+          onClick={() => !isRemoving && setConfirmationOpen(false)}
+          disabled={isRemoving}
           style={{
             position: 'absolute',
             right: 8,
@@ -172,10 +182,18 @@ export default function savedCourses() {
           <FaTimes />
         </IconButton>
       </DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Are you sure you want to remove this course?
-        </DialogContentText>
+      <DialogContent style={{ minHeight: 80 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        {isRemoving ? (
+          <DialogContentText className="text-center text-xl font-semibold">
+            Removing Course...
+          </DialogContentText>
+        ) : (
+          <DialogContentText>
+            Are you sure you want to remove this course from your saved courses?
+          </DialogContentText>
+        )}
+        </div>
       </DialogContent>
       <DialogActions style={{ justifyContent: 'center', paddingBottom: '16px'}}>
         <button onClick={handleRemoveCourse} color="secondary">

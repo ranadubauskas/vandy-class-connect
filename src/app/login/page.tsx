@@ -16,9 +16,7 @@ export default function Login() {
         setError('');
         try {
             const user = await signIn(email, password);
-            console.log('user: ', user);
             loginUser(user);
-            console.log('routing');
             router.push('/home');
         } catch (err) {
             console.error(err);
@@ -33,14 +31,14 @@ export default function Login() {
                 <form onSubmit={handleLogin} className="space-y-4">
                     <input
                         type="email"
-                        placeholder="Email"
+                        placeholder="Vanderbilt Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="password"
-                        placeholder="Vanderbilt Password"
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"

@@ -41,6 +41,7 @@ body {
 
 /* Small Devices */
 @media (max-width: 530px) {
+
   /* Container padding adjustment */
   .min-h-screen {
     padding: 1rem;
@@ -56,7 +57,7 @@ body {
   }
 
   /* Adjust button spacing */
-  .flex.space-x-4 > * {
+  .flex.space-x-4>* {
     margin-right: 0.5rem;
   }
 
@@ -111,4 +112,3 @@ body {
     width: calc(100% - 2rem);
   }
 }
-
