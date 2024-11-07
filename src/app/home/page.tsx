@@ -60,7 +60,7 @@ export default function Home() {
       }
       if (searchQuery) {
         const queryWords = searchQuery.toLowerCase().split(' ');
-        filtered = filtered.filter(course => 
+        filtered = filtered.filter(course =>
           queryWords.every(word =>
             course.code.toLowerCase().includes(word) ||
             course.name.toLowerCase().includes(word)
@@ -129,8 +129,8 @@ export default function Home() {
         </button>
       </div>
 
-           {/* Display Selected Filters */}
-           <div className="mb-4 flex flex-wrap gap-2">
+      {/* Display Selected Filters */}
+      <div className="mb-4 flex flex-wrap gap-2">
         {subjectFilters.map((filter) => (
           <div
             key={filter}
@@ -246,7 +246,7 @@ export default function Home() {
               </button>
             </div>
           ))
-        )} 
+        )}
       </div>
     </div>
   );
