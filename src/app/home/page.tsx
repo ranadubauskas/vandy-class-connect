@@ -9,8 +9,6 @@ import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
 
-pb.autoCancellation(false);
-
 export default function Home() {
   const [userCookies, setUserCookies] = useState(null);
   const [savedCourses, setSavedCourses] = useState<string[]>([]);

@@ -1,10 +1,8 @@
 
 'use server'
 import { cookies } from 'next/headers';
-import PocketBase from 'pocketbase';
+import pb from './lib/pocketbaseClient';
 
-const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
-const pb = new PocketBase(`${NEXT_PUBLIC_POCKETBASE_URL}`);
 
 type UserInfoType = {
     id: string;
@@ -198,7 +196,6 @@ export async function deleteReview(reviewId) {
     }
 }
 
-
 export async function getAllCourses() {
     try {
         // If subject is provided, filter by subject, otherwise get all courses
@@ -255,7 +252,7 @@ export async function getCourseByID(courseID: string) {
 export async function getUserByID(userID: string) {
     try {
         const fetchedUser = await pb.collection('users').getOne(userID);
-        return fetchedUser
+        return fetchedUser;
     } catch (error) {
         console.error('Error fetching review:', error);
         return null;

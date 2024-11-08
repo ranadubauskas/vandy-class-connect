@@ -1,49 +1,37 @@
-// __tests__/server.test.tsx
+/* eslint-disable @typescript-eslint/no-require-imports */
 
-import { cookies } from 'next/headers';
-
-// Mocks
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(),
-}));
-
-let mockPb: any = {};
-
-jest.mock('pocketbase', () => {
-  const MockPocketBase = jest.fn().mockImplementation(() => {
-    mockPb = {
-      collection: jest.fn(),
-    };
-    return mockPb;
-  });
-
-  return {
-    __esModule: true,
-    default: MockPocketBase,
-  };
-});
-
-// Use 'require' instead of 'import' to control module loading order
-const {
-  signIn,
-  register,
-  editUser,
-  getReviewByID,
-  editReview,
-  deleteReview,
-  getAllCourses,
-  getCoursesBySubject,
-  getCourseAndReviews,
-} = require('../src/app/server');
-
-describe('Server Functions', () => {
+jest.mock('next/headers', () => {
   const mockCookies = {
     set: jest.fn(),
   };
+  return {
+    cookies: jest.fn(() => mockCookies),
+  };
+});
+
+
+jest.mock('../src/app/lib/pocketbaseClient', () => {
+  const mockPb = {
+    collection: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockPb,
+  };
+});
+
+
+// Use 'require' instead of 'import' to control module loading order
+import { deleteReview, editReview, editUser, getAllCourses, getCourseAndReviews, getCourseByID, getCoursesBySubject, getReviewByID, getUserByID, getUserReviews, register, signIn } from '../src/app/server';
+
+describe('Server Functions', () => {
+  let mockCookies;
+  let mockPb;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (cookies as jest.Mock).mockReturnValue(mockCookies);
+    mockCookies = require('next/headers').cookies();
+    mockPb = require('../src/app/lib/pocketbaseClient').default;
   });
 
   describe('signIn', () => {
@@ -63,16 +51,9 @@ describe('Server Functions', () => {
         },
       };
 
-      const mockUserWithReviews = {
-        expand: {
-          reviews: ['review1', 'review2'],
-        },
-      };
-
       // Set up mock methods
       const mockUsersCollection = {
         authWithPassword: jest.fn().mockResolvedValue(mockUserAuthData),
-        getOne: jest.fn().mockResolvedValue(mockUserWithReviews),
       };
 
       mockPb.collection.mockImplementation((collectionName: string) => {
@@ -219,6 +200,21 @@ describe('Server Functions', () => {
       formData.set('graduationYear', '2024');
 
       await expect(register(formData)).rejects.toThrow('Passwords do not match.');
+    });
+
+    it('should throw an error if password length is less than 8 characters', async () => {
+      const formData = new FormData();
+      formData.set('username', 'testuser');
+      formData.set('email', 'test-user@vanderbilt.edu');
+      formData.set('password', 'short'); // Password too short
+      formData.set('passwordConfirm', 'short');
+      formData.set('firstName', 'Test');
+      formData.set('lastName', 'User');
+      formData.set('graduationYear', '2024');
+  
+      await expect(register(formData)).rejects.toThrow(
+        'Password must be at least 8 characters long.'
+      );
     });
   });
 
@@ -435,6 +431,23 @@ describe('Server Functions', () => {
       });
       expect(courses).toEqual(mockCourses);
     });
+
+    it('should return an empty array if fetching courses fails', async () => {
+      const mockCoursesCollection = {
+        getFullList: jest.fn().mockRejectedValue(new Error('Fetch failed')),
+      };
+  
+      mockPb.collection.mockImplementation((collectionName: string) => {
+        if (collectionName === 'courses') {
+          return mockCoursesCollection;
+        }
+        return {};
+      });
+  
+      const courses = await getAllCourses();
+  
+      expect(courses).toEqual([]);
+    });
   });
 
   describe('getCoursesBySubject', () => {
@@ -534,4 +547,166 @@ describe('Server Functions', () => {
       expect(result).toBeNull();
     });
   });
+  describe('getUserReviews', () => {
+    it('should return expanded reviews for a valid user ID', async () => {
+      const userID = 'validUserID';
+      const mockUserWithReviews = {
+        expand: { reviews: ['review1', 'review2'] },
+      };
+
+      const mockUsersCollection = {
+        getOne: jest.fn().mockResolvedValue(mockUserWithReviews),
+      };
+
+      mockPb.collection.mockImplementation((collectionName: string) => {
+        if (collectionName === 'users') {
+          return mockUsersCollection;
+        }
+        return {};
+      });
+
+      const reviews = await getUserReviews(userID);
+
+      expect(mockPb.collection).toHaveBeenCalledWith('users');
+      expect(mockUsersCollection.getOne).toHaveBeenCalledWith(userID, {
+        expand: 'reviews.course',
+      });
+      expect(reviews).toEqual(['review1', 'review2']);
+    });
+
+    it('should return an empty array if fetching user reviews fails', async () => {
+      const userID = 'invalidUserID';
+
+      const mockUsersCollection = {
+        getOne: jest.fn().mockRejectedValue(new Error('User not found')),
+      };
+
+      mockPb.collection.mockImplementation((collectionName: string) => {
+        if (collectionName === 'users') {
+          return mockUsersCollection;
+        }
+        return {};
+      });
+
+      const reviews = await getUserReviews(userID);
+
+      expect(reviews).toEqual([]);
+    });
+    it('should return an empty array if fetching user reviews fails', async () => {
+      const userID = 'invalidUserID';
+  
+      const mockUsersCollection = {
+        getOne: jest.fn().mockRejectedValue(new Error('User not found')),
+      };
+  
+      mockPb.collection.mockImplementation((collectionName: string) => {
+        if (collectionName === 'users') {
+          return mockUsersCollection;
+        }
+        return {};
+      });
+  
+      const reviews = await getUserReviews(userID);
+  
+      expect(reviews).toEqual([]);
+    });
+  });
+  
+
+  describe('getCourseByID', () => {
+    it('should return the course when fetching by ID is successful', async () => {
+      const courseID = 'validCourseID';
+      const mockCourse = {
+        id: courseID,
+        name: 'Example Course',
+        subject: 'CS',
+      };
+  
+      const mockCoursesCollection = {
+        getOne: jest.fn().mockResolvedValue(mockCourse),
+      };
+  
+      mockPb.collection.mockImplementation((collectionName: string) => {
+        if (collectionName === 'courses') {
+          return mockCoursesCollection;
+        }
+        return {};
+      });
+  
+      const course = await getCourseByID(courseID);
+  
+      expect(mockPb.collection).toHaveBeenCalledWith('courses');
+      expect(mockCoursesCollection.getOne).toHaveBeenCalledWith(courseID);
+      expect(course).toEqual(mockCourse);
+    });
+  
+    it('should return null if fetching course by ID fails', async () => {
+      const courseID = 'invalidCourseID';
+  
+      const mockCoursesCollection = {
+        getOne: jest.fn().mockRejectedValue(new Error('Course not found')),
+      };
+  
+      mockPb.collection.mockImplementation((collectionName: string) => {
+        if (collectionName === 'courses') {
+          return mockCoursesCollection;
+        }
+        return {};
+      });
+  
+      const course = await getCourseByID(courseID);
+  
+      expect(course).toBeNull();
+    });
+  });
+  
+
+  describe('getUserByID', () => {
+    it('should return the user when fetching by ID is successful', async () => {
+      const userID = 'validUserID';
+      const mockUser = {
+        id: userID,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+      };
+  
+      const mockUsersCollection = {
+        getOne: jest.fn().mockResolvedValue(mockUser),
+      };
+  
+      mockPb.collection.mockImplementation((collectionName: string) => {
+        if (collectionName === 'users') {
+          return mockUsersCollection;
+        }
+        return {};
+      });
+  
+      const user = await getUserByID(userID);
+  
+      expect(mockPb.collection).toHaveBeenCalledWith('users');
+      expect(mockUsersCollection.getOne).toHaveBeenCalledWith(userID);
+      expect(user).toEqual(mockUser);
+    });
+  
+    it('should return null if fetching user by ID fails', async () => {
+      const userID = 'invalidUserID';
+  
+      const mockUsersCollection = {
+        getOne: jest.fn().mockRejectedValue(new Error('User not found')),
+      };
+  
+      mockPb.collection.mockImplementation((collectionName: string) => {
+        if (collectionName === 'users') {
+          return mockUsersCollection;
+        }
+        return {};
+      });
+  
+      const user = await getUserByID(userID);
+  
+      expect(user).toBeNull();
+    });
+  });
+
 });

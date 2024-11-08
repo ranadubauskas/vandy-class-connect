@@ -69,7 +69,7 @@ describe('NavBar Component', () => {
     render(
       <AuthContext.Provider
         value={{
-          userData: null,
+          userData: mockUserData,
           logoutUser: mockLogout,
           getUser: mockGetUser,
           loginUser: mockLoginUser,
@@ -87,12 +87,20 @@ describe('NavBar Component', () => {
   });
 
   it('should call logoutUser when "Log Out" button is clicked', () => {
-    const mockUserData = { id: '123', firstName: 'John', lastName: 'Doe' };
+    const mockUserData = {
+      id: '123',
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      graduationYear: '2025',
+      profilePic: 'profile-pic-url.jpg',
+    };
 
     render(
       <AuthContext.Provider
         value={{
-          userData: null,
+          userData: mockUserData,
           logoutUser: mockLogout,
           getUser: mockGetUser,
           loginUser: mockLoginUser,
@@ -109,12 +117,20 @@ describe('NavBar Component', () => {
   it('should highlight the current page link based on pathname', () => {
     (usePathname as jest.Mock).mockReturnValue('/home');
 
-    const mockUserData = { id: '123', firstName: 'John', lastName: 'Doe' };
+    const mockUserData = {
+      id: '123',
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      graduationYear: '2025',
+      profilePic: 'profile-pic-url.jpg',
+    };
 
     render(
       <AuthContext.Provider
         value={{
-          userData: null,
+          userData: mockUserData,
           logoutUser: mockLogout,
           getUser: mockGetUser,
           loginUser: mockLoginUser,

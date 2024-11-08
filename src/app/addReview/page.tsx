@@ -121,7 +121,7 @@ function AddReviewComponent() {
             router.push(`/course?id=${courseId}`);
         } catch (error) {
             console.error('Error saving review:', error);
-            alert('Failed to add review');
+            setError('Error saving review.');
         } finally {
             setSaving(false);
         }
@@ -147,6 +147,8 @@ function AddReviewComponent() {
                 <button
                     className="text-white text-lg"
                     onClick={() => router.push(`/course?id=${courseId}`)}
+                    aria-label="Back to Course Page"
+
                 >
                     ← Back to Course Page
                 </button>
@@ -173,6 +175,7 @@ function AddReviewComponent() {
                         min="0"
                         step="0.1" // Allows for partial ratings like 3.4
                         value={rating}
+                        aria-label="Rating Input"
                         onChange={(e) => {
                             const value = parseFloat(e.target.value);
                             if (!isNaN(value)) {
@@ -184,9 +187,7 @@ function AddReviewComponent() {
                         placeholder="Rating"
                     />
                     {/* Dynamically render larger stars based on the input */}
-                    {/* Make the stars larger */}
                     <StarRating rating={rating} onRatingChange={handleRatingChange} size={40} />
-                    {/* <StarRating rating={rating} readOnly={true} size={40} /> */}
 
                     {/* Upload Syllabus Section */}
                     <div className="ml-8">

@@ -262,6 +262,7 @@ function CourseDetailPageComponent() {
                 <div className="flex justify-between">
                   <h3 className="font-semibold text-lg">Tutors</h3>
                   <button
+                    aria-label="Close"  
                     onClick={() => setShowTutors(false)}
                     className="text-gray-600 hover:text-gray-900 transition duration-300"
                   >
@@ -415,9 +416,9 @@ function CourseDetailPageComponent() {
                       </div>
                       {/* Right Section: Buttons */}
                       <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                        <Tooltip title="Download Syllabus">
                           {/* Syllabus Download Button */}
                           {syllabusUrl && (
+                          <Tooltip title="Download Syllabus">
                             <button
                               title="Download Syllabus"
                               className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
@@ -425,12 +426,12 @@ function CourseDetailPageComponent() {
                             >
                               <FaFileDownload className="text-xl" />
                             </button>
+                            </Tooltip>
                           )}
-                        </Tooltip>
-
                         {/* Report Review Button */}
                         <Tooltip title="Report Review">
                           <button
+                            aria-label="Report Review"
                             onClick={() => reportReview(review.id)}
                             className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
                           >

@@ -1,5 +1,5 @@
-import { getUserCookies, logout } from '../src/app/lib/functions';
 import { cookies } from 'next/headers';
+import { getUserCookies, logout } from '../src/app/lib/functions';
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn(),
@@ -14,6 +14,26 @@ describe('getUserCookies', () => {
       delete: jest.fn(),
     };
     (cookies as jest.Mock).mockReturnValue(mockCookieStore);
+  });
+
+  it('should correctly parse savedCourses if valid JSON is present', async () => {
+    const mockCookies = [
+      { name: 'id', value: '1' },
+      { name: 'firstName', value: 'John' },
+      { name: 'lastName', value: 'Doe' },
+      { name: 'email', value: 'john.doe@example.com' },
+      { name: 'savedCourses', value: JSON.stringify(['course1', 'course2']) },
+    ];
+    mockCookieStore.getAll.mockReturnValue(mockCookies);
+
+    const user = await getUserCookies();
+    expect(user).toEqual({
+      id: '1',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      savedCourses: ['course1', 'course2'],
+    });
   });
 
   it('should return user object if required cookies are present', async () => {
@@ -33,6 +53,46 @@ describe('getUserCookies', () => {
       lastName: 'Doe',
       email: 'john.doe@example.com',
       savedCourses: ['course1', 'course2'],
+    });
+  });
+
+  it('should default to an empty array if savedCourses is an empty string', async () => {
+    const mockCookies = [
+      { name: 'id', value: '1' },
+      { name: 'firstName', value: 'John' },
+      { name: 'lastName', value: 'Doe' },
+      { name: 'email', value: 'john.doe@example.com' },
+      { name: 'savedCourses', value: '' },  // Empty string for savedCourses
+    ];
+    mockCookieStore.getAll.mockReturnValue(mockCookies);
+
+    const user = await getUserCookies();
+    expect(user).toEqual({
+      id: '1',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      savedCourses: [], // Defaults to empty array
+    });
+  });
+
+  it('should default to an empty array if savedCourses is missing', async () => {
+    const mockCookies = [
+      { name: 'id', value: '1' },
+      { name: 'firstName', value: 'John' },
+      { name: 'lastName', value: 'Doe' },
+      { name: 'email', value: 'john.doe@example.com' },
+      // No savedCourses cookie
+    ];
+    mockCookieStore.getAll.mockReturnValue(mockCookies);
+
+    const user = await getUserCookies();
+    expect(user).toEqual({
+      id: '1',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      savedCourses: [], // Defaults to empty array
     });
   });
 
@@ -72,6 +132,15 @@ describe('getUserCookies', () => {
     const result = await getUserCookies();
     expect(result).toBe(errorMessage);
   });
+  it('should return null if a non-Error object is thrown', async () => {
+    mockCookieStore.getAll.mockImplementation(() => {
+      throw 'An unexpected error'; // Non-error object
+    });
+
+    const result = await getUserCookies();
+    expect(result).toBeNull();
+  });
+
 });
 
 describe('logout', () => {

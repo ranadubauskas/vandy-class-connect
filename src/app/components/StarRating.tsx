@@ -12,7 +12,6 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
   const [selectedRating, setSelectedRating] = useState<number>(rating);
 
   const handleMouseEnter = (event: React.MouseEvent, star: number) => {
-    console.log("MOUSE ENTER");
     if (!readOnly) {
       const { offsetX } = event.nativeEvent;
       const isHalf = offsetX < size / 2; // Check if cursor is in the left half of the star
@@ -21,7 +20,6 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
   };
 
   const handleClick = (star: number, isHalf: boolean) => {
-    console.log("CLICKED");
     if (!readOnly && onRatingChange) {
       const newRating = isHalf ? star - 0.5 : star;
       setSelectedRating(newRating);

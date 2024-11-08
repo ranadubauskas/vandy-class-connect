@@ -1,5 +1,3 @@
-// __tests__/contexts.test.tsx
-
 import { render, screen, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import { act } from 'react-dom/test-utils';
@@ -17,10 +15,13 @@ jest.mock('../src/app/lib/functions', () => ({
 
 describe('AuthContext', () => {
   const mockPush = jest.fn();
+  let consoleErrorSpy: jest.SpyInstance;
+
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   const TestComponent = () => {
@@ -36,6 +37,21 @@ describe('AuthContext', () => {
       </div>
     );
   };
+
+  it('should log an error if setUserDataFromCookies encounters an error', async () => {
+    const errorMessage = 'Error fetching user cookies';
+    (getUserCookies as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith("Error setting user data:", expect.any(Error));
+    });
+  });
 
   it('should render AuthProvider and handle login', async () => {
     render(

@@ -1,5 +1,3 @@
-// __tests__/homePage.test.tsx
-
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useRouter } from 'next/navigation';
 import Home from "../src/app/home/page";
@@ -41,9 +39,13 @@ describe("Home page", () => {
 
     const mockAuthContextValue = {
         userData: {
+            id: "123",
             firstName: "John",
             lastName: "Smith",
-            id: "123",
+            username: "johnsmith",
+            email: "john.smith@example.com",
+            graduationYear: "2024",
+            profilePic: "profilePicUrl",
         },
         getUser: jest.fn(),
         logoutUser: jest.fn(),
