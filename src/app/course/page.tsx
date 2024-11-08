@@ -28,6 +28,7 @@ function CourseDetailPageComponent() {
   const [popupMessage, setPopupMessage] = useState('');
   const [professors, setProfessors] = useState([]);
   const [selectedProfessor, setSelectedProfessor] = useState("");
+  const [copiedEmailMessage, setCopiedEmailMessage] = useState('');
 
   const currentUserId = userData?.id;
   const firstName = userData?.firstName;
@@ -101,8 +102,10 @@ function CourseDetailPageComponent() {
   //Function to copy tutor email to clipboard
   const copyEmail = (email) => {
     navigator.clipboard.writeText(email);
-    alert(`Copied: ${email}`);
+    setCopiedEmailMessage('Email copied');
+    setTimeout(() => setCopiedEmailMessage(''), 2000);
   }
+
 
   //Function to toggle visibility of tutor list
   const toggleTutors = () => {
@@ -301,6 +304,12 @@ function CourseDetailPageComponent() {
                   ) : (
                     <p>No tutors available for this course</p>
                   )}
+                  {/* Display copied message */}
+                  {copiedEmailMessage && (
+                    <p className="text-green-500 mt-2 text-center">
+                      {copiedEmailMessage}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -448,8 +457,8 @@ function CourseDetailPageComponent() {
 
 export default function CourseDetailPage() {
   return (
-      <Suspense fallback={<Loading />}>
-          <CourseDetailPageComponent />
-      </Suspense>
+    <Suspense fallback={<Loading />}>
+      <CourseDetailPageComponent />
+    </Suspense>
   );
 }
