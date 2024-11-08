@@ -1,7 +1,6 @@
 // __tests__/server.test.tsx
 
 import { cookies } from 'next/headers';
-import PocketBase from 'pocketbase';
 
 // Mocks
 jest.mock('next/headers', () => ({

@@ -1,55 +1,76 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import StarRating from '../src/app/components/StarRating'; // Adjust the path as necessary
+// StarRating.test.tsx
+import { fireEvent, render } from '@testing-library/react';
+import StarRating from '../src/app/components/StarRating';
 
 describe('StarRating Component', () => {
-  const handleRatingChange = jest.fn();
-
-  afterEach(() => {
-    jest.clearAllMocks();
+  test('renders 5 stars', () => {
+    const { container } = render(<StarRating rating={0} />);
+    const starSpans = container.querySelectorAll('.star-rating > span');
+    expect(starSpans.length).toBe(5);
   });
 
-  it('should render 5 stars', () => {
-    render(<StarRating rating={3} />);
-    const stars = screen.getAllByText('★');
-    expect(stars).toHaveLength(5);
+  test('fills stars according to the rating prop', () => {
+    const { container } = render(<StarRating rating={3.5} />);
+    const starSpans = container.querySelectorAll('.star-rating > span');
+
+    starSpans.forEach((starSpan, index) => {
+      const fillSpan = starSpan.querySelector('span:nth-child(2)') as HTMLElement;
+      const fillWidth = fillSpan ? fillSpan.style.width : null;
+
+      if (index < 3) {
+        // First three stars should be fully filled
+        expect(fillWidth).toBe('100%');
+      } else if (index === 3) {
+        // Fourth star should be half filled
+        expect(fillWidth).toBe('50%');
+      } else {
+        // Remaining stars should not be filled
+        expect(fillWidth).toBe('0%');
+      }
+    });
   });
 
-  it('should apply the correct rating based on the initial prop', () => {
-    render(<StarRating rating={3} />);
-    const stars = screen.getAllByText('★');
-    expect(stars[0]).toHaveStyle('color: #FFD700');
-    expect(stars[1]).toHaveStyle('color: #FFD700');
-    expect(stars[2]).toHaveStyle('color: #FFD700');
-    expect(stars[3]).toHaveStyle('color: #ccc');
+  test('calls onRatingChange with correct value when a star is clicked', () => {
+    const onRatingChange = jest.fn();
+    const { container } = render(<StarRating rating={0} onRatingChange={onRatingChange} />);
+    const starSpans = container.querySelectorAll('.star-rating > span');
+
+    fireEvent.click(starSpans[2]);
+
+    expect(onRatingChange).toHaveBeenCalledWith(2.5);
   });
 
-  it('should allow full-star rating change on click when not read-only', () => {
-    render(<StarRating rating={3} onRatingChange={handleRatingChange} readOnly={false} />);
-    const stars = screen.getAllByText('★');
-    fireEvent.click(stars[4]);
-    expect(handleRatingChange).toHaveBeenCalledWith(5);
+  test('does not call onRatingChange when readOnly is true', () => {
+    const onRatingChange = jest.fn();
+    const { container } = render(
+      <StarRating rating={0} onRatingChange={onRatingChange} readOnly={true} />
+    );
+    const starSpans = container.querySelectorAll('.star-rating > span');
+
+    fireEvent.click(starSpans[2]);
+
+    expect(onRatingChange).not.toHaveBeenCalled();
   });
 
-  it('should allow half-star rating on hover and update accordingly', () => {
-    render(<StarRating rating={3} onRatingChange={handleRatingChange} readOnly={false} size={24} />);
-    const stars = screen.getAllByText('★');
-    fireEvent.mouseMove(stars[2], { nativeEvent: { offsetX: 10 } }); // simulate half-star hover
-    expect(stars[2]).toHaveStyle('color: #FFD700'); // Check that the half star is colored correctly
+  test('cursor style is pointer when readOnly is false', () => {
+    const { container } = render(<StarRating rating={0} readOnly={false} />);
+    const starSpan = container.querySelector('.star-rating > span') as HTMLElement;
+
+    expect(starSpan.style.cursor).toBe('pointer');
   });
 
-  it('should not call onRatingChange if component is read-only', () => {
-    render(<StarRating rating={2} onRatingChange={handleRatingChange} readOnly={true} />);
-    const stars = screen.getAllByText('★');
-    fireEvent.click(stars[4]);
-    expect(handleRatingChange).not.toHaveBeenCalled();
+  test('cursor style is default when readOnly is true', () => {
+    const { container } = render(<StarRating rating={0} readOnly={true} />);
+    const starSpan = container.querySelector('.star-rating > span') as HTMLElement;
+
+    expect(starSpan.style.cursor).toBe('default');
   });
 
-  it('should reset hover state when the mouse leaves a star', () => {
-    render(<StarRating rating={2} />);
-    const stars = screen.getAllByText('★');
-    fireEvent.mouseMove(stars[2], { nativeEvent: { offsetX: 10 } });
-    expect(stars[2]).toHaveStyle('color: #FFD700');
-    fireEvent.mouseLeave(stars[2]);
-    expect(stars[2]).toHaveStyle('color: #ccc');
+  test('renders stars with correct size', () => {
+    const size = 30;
+    const { container } = render(<StarRating rating={0} size={size} />);
+    const starSpan = container.querySelector('.star-rating > span') as HTMLElement;
+
+    expect(starSpan.style.fontSize).toBe(`${size}px`);
   });
 });
