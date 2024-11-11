@@ -117,7 +117,6 @@ function AddReviewComponent() {
                 formData.append('syllabus', syllabusFile);
                 await pb.collection('courses').update(courseId, formData);
             }
-
             router.push(`/course?id=${courseId}`);
         } catch (error) {
             console.error('Error saving review:', error);
@@ -139,7 +138,6 @@ function AddReviewComponent() {
         setRating(newRating);
     };
 
-
     return (
         <div className="min-h-screen p-6">
             {/* Back to Course Link */}
@@ -148,7 +146,6 @@ function AddReviewComponent() {
                     className="text-white text-lg"
                     onClick={() => router.push(`/course?id=${courseId}`)}
                     aria-label="Back to Course Page"
-
                 >
                     ← Back to Course Page
                 </button>

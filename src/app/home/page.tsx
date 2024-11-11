@@ -8,6 +8,8 @@ import { IoClose, IoFilterOutline } from "react-icons/io5";
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid';
+
 
 export default function Home() {
   const [userCookies, setUserCookies] = useState(null);
@@ -21,6 +23,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [courseSubjects, setCourseSubjects] = useState<string[]>([]);
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
+  const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
 
   const router = useRouter();
 
@@ -43,7 +46,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchSavedCourses = async () => {
-      if(!userCookies) return;
+      if (!userCookies) return;
 
       try {
         const userRecord = await pb.collection('users').getOne(userCookies.id);
@@ -65,11 +68,16 @@ export default function Home() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const courses = await getAllCourses();
-      setCourses(courses);
-      const subjects = Array.from(new Set(courses.map(course => course.subject)));
-      setCourseSubjects(subjects);
-      setLoading(false);
+      try {
+        const courses = await getAllCourses();
+        setCourses(courses);
+        const subjects = Array.from(new Set(courses.map(course => course.subject)));
+        setCourseSubjects(subjects);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching courses:', error); // Ensure this error is logged
+        setLoading(false);
+      }
     };
     fetchCourses();
   }, []);
@@ -114,25 +122,25 @@ export default function Home() {
   };
 
   const updateSaved = async (userId, courseId, isSaved) => {
-      try {
-        const userRecord = await pb.collection('users').getOne(userId);
+    try {
+      const userRecord = await pb.collection('users').getOne(userId);
 
-        let updatedSavedCourses;
+      let updatedSavedCourses;
 
-        if(isSaved) { //Remove course from savedCourses
-          updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
-        } else { //Add course to savedCourses
-          updatedSavedCourses = [...userRecord.savedCourses, courseId];
-        }
-
-        //Update user record in database
-        await pb.collection('users').update(userId, {
-          savedCourses: updatedSavedCourses,
-        });
-        setSavedCourses(updatedSavedCourses);
-      } catch (error) {
-        console.error("Error saving course:", error);
+      if (isSaved) { //Remove course from savedCourses
+        updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
+      } else { //Add course to savedCourses
+        updatedSavedCourses = [...userRecord.savedCourses, courseId];
       }
+
+      //Update user record in database
+      await pb.collection('users').update(userId, {
+        savedCourses: updatedSavedCourses,
+      });
+      setSavedCourses(updatedSavedCourses);
+    } catch (error) {
+      console.error("Error saving course:", error);
+    }
   };
   const toggleSaveCourse = (courseId) => {
     const isSaved = savedCourses.includes(courseId);
@@ -168,11 +176,11 @@ export default function Home() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="p-3 w-full sm:w-80 lg:w-[40rem] rounded-full border border-gray-300"
+          className="p-3 w-full sm:w-80 lg:w-[40rem] rounded-full border border-gray-300 "
           placeholder="Search for a course"
         />
         <button
-          className="bg-gray-200 p-3 rounded-full hover:bg-gray-300 transition duration-300"
+          className="bg-gray-200 p-3 rounded-full hover:bg-gray-300 transition duration-300 shadow-lg"
           onClick={() => setShowFilterModal(true)}
           aria-label="Open filter"
           title="Filter by Subject"
@@ -180,11 +188,42 @@ export default function Home() {
           <IoFilterOutline size={20} />
         </button>
         <button
-          className="bg-gray-200 px-6 py-3 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-300 w-full sm:w-auto"
+          className="bg-gray-200 px-6 py-3 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-300 w-full sm:w-auto shadow-lg"
           onClick={() => setSearchQuery(searchQuery)}
         >
           <IoIosSearch size={24} className="mr-2" /> Search
         </button>
+      </div>
+
+      {/* Subject Filter Dropdown */}
+      <div className="mb-4">
+        <button
+          className="bg-gray-200 px-4 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+          onClick={() => setShowSubjectDropdown(!showSubjectDropdown)}
+        >
+          Filter by Subject
+        </button>
+        {showSubjectDropdown && (
+          <div className="bg-white p-4 mt-2 rounded-lg shadow-lg">
+            {courseSubjects.map((subject) => (
+              <label key={subject} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={tempSubjectFilters.includes(subject)}
+                  onChange={() => toggleTempFilter(subject)}
+                  aria-label={subject}
+                />
+                <span>{subject}</span>
+              </label>
+            ))}
+            <button
+              className="mt-2 bg-blue-500 text-white py-1 px-3 rounded-full hover:bg-blue-600 transition"
+              onClick={applyFilter}
+            >
+              Apply Filters
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Display Selected Filters */}
@@ -196,6 +235,7 @@ export default function Home() {
           >
             <span className="mr-2">{filter}</span>
             <button
+              aria-label={`Remove filter ${filter}`}
               onClick={() => removeFilter(filter)}
               className="text-red-500 hover:text-red-700"
             >
@@ -231,13 +271,17 @@ export default function Home() {
 
             {/* Subject Filters */}
             <div className="mb-4">
-              <label className="flex items-center space-x-2 font-bold">Filter by Subject:</label>
+              <label
+                title="Filter by Subject"
+                aria-label="Filter by Subject"
+                className="flex items-center space-x-2 font-bold">Filter by Subject:</label>
               {courseSubjects.map((subject) => (
                 <label key={subject} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     checked={tempSubjectFilters.includes(subject)}
                     onChange={() => toggleTempFilter(subject)}
+                    aria-label={subject}
                   />
                   <span>{subject}</span>
                 </label>
@@ -248,6 +292,8 @@ export default function Home() {
             <div className="mb-4">
               <label className="block mb-2 font-bold">Minimum Rating:</label>
               <select
+                id="ratingFilterSelect"
+                aria-label="Minimum Rating:"
                 value={ratingFilter || ''}
                 onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
                 className="p-2 rounded border border-gray-300 w-full"
@@ -286,37 +332,39 @@ export default function Home() {
           filteredCourses.map((course) => {
             const isSaved = savedCourses.includes(course.id);
             return (
-            <div
-              key={course.id}
-              className="flex flex-col sm:flex-row items-center justify-between bg-white text-black p-4 sm:p-6 rounded-lg shadow-lg"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="text-lg sm:text-2xl bg-gray-200 p-3 rounded-lg font-bold">
-                  {course.averageRating.toFixed(1) || "N/A"}
+              <div
+                key={course.id}
+                className="flex flex-col sm:flex-row items-center justify-between bg-white text-black p-4 sm:p-6 rounded-lg shadow-lg"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="text-lg sm:text-2xl bg-gray-200 p-3 rounded-lg font-bold shadow-lg">
+                    {course.averageRating.toFixed(1) || "N/A"}
+                  </div>
+                  <div className="text-lg sm:text-2xl">
+                    <span className="font-bold">{course.code}</span>: {course.name}
+                  </div>
                 </div>
-                <div className="text-lg sm:text-2xl">
-                  <span className="font-bold">{course.code}</span>: {course.name}
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <button
-                  className="mt-4 sm:mt-0 bg-gray-200 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-300 transition duration-300"
-                  onClick={() => router.push(`/course?id=${course.id}`)}
-                >
-                  View Course
-                </button>
-
-                <Tooltip title={isSaved ? "Unsave Course" : "Save Course"}>
+                <div className="flex items-center space-x-4">
                   <button
-                    onClick={() => toggleSaveCourse(course.id)}
-                    className="text-black-500 hover:text-black-700 transition duration-300 flex items-center"
+                    className="mt-4 sm:mt-0 bg-gray-200 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg"
+                    onClick={() => router.push(`/course?id=${course.id}`)}
                   >
-                    {isSaved ? <FaBookmark size={24}/> : <FaRegBookmark size={24}/>}
+                    View Course
                   </button>
-                </Tooltip>
+
+                  <Tooltip title={isSaved ? "Unsave Course" : "Save Course"}>
+                    <button
+                      data-testid={`save-button-${course.id}`}
+                      onClick={() => toggleSaveCourse(course.id)}
+                      className="text-black-500 hover:text-black-700 transition duration-300 flex items-center"
+                    >
+                      {isSaved ? <FaBookmark size={24} /> : <FaRegBookmark size={24} />}
+                    </button>
+                  </Tooltip>
+                </div>
               </div>
-            </div>
-          )})
+            )
+          })
         )}
       </div>
     </div>
