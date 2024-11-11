@@ -175,9 +175,22 @@ export async function getReviewByID(reviewId) {
 }
 
 
-export async function editReview(reviewId, data) {
+export async function editReview(reviewId, data, courseId) {
     try {
         const review = await pb.collection("reviews").update(reviewId, data);
+
+        const existingReviews = await pb.collection('reviews').getFullList({
+            filter: `course="${courseId}"`,
+        });
+
+
+        const totalRating = existingReviews.reduce((sum, review) => sum + (review.rating || 0), 0)
+        const avgRating = totalRating / (existingReviews.length);
+
+        await pb.collection('courses').update(courseId, {
+            averageRating: avgRating,
+        });
+
         return review;
     } catch (err) {
         console.error("Error review:", err);
@@ -186,9 +199,22 @@ export async function editReview(reviewId, data) {
 }
 
 
-export async function deleteReview(reviewId) {
+export async function deleteReview(reviewId, courseId) {
     try {
         const deletedReview = await pb.collection("reviews").delete(reviewId);
+        
+        const existingReviews = await pb.collection('reviews').getFullList({
+            filter: `course="${courseId}"`,
+        });
+
+        const totalRating = existingReviews.reduce((sum, review) => sum + (review.rating || 0), 0)
+        const avgRating = totalRating / (existingReviews.length);
+
+        await pb.collection('courses').update(courseId, {
+            averageRating: avgRating,
+        });
+
+
         return deletedReview;
     } catch (err) {
         console.error("Error review:", err);
