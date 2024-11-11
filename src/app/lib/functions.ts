@@ -8,7 +8,7 @@ export async function getUserCookies() {
 
         const allCookies = cookieStore.getAll();  // Fetch all cookies from the cookie store
         const hasRequiredCookies = allCookies.some(cookie => 
-            ["id", "firstName", "lastName", "email"].includes(cookie.name)
+            ["id", "firstName", "lastName", "email", "savedCourses"].includes(cookie.name)
         );
 
         if (!hasRequiredCookies) {
@@ -21,8 +21,13 @@ export async function getUserCookies() {
             return acc;
         }, {});
 
-        return singleObject;
+        try {
+            singleObject.savedCourses = singleObject.savedCourses ? JSON.parse(singleObject.savedCourses) : [];
+        } catch {
+            singleObject.savedCourses = [];  // Default to empty array if parsing fails
+        }
 
+        return singleObject;
     } catch (error) {
         console.error("Error fetching user cookies:", error);
         if (error instanceof Error) {
@@ -43,4 +48,5 @@ export async function logout() {
     allCookies.delete("graduationYear");
     allCookies.delete("profilePic");
     allCookies.delete("reviews");
+    allCookies.delete("savedCourses");
 }
