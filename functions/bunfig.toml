@@ -1,0 +1,3 @@
+[tests]
+coverage = true  # enables coverage
+exclude = ["src/pocketbase.ts"]

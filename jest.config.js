@@ -29,8 +29,9 @@ const customJestConfig = {
     },
     moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
     // Exclude .history/ directory from tests
-    testPathIgnorePatterns: ['<rootDir>/.history/', '<rootDir>/node_modules/'],
+    testPathIgnorePatterns: ['<rootDir>/.history/', '<rootDir>/node_modules/', '<rootDir>/functions/'],
 };
 
 // Export as an ES module
 module.exports = createJestConfig(customJestConfig);
+
