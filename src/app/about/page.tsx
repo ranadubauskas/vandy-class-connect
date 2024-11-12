@@ -4,7 +4,7 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/navigation';
 
 export default function About() {
-  const router = useRouter(); 
+  const router = useRouter();
   const faqData = [
     {
       question: 'What is VandyClassConnect?',
@@ -35,10 +35,10 @@ export default function About() {
             ← Back
           </button>
         </div>
-        
+
         {/* Heading */}
         <h1 className="text-3xl sm:text-4xl font-bold text-center text-white">About</h1>
-        
+
         {/* Intro Text */}
         <p className="text-center text-lg sm:text-xl mt-4 sm:mt-6 text-white leading-relaxed">
           VandyClassConnect is a platform to help Vanderbilt students

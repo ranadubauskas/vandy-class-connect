@@ -1,11 +1,11 @@
-// __tests__/homePage.test.tsx
-
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import Home from "../src/app/home/page";
 import { AuthContext } from "../src/app/lib/contexts";
 import { getUserCookies } from '../src/app/lib/functions';
 import { getAllCourses } from '../src/app/server';
+
 
 // Mock dependencies
 jest.mock('next/navigation', () => ({
@@ -17,20 +17,39 @@ jest.mock('../src/app/lib/functions', () => ({
     getUserCookies: jest.fn(),
 }));
 
+jest.mock('../src/app/lib/pocketbaseClient', () => {
+    const collectionMock = jest.fn().mockImplementation((collectionName) => {
+        return {
+            getOne: getOneMock,
+            update: updateMock,
+        };
+    });
+    const pbMock = {
+        collection: collectionMock,
+    };
+    return {
+        __esModule: true,
+        default: pbMock,
+    };
+});
+
+const getOneMock = jest.fn();
+const updateMock = jest.fn();
+
 jest.mock('../src/app/server', () => ({
     getAllCourses: jest.fn().mockResolvedValue([
         {
             id: "1",
             name: "Program Design and Data Structures",
             code: "CS 2201",
-            subject: "Computer Science",
+            subject: "CS",
             averageRating: 4.5,
         },
         {
             id: "2",
             name: "Methods of Linear Algebra",
             code: "MATH 2410",
-            subject: "Mathematics",
+            subject: "MATH",
             averageRating: 4.0,
         },
     ]),
@@ -38,6 +57,21 @@ jest.mock('../src/app/server', () => ({
 
 describe("Home page", () => {
     const mockPush = jest.fn();
+
+    const mockAuthContextValue = {
+        userData: {
+            id: "123",
+            firstName: "John",
+            lastName: "Smith",
+            username: "johnsmith",
+            email: "john.smith@example.com",
+            graduationYear: "2024",
+            profilePic: "profilePicUrl",
+        },
+        getUser: jest.fn(),
+        logoutUser: jest.fn(),
+        loginUser: jest.fn(),
+    };
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -49,6 +83,7 @@ describe("Home page", () => {
 
         // Mock getUserCookies
         (getUserCookies as jest.Mock).mockResolvedValue({
+            id: "123",
             firstName: "John",
             lastName: "Smith",
         });
@@ -68,12 +103,19 @@ describe("Home page", () => {
                 averageRating: 4.0,
             },
         ]);
+
+        getOneMock.mockResolvedValue({
+            savedCourses: ['1'],
+        });
+
+        updateMock.mockResolvedValue({});
+
     });
 
     it("should render the Home component and display user name", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -84,7 +126,7 @@ describe("Home page", () => {
 
     it("should display loading state initially", () => {
         render(
-            <AuthContext.Provider value={null}>
+            <AuthContext.Provider value={mockAuthContextValue}>
                 <Home />
             </AuthContext.Provider>
         );
@@ -94,7 +136,7 @@ describe("Home page", () => {
     it("should display courses after loading", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -109,7 +151,7 @@ describe("Home page", () => {
     it("should filter courses based on search query", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -133,7 +175,7 @@ describe("Home page", () => {
     it("should open and close the filter modal", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -156,7 +198,7 @@ describe("Home page", () => {
     it("should navigate to course page when 'View Course' is clicked", async () => {
         await act(async () => {
             render(
-                <AuthContext.Provider value={null}>
+                <AuthContext.Provider value={mockAuthContextValue}>
                     <Home />
                 </AuthContext.Provider>
             );
@@ -170,4 +212,552 @@ describe("Home page", () => {
         });
         expect(mockPush).toHaveBeenCalledWith("/course?id=1");
     });
+    it('should add a course to savedCourses when the course is not already saved', async () => {
+        await act(async () => {
+            render(<Home />);
+        });
+
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        // Verify that course '2' is not saved initially
+        const saveButton2 = screen.getByTestId('save-button-2');
+        userEvent.hover(saveButton2);
+
+        expect(await screen.findByText('Save Course')).toBeInTheDocument();
+        // Simulate unhover
+        userEvent.unhover(saveButton2);
+
+        // Click the save button for course '2' to save it
+        fireEvent.click(saveButton2);
+
+        // Wait for state to update
+        await waitFor(() => {
+            // Optionally, you can check if the saveButton2 now displays the unsaved icon
+            // Or simulate hover again and check the tooltip text
+            userEvent.hover(saveButton2);
+            expect(screen.getByText('Unsave Course')).toBeInTheDocument();
+        });
+
+        // // Verify that updateMock is called with the correct arguments
+        // expect(updateMock).toHaveBeenCalledWith('123', {
+        //     savedCourses: ['1', '2'],
+        // });
+    });
+    // it("should remove a subject filter when the remove button is clicked", async () => {
+    //     await act(async () => {
+    //         render(
+    //             <AuthContext.Provider value={mockAuthContextValue}>
+    //                 <Home />
+    //             </AuthContext.Provider>
+    //         );
+    //     });
+
+    //     await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+    //     // Open filter modal
+    //     fireEvent.click(screen.getByLabelText("Open filter"));
+
+    //     // Find the filter modal
+    //     const filterModal = screen.getByText("Select Filters").closest("div");
+    //     expect(filterModal).not.toBeNull(); // Ensure the modal is present
+
+    //     // Locate the checkbox associated with "MATH" by looking for its label text within the modal
+    //     const mathCheckboxLabel = within(filterModal!).getAllByText('MATH', { selector: 'span' }).find(element => element.closest('label'));
+    //     expect(mathCheckboxLabel).not.toBeNull();
+    //     const mathCheckbox = within(mathCheckboxLabel!).getByRole("checkbox");
+
+    //     // Click on the "MATH" checkbox to select it
+    //     fireEvent.click(mathCheckbox);
+
+    //     // Apply filter by clicking the "Save" button within the modal
+    //     const saveButton = within(filterModal!).getByRole('button', { name: /save/i });
+    //     fireEvent.click(saveButton);
+
+    //     // Verify that only "MATH 2410" is displayed
+    //     expect(screen.queryByText("CS 2201")).not.toBeInTheDocument();
+    //     expect(screen.getByText("MATH 2410")).toBeInTheDocument();
+
+    //     // Find and click the remove button for the "MATH" filter
+    //     const removeFilterButton = screen.getByLabelText("Remove filter MATH");
+    //     expect(removeFilterButton).toBeInTheDocument();
+    //     fireEvent.click(removeFilterButton);
+
+    //     // Verify both courses are displayed again
+    //     expect(screen.getByText("CS 2201")).toBeInTheDocument();
+    //     expect(screen.getByText("MATH 2410")).toBeInTheDocument();
+    // });
+    it('should apply rating filter and update course list', async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+    
+        // Open filter modal
+        fireEvent.click(screen.getByLabelText('Open filter'));
+    
+        // Get the filter modal and set rating filter to 4.0
+        const filterModal = screen.getByText('Select Filters').closest('div');
+        fireEvent.change(within(filterModal).getByLabelText('Minimum Rating:'), { target: { value: '4' } });
+    
+        // Apply filter by selecting the specific "Save" button in the modal
+        const modalSaveButton = within(filterModal).getByRole('button', { name: /save/i });
+        fireEvent.click(modalSaveButton);
+    
+        // Verify only courses with rating >= 4.0 are displayed
+        expect(screen.getByText('CS 2201')).toBeInTheDocument();
+        expect(screen.getByText('MATH 2410')).toBeInTheDocument(); // Both courses have >=4.0
+    });
+
+    it('should filter courses based on search query when search button is clicked', async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        // Enter search query
+        fireEvent.change(screen.getByPlaceholderText('Search for a course'), { target: { value: 'Program' } });
+
+        // Click the Search button
+        fireEvent.click(screen.getByRole('button', { name: /search/i }));
+
+        // Wait for the filtering to take effect
+        await waitFor(() => {
+            expect(screen.getByText('CS 2201')).toBeInTheDocument();
+            expect(screen.queryByText('MATH 2410')).not.toBeInTheDocument();
+        });
+    });
+
+    it('should handle no user cookies found', async () => {
+        (getUserCookies as jest.Mock).mockResolvedValue(null);
+
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getUserCookies).toHaveBeenCalled());
+
+        // Since there are no user cookies, welcome message should not display the name
+        expect(screen.queryByText('Welcome,', { exact: false })).not.toBeInTheDocument();
+    });
+
+    it('should handle error when fetching saved courses', async () => {
+        getOneMock.mockRejectedValue(new Error('Fetch error'));
+
+        // Spy on console.error to suppress error output in test
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getOneMock).toHaveBeenCalledTimes(1));
+
+        // Verify that an error was logged
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching saved courses:', expect.any(Error));
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle error when fetching cookies', async () => {
+        (getUserCookies as jest.Mock).mockRejectedValue(new Error('Cookies error'));
+
+        // Spy on console.error
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getUserCookies).toHaveBeenCalled());
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching cookies:', expect.any(Error));
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle error when fetching courses', async () => {
+        (getAllCourses as jest.Mock).mockRejectedValue(new Error('Courses error'));
+
+        // Spy on console.error
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching courses:', expect.any(Error));
+
+        // Verify that loading is set to false
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle error when updating saved courses', async () => {
+        updateMock.mockRejectedValue(new Error('Update error'));
+    
+        // Spy on console.error
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+    
+        // Click the save button for course '2' to save it
+        const saveButton2 = screen.getByTestId('save-button-2');
+        fireEvent.click(saveButton2);
+    
+        // Wait for update to be called
+        await waitFor(() =>
+            expect(updateMock).toHaveBeenCalledWith('123', {
+                savedCourses: ['1', '2'],  // This matches the updated expected value
+            })
+        );
+    
+        // Expect error to be logged
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error saving course:', expect.any(Error));
+    
+        consoleErrorSpy.mockRestore();
+    });
+    // it('should remove a subject filter when the remove button is clicked', async () => {
+    //     await act(async () => {
+    //       render(
+    //         <AuthContext.Provider value={mockAuthContextValue}>
+    //           <Home />
+    //         </AuthContext.Provider>
+    //       );
+    //     });
+      
+    //     await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+      
+    //     // Open filter modal
+    //     fireEvent.click(screen.getByLabelText('Open filter'));
+      
+    //     // Select subject filter for "Mathematics"
+    //     fireEvent.click(screen.getByLabelText('MATH'));
+      
+    //     // Apply filter
+    //     fireEvent.click(screen.getByRole('button', { name: /save/i }));
+      
+    //     // Verify only "MATH 2410" is displayed
+    //     expect(screen.queryByText('CS 2201')).not.toBeInTheDocument();
+    //     expect(screen.getByText('MATH 2410')).toBeInTheDocument();
+      
+    //     // Remove the subject filter
+    //     const removeFilterButton = screen.getByLabelText('Remove filter MATH');
+    //     fireEvent.click(removeFilterButton);
+      
+    //     // Verify both courses are displayed again
+    //     expect(screen.getByText('CS 2201')).toBeInTheDocument();
+    //     expect(screen.getByText('MATH 2410')).toBeInTheDocument();
+    //   });
+    it("should log 'No save courses found' if there are no saved courses", async () => {
+        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    
+        // Mock the response to have no saved courses
+        getOneMock.mockResolvedValueOnce({ savedCourses: null });
+    
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        await waitFor(() => expect(consoleLogSpy).toHaveBeenCalledWith("No save courses found"));
+    
+        consoleLogSpy.mockRestore();
+    });
+
+    it("should filter courses by selected subject", async () => {
+        // Mock getAllCourses to return courses with a known subject like "CS"
+        getAllCourses.mockResolvedValue([
+            {
+                id: "1",
+                name: "Program Design and Data Structures",
+                code: "CS 2201",
+                subject: "CS",
+                averageRating: 4.5,
+            },
+            {
+                id: "2",
+                name: "Methods of Linear Algebra",
+                code: "MATH 2410",
+                subject: "MATH",
+                averageRating: 4.0,
+            },
+        ]);
+    
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        // Wait for courses and course subjects to be loaded
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+    
+        // Open the filter modal
+        fireEvent.click(screen.getByLabelText("Open filter"));
+    
+        const filterModal = screen.getByText("Select Filters").closest("div");
+        expect(filterModal).not.toBeNull();
+    
+        // Check if the "CS" checkbox is displayed in the filter modal
+        const csCheckbox = within(filterModal!).getByLabelText("CS");
+        expect(csCheckbox).toBeInTheDocument();
+    
+        // Select "CS" as a subject filter
+        fireEvent.click(csCheckbox);
+    
+        // Apply the filter
+        fireEvent.click(within(filterModal!).getByRole("button", { name: /save/i }));
+    
+        // Verify that only CS courses are displayed
+        expect(screen.getByText("CS 2201")).toBeInTheDocument();
+        expect(screen.queryByText("MATH 2410")).not.toBeInTheDocument();
+    });
+
+    it("should toggle temp subject filters when a subject is selected", async () => {
+        // Mock the course data to ensure "CS" is present in the subjects
+        getAllCourses.mockResolvedValue([
+            {
+                id: "1",
+                name: "Program Design and Data Structures",
+                code: "CS 2201",
+                subject: "CS",
+                averageRating: 4.5,
+            },
+            {
+                id: "2",
+                name: "Methods of Linear Algebra",
+                code: "MATH 2410",
+                subject: "MATH",
+                averageRating: 4.0,
+            },
+        ]);
+    
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        // Wait for courses to load and ensure "CS" appears in subjects
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+    
+        // Open the filter modal
+        fireEvent.click(screen.getByLabelText("Open filter"));
+    
+        const filterModal = screen.getByText("Select Filters").closest("div");
+        expect(filterModal).not.toBeNull();
+    
+        // Ensure "CS" label is present and toggle it on
+        const csCheckbox = within(filterModal!).getByLabelText("CS");
+        fireEvent.click(csCheckbox);
+        expect(csCheckbox).toBeChecked();
+    
+        // Toggle "CS" off
+        fireEvent.click(csCheckbox);
+        expect(csCheckbox).not.toBeChecked();
+    });
+
+    it("should remove a course from savedCourses when unsaved", async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+    
+        // Simulate clicking the save button for an already saved course (to unsave it)
+        const saveButton1 = screen.getByTestId('save-button-1'); // Assuming course with id "1" is saved
+        fireEvent.click(saveButton1);
+    
+        // Wait for update to be called with course removed
+        await waitFor(() =>
+            expect(updateMock).toHaveBeenCalledWith("123", {
+                savedCourses: [], // Expect savedCourses array to be empty after removing
+            })
+        );
+    });
+
+    it("should add a course to savedCourses when saved", async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+    
+        // Simulate clicking the save button for a course not currently saved
+        const saveButton2 = screen.getByTestId('save-button-2'); // Assuming course with id "2" is not saved
+        fireEvent.click(saveButton2);
+    
+        // Wait for update to be called with course added
+        await waitFor(() =>
+            expect(updateMock).toHaveBeenCalledWith("123", {
+                savedCourses: ["1", "2"], // Expect both courses to be saved
+            })
+        );
+    });
+
+    it("should remove a subject filter when the remove button is clicked", async () => {
+        // Mock the course data to ensure "CS" is present in the subjects
+        getAllCourses.mockResolvedValue([
+            {
+                id: "1",
+                name: "Program Design and Data Structures",
+                code: "CS 2201",
+                subject: "CS",
+                averageRating: 4.5,
+            },
+            {
+                id: "2",
+                name: "Methods of Linear Algebra",
+                code: "MATH 2410",
+                subject: "MATH",
+                averageRating: 4.0,
+            },
+        ]);
+    
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        // Wait for courses to load and ensure "CS" appears in subjects
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+    
+        // Open the filter modal and select "CS"
+        fireEvent.click(screen.getByLabelText("Open filter"));
+    
+        const filterModal = screen.getByText("Select Filters").closest("div");
+        expect(filterModal).not.toBeNull();
+    
+        // Select "CS" checkbox within the modal
+        const csCheckbox = within(filterModal!).getByLabelText("CS");
+        fireEvent.click(csCheckbox);
+    
+        // Click the "Save" button specifically within the modal
+        const saveButton = within(filterModal!).getByRole("button", { name: /save/i });
+        fireEvent.click(saveButton);
+    
+        // Verify "CS" filter is displayed
+        expect(screen.getByText("CS")).toBeInTheDocument();
+    
+        // Remove "CS" filter
+        fireEvent.click(screen.getByLabelText("Remove filter CS"));
+        expect(screen.queryByText("CS")).not.toBeInTheDocument();
+    });
+    
+    it("should clear the rating filter when the clear button is clicked", async () => {
+        // Mock the course data to ensure filtering can occur
+        getAllCourses.mockResolvedValue([
+            {
+                id: "1",
+                name: "Program Design and Data Structures",
+                code: "CS 2201",
+                subject: "CS",
+                averageRating: 4.5,
+            },
+            {
+                id: "2",
+                name: "Methods of Linear Algebra",
+                code: "MATH 2410",
+                subject: "MATH",
+                averageRating: 3.0,
+            },
+        ]);
+    
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+    
+        // Wait for courses to load and ensure data is fetched
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+    
+        // Open the filter modal
+        fireEvent.click(screen.getByLabelText("Open filter"));
+    
+        // Target the filter modal specifically to interact with elements within it
+        const filterModal = screen.getByText("Select Filters").closest("div");
+        expect(filterModal).not.toBeNull();
+    
+        // Set a minimum rating by selecting the dropdown inside the modal
+        const ratingSelect = within(filterModal!).getByLabelText("Minimum Rating:");
+        fireEvent.change(ratingSelect, { target: { value: "4" } });
+    
+        // Target and click the "Save" button within the filter modal
+        const saveButton = within(filterModal!).getByRole("button", { name: /save/i });
+        fireEvent.click(saveButton);
+    
+        // Verify that the rating filter is applied by checking for its presence in the document
+        expect(screen.getByText("Rating: 4+")).toBeInTheDocument();
+    
+        // Clear the rating filter by finding the close button within the rating span
+        const ratingFilterDiv = screen.getByText("Rating: 4+").closest("div");
+        const clearButton = within(ratingFilterDiv!).getByRole("button");
+        fireEvent.click(clearButton);
+        
+        // Verify the rating filter is removed
+        expect(screen.queryByText("Rating: 4+")).not.toBeInTheDocument();
+    });
+
+  
+    
+
+
 });

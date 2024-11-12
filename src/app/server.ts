@@ -1,36 +1,43 @@
 
 'use server'
 import { cookies } from 'next/headers';
-import PocketBase from 'pocketbase';
-import { UserInfoType } from './lib/contexts';
+import pb from './lib/pocketbaseClient';
 
 
-const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
-const pb = new PocketBase(`${NEXT_PUBLIC_POCKETBASE_URL}`);
+type UserInfoType = {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    graduationYear: string;
+    profilePic: string;
+};
 
 
-export async function getUserReviews(userID: string){
-    try{
+export async function getUserReviews(userID: string) {
+    try {
         const user = await pb.collection('users').getOne(userID, {
             expand: "reviews.course",
         });
         const expandedReviews = user.expand?.reviews || [];
         return expandedReviews;
-    } catch(error){
+    } catch (error) {
         console.error(error);
         return [];
     }
 }
 
 export async function signIn(email: string, password: string): Promise<UserInfoType> {
-    console.log("IN SIGN IN");
+    if (!email || !password) {
+        throw new Error('Invalid email or password');
+      }
     try {
-      // Authenticate the user
-      const userAuthData = await pb.collection('users').authWithPassword(email, password);
+        // Authenticate the user
+        const userAuthData = await pb.collection('users').authWithPassword(email, password);
 
-      //Set user cookies
-      const userReviews = await getUserReviews(userAuthData.record.id);
-        console.log('userRevs: ' +  userReviews);
+        //Set user cookies
+        const userReviews = await getUserReviews(userAuthData.record.id);
 
         const allCookies = await cookies();
         // Set cookies for authenticated user
@@ -40,107 +47,105 @@ export async function signIn(email: string, password: string): Promise<UserInfoT
         allCookies.set("email", userAuthData.record.email);
         allCookies.set("graduationYear", userAuthData.record.graduationYear);
         allCookies.set("username", userAuthData.record.username);
-  
-      // Extract the user record
-      const userRecord = userAuthData.record;
-      console.log("IN SIGN I2");
-  
-      // Create a UserInfoType object
-      const userInfo: UserInfoType = {
-        id: userRecord.id,
-        username: userRecord.username,
-        firstName: userRecord.firstName,
-        lastName: userRecord.lastName,
-        email: userRecord.email,
-        graduationYear: userRecord.graduationYear,
-        profilePic: userRecord.profilePic,
-      };
-  
-      console.log('userInfo: ', userInfo);
-      // Optionally set cookies here if needed
-  
-      return userInfo;
+
+        // Extract the user record
+        const userRecord = userAuthData.record;
+
+        // Create a UserInfoType object
+        const userInfo: UserInfoType = {
+            id: userRecord.id,
+            username: userRecord.username,
+            firstName: userRecord.firstName,
+            lastName: userRecord.lastName,
+            email: userRecord.email,
+            graduationYear: userRecord.graduationYear,
+            profilePic: userRecord.profilePic,
+        };
+
+        return userInfo;
     } catch (err) {
-      console.error("Error in signIn:", err);
-      throw err;
+        console.error("Error in signIn:", err);
+        throw err;
     }
 }
 
 export async function register(formData: FormData) {
-    try{
-    const username = formData.get("username");
-    const email = formData.get("email");
-    const password = formData.get("password");
-    const passwordConfirm = formData.get("passwordConfirm");
-    const firstName = formData.get("firstName");
-    const lastName = formData.get("lastName");
-    const graduationYear = formData.get("graduationYear");
+    try {
+        const username = formData.get("username");
+        const email = formData.get("email");
+        const password = formData.get("password");
+        const passwordConfirm = formData.get("passwordConfirm");
+        const firstName = formData.get("firstName");
+        const lastName = formData.get("lastName");
+        const graduationYear = formData.get("graduationYear");
 
-    if (
-        typeof username !== 'string' || username == "" ||
-        typeof email !== 'string' || email == "" ||
-        typeof password !== 'string' || password == "" ||
-        typeof passwordConfirm !== 'string' || passwordConfirm == "" ||
-        typeof firstName !== 'string' || firstName == "" ||
-        typeof lastName !== 'string' || lastName == "" || 
-        typeof graduationYear !== 'string' ||  graduationYear == ""
-    ) {
-        throw new Error("Invalid input. Please provide all required fields.");
-    }
+        if (
+            typeof username !== 'string' || username == "" ||
+            typeof email !== 'string' || email == "" ||
+            typeof password !== 'string' || password == "" ||
+            typeof passwordConfirm !== 'string' || passwordConfirm == "" ||
+            typeof firstName !== 'string' || firstName == "" ||
+            typeof lastName !== 'string' || lastName == "" ||
+            typeof graduationYear !== 'string' || graduationYear == ""
+        ) {
+            throw new Error("Invalid input. Please provide all required fields.");
+        }
 
-    if (!email.endsWith('@vanderbilt.edu')) {
-        throw new Error("Only Vanderbilt email addresses are allowed.");
-    }
+        if (!email.endsWith('@vanderbilt.edu')) {
+            throw new Error("Only Vanderbilt email addresses are allowed.");
+        }
 
-    if (password !== passwordConfirm) {
-        throw new Error("Passwords do not match.");
-    }
+        if (password.length < 8) {
+            throw new Error("Password must be at least 8 characters long.");
+        }
+
+        if (password !== passwordConfirm) {
+            throw new Error("Passwords do not match.");
+        }
 
 
-    const newUser = await pb.collection('users').create({
-        username,
-        email,
-        emailVisibility: true,
-        password,
-        passwordConfirm,
-        firstName: firstName,
-        lastName: lastName,
-        graduationYear: graduationYear
-    });
-    console.log('newUser: ', newUser);
-    
-    const userData = {
-        id: newUser.id,
-        username: newUser.username,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        email: newUser.email,
-        graduationYear: newUser.graduationYear,
-        profilePic: newUser.profilePic,
-    };
-    const allCookies = await cookies();
+        const newUser = await pb.collection('users').create({
+            username,
+            email,
+            emailVisibility: true,
+            password,
+            passwordConfirm,
+            firstName: firstName,
+            lastName: lastName,
+            graduationYear: graduationYear
+        });
 
-    allCookies.set("id", newUser.id);
-    allCookies.set("username", newUser.username);
-    allCookies.set("firstName", newUser.firstName);
-    allCookies.set("lastName", newUser.lastName);
-    allCookies.set("email", newUser.email);
-    allCookies.set("graduationYear", newUser.graduationYear);
-    allCookies.set("profilePic", null);
-    allCookies.set("reviews", newUser.reviews);
-    
-    return userData;
-    } catch (err){
+        const userData = {
+            id: newUser.id,
+            username: newUser.username,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            email: newUser.email,
+            graduationYear: newUser.graduationYear,
+            profilePic: newUser.profilePic,
+        };
+        const allCookies = await cookies();
+
+        allCookies.set("id", newUser.id);
+        allCookies.set("username", newUser.username);
+        allCookies.set("firstName", newUser.firstName);
+        allCookies.set("lastName", newUser.lastName);
+        allCookies.set("email", newUser.email);
+        allCookies.set("graduationYear", newUser.graduationYear);
+        allCookies.set("profilePic", null);
+        allCookies.set("reviews", newUser.reviews);
+
+        return userData;
+    } catch (err) {
         console.error("Error creating user:", err);
         throw err;
     }
-    
+
 }
 
 export async function editUser(userId, data) {
     try {
         const user = await pb.collection("users").update(userId, data);
-        console.log("user", user);
 
         const allCookies = await cookies();
 
@@ -170,9 +175,22 @@ export async function getReviewByID(reviewId) {
 }
 
 
-export async function editReview(reviewId, data) {
+export async function editReview(reviewId, data, courseId) {
     try {
         const review = await pb.collection("reviews").update(reviewId, data);
+
+        const existingReviews = await pb.collection('reviews').getFullList({
+            filter: `course="${courseId}"`,
+        });
+
+
+        const totalRating = existingReviews.reduce((sum, review) => sum + (review.rating || 0), 0)
+        const avgRating = totalRating / (existingReviews.length);
+
+        await pb.collection('courses').update(courseId, {
+            averageRating: avgRating,
+        });
+
         return review;
     } catch (err) {
         console.error("Error review:", err);
@@ -181,16 +199,28 @@ export async function editReview(reviewId, data) {
 }
 
 
-export async function deleteReview(reviewId) {
+export async function deleteReview(reviewId, courseId) {
     try {
         const deletedReview = await pb.collection("reviews").delete(reviewId);
+        
+        const existingReviews = await pb.collection('reviews').getFullList({
+            filter: `course="${courseId}"`,
+        });
+
+        const totalRating = existingReviews.reduce((sum, review) => sum + (review.rating || 0), 0)
+        const avgRating = totalRating / (existingReviews.length);
+
+        await pb.collection('courses').update(courseId, {
+            averageRating: avgRating,
+        });
+
+
         return deletedReview;
     } catch (err) {
         console.error("Error review:", err);
         throw err;
     }
 }
-
 
 export async function getAllCourses() {
     try {
@@ -228,7 +258,7 @@ export async function getCourseAndReviews(courseID: string) {
             expand: 'reviews',
         });
         const expandedReviews = fetchedCourse.expand?.reviews || [];
-        return {course: fetchedCourse, reviews: expandedReviews};
+        return { course: fetchedCourse, reviews: expandedReviews };
     } catch (error) {
         console.error('Error fetching courses:', error);
         return null;
@@ -248,7 +278,7 @@ export async function getCourseByID(courseID: string) {
 export async function getUserByID(userID: string) {
     try {
         const fetchedUser = await pb.collection('users').getOne(userID);
-        return fetchedUser
+        return fetchedUser;
     } catch (error) {
         console.error('Error fetching review:', error);
         return null;

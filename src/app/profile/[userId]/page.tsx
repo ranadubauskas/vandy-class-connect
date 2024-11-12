@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
 import { editUser, getUserByID } from '../../server';
@@ -18,11 +18,11 @@ export default function Profile() {
     const params = useParams();
 
     const { userId } = params;
+    
 
     const userVal = useContext(AuthContext);
-    if(!userVal) return;
 
-    const { getUser, logoutUser } = userVal || {};
+    const { userData, getUser } = userVal || {};
 
     const [isEditing, setIsEditing] = useState(false);
     const [firstName, setFirstName] = useState('');
@@ -43,16 +43,16 @@ export default function Profile() {
             setOtherUser(fetchedUser);
             console.log("other user: ", fetchedUser);
     
-            const isProfileMine = userId === userVal.id;
+            const isProfileMine = userId === userData?.id;
             setIsMyProfile(isProfileMine);
     
-            setFirstName(isProfileMine ? userVal.firstName : fetchedUser.firstName);
-            setLastName(isProfileMine ? userVal.lastName : fetchedUser.lastName);
-            setEmail(isProfileMine ? userVal.email : fetchedUser.email);
-            setGraduationYear(isProfileMine ? userVal.graduationYear : fetchedUser.graduationYear);
+            setFirstName(isProfileMine ? userData?.firstName : fetchedUser.firstName);
+            setLastName(isProfileMine ? userData?.lastName : fetchedUser.lastName);
+            setEmail(isProfileMine ? userData?.email : fetchedUser.email);
+            setGraduationYear(isProfileMine ? userData?.graduationYear : fetchedUser.graduationYear);
     
-            const profilePicId = isProfileMine ? userVal.id : fetchedUser.id;
-            const profilePicName = isProfileMine ? userVal.profilePic : fetchedUser.profilePic;
+            const profilePicId = isProfileMine ? userData?.id : fetchedUser.id;
+            const profilePicName = isProfileMine ? userData?.profilePic : fetchedUser.profilePic;
     
             if (profilePicName) {
                 setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
@@ -67,6 +67,10 @@ export default function Profile() {
     }, [userVal, userId]);
     
 
+    if (!userVal) {
+        return <div>Loading...</div>; // Render a fallback UI if context is missing
+    }
+
     const handleViewRatings = () => {
         if (typeof window !== 'undefined') {
 
@@ -76,7 +80,7 @@ export default function Profile() {
 
     const handleSave = async () => {
         try {
-            const userId = userVal.id;
+            const userId = userData?.id;
             const formData = new FormData();
             formData.append('firstName', firstName);
             formData.append('lastName', lastName);

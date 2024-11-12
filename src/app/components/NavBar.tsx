@@ -34,7 +34,7 @@ export default function NavBar() {
               Saved Courses
             </Link>
             <Link
-              href={`/profile?id=${userData.id}`}
+              href={`/profile/${userData.id}`}
               className="text-white hover:text-gray-300 text-sm sm:text-lg"
             >
               Profile

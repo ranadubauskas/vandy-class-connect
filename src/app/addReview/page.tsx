@@ -1,27 +1,26 @@
 'use client';
 import { useRouter, useSearchParams } from 'next/navigation';
-import PocketBase from 'pocketbase';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Loading from "../components/Loading";
 import StarRating from '../components/StarRating';
 import { useAuth } from '../lib/contexts';
+import pb from "../lib/pocketbaseClient";
 
-const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
-pb.autoCancellation(false);
-
-export default function AddReviewPage() {
+function AddReviewComponent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const courseId = searchParams.get('id');
-    const { id: userId } = useAuth();
-
+    const { userData } = useAuth();
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
+    const [professorFirstName, setProfessorFirstName] = useState('');
+    const [professorLastName, setProfessorLastName] = useState('');
     const [syllabusFile, setSyllabusFile] = useState(null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const userId = userData.id;
 
     useEffect(() => {
         if (!courseId) return;
@@ -29,6 +28,7 @@ export default function AddReviewPage() {
         const fetchCourse = async () => {
             try {
                 const fetchedCourse = await pb.collection('courses').getOne(courseId);
+
                 setCourse(fetchedCourse);
             } catch (error) {
                 console.error('Error fetching course:', error);
@@ -57,49 +57,69 @@ export default function AddReviewPage() {
         }
         setSaving(true);
         setError('');
+
         try {
-            // Step 1: Create the review in the 'reviews' collection
+            // Check if the professor exists
+            const professorFilter = `firstName="${professorFirstName.trim()}" && lastName="${professorLastName.trim()}"`;
+            const existingProfessors = await pb.collection('professors').getFullList({
+                filter: professorFilter,
+            });
+
+            let professorId;
+            if (existingProfessors.length > 0) {
+                // Professor exists
+                professorId = existingProfessors[0].id;
+            } else {
+                // Create new professor
+                const newProfessor = await pb.collection('professors').create({
+                    firstName: professorFirstName.trim(),
+                    lastName: professorLastName.trim(),
+                    course: courseId,
+                });
+                professorId = newProfessor.id;
+            }
+
+            // Create the review
             const reviewData = {
                 course: courseId,
-                rating: parseFloat(rating), // Rating out of 5, including partial ratings
+                rating,
                 comment,
-                user: userId, // The user from cookies/context
-                syllabus: syllabusFile
+                user: userData.id,
+                syllabus: syllabusFile,
+                professors: [professorId], // Add professor relation
             };
 
             const newReview = await pb.collection('reviews').create(reviewData);
 
-            // Step 2: Update the 'courses' collection to include the new review
-            const fetchedCourse = await pb.collection('courses').getOne(courseId, {
-                expand: 'reviews',
+            // Update the course
+            const existingProfessorIds = course.professors || [];
+            const updatedProfessors = [...new Set([...existingProfessorIds, professorId])];
+
+            const existingReviewIds = course.reviews || [];
+            const updatedReviews = [...existingReviewIds, newReview.id];
+
+            // Optionally, fetch existing reviews to calculate the average rating
+            const existingReviews = await pb.collection('reviews').getFullList({
+                filter: `course="${courseId}"`,
             });
 
-            // Append the new review ID to the existing list of review IDs
-            const updatedReviews = [...(fetchedCourse.reviews || []), newReview.id];
+            const totalRating = existingReviews.reduce((sum, review) => sum + (review.rating || 0), 0) + newReview.rating;
+            const avgRating = totalRating / (existingReviews.length + 1);
 
-            console.log(updatedReviews);
-
-            const reviewsFromExpand = fetchedCourse.expand?.reviews || [];
-
-            // Recalculate the average rating
-            const totalRating = reviewsFromExpand.reduce((sum, review) => sum + (review.rating || 0), 0);
-            const avgRating = (totalRating + newReview.rating) / (reviewsFromExpand.length + 1); // Increment the count
-
-            // Update the course with the new review list and average rating
             await pb.collection('courses').update(courseId, {
                 reviews: updatedReviews,
-                averageRating: avgRating, // Update average rating
+                averageRating: avgRating,
+                professors: updatedProfessors,
             });
 
-            // Step 3: Upload syllabus file if present
+            // Upload syllabus file if present
             if (syllabusFile) {
                 const formData = new FormData();
                 formData.append('syllabus', syllabusFile);
-
                 await pb.collection('courses').update(courseId, formData);
             }
+            router.push(`/course?id=${courseId}`);
 
-            // Step 4: Add the review to a user profile
             const fetchedUserReviews = await pb.collection('users').getOne(userId, {
                 expand: 'reviews'
             });
@@ -109,13 +129,11 @@ export default function AddReviewPage() {
             await pb.collection('users').update(userId, {
                 reviews: userReviews
             })
-            console.log(userReviews);
 
-            // Redirect back to the course detail page
-            router.push(`/course?id=${courseId}`);
+
         } catch (error) {
             console.error('Error saving review:', error);
-            alert('Failed to add review');
+            setError('Error saving review.');
         } finally {
             setSaving(false);
         }
@@ -129,6 +147,10 @@ export default function AddReviewPage() {
         return <div>Course not found</div>;
     }
 
+    const handleRatingChange = (newRating: number) => {
+        setRating(newRating);
+    };
+
     return (
         <div className="min-h-screen p-6">
             {/* Back to Course Link */}
@@ -136,6 +158,7 @@ export default function AddReviewPage() {
                 <button
                     className="text-white text-lg"
                     onClick={() => router.push(`/course?id=${courseId}`)}
+                    aria-label="Back to Course Page"
                 >
                     ← Back to Course Page
                 </button>
@@ -155,19 +178,27 @@ export default function AddReviewPage() {
                 {/* Rating Input Section with Stars */}
                 <div className="flex items-center mt-4">
                     {/* Input for Rating */}
-                    
-                    {/* Dynamically render larger stars based on the input */}
-                    <StarRating rating={rating} readOnly={false} size={40} onRatingChange={(newRating) => {setRating(newRating)}}/> {/* Make the stars larger */}
                     <input
                         type="number"
-                        className="w-20 p-2 border border-gray-300 rounded ml-4 bg-gray-100 cursor-not-allowed"
+                        className="w-20 p-2 border border-gray-300 rounded mr-4"
                         max="5"
                         min="0"
                         step="0.1" // Allows for partial ratings like 3.4
                         value={rating}
-                        readOnly
+                        aria-label="Rating Input"
+                        onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (!isNaN(value)) {
+                                setRating(value);
+                            } else {
+                                setRating(0);
+                            }
+                        }}
                         placeholder="Rating"
                     />
+                    {/* Dynamically render larger stars based on the input */}
+                    <StarRating rating={rating} onRatingChange={handleRatingChange} size={40} />
+
                     {/* Upload Syllabus Section */}
                     <div className="ml-8">
                         <label htmlFor="syllabus-upload" className="text-lg font-semibold mr-3">
@@ -182,12 +213,28 @@ export default function AddReviewPage() {
                         />
                     </div>
                 </div>
+                <div className="flex items-center mt-4 space-x-4">
+                    <input
+                        type="text"
+                        className="w-2/5 p-2 border border-gray-300 rounded"
+                        placeholder="Professor's First Name"
+                        value={professorFirstName}
+                        onChange={(e) => setProfessorFirstName(e.target.value)}
+                    />
+                    <input
+                        type="text"
+                        className="w-2/5 p-2 border border-gray-300 rounded"
+                        placeholder="Professor's Last Name"
+                        value={professorLastName}
+                        onChange={(e) => setProfessorLastName(e.target.value)}
+                    />
+                </div>
 
                 {/* Comment Input */}
                 <div className="mt-4">
                     <textarea
                         className="w-full p-4 border border-gray-300 rounded-lg"
-                        rows="5"
+                        rows={5}
                         placeholder="Enter your review here..."
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
@@ -197,7 +244,7 @@ export default function AddReviewPage() {
                 {/* Save Button */}
                 <div className="mt-6">
                     <button
-                        className={`bg-blue-500 text-white py-2 px-6 rounded-lg shadow-lg ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`bg-blue-500 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-blue-700 ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={handleSave}
                         disabled={saving}
                     >
@@ -208,5 +255,13 @@ export default function AddReviewPage() {
                 {error && <div className="text-red-500 mt-2 mb-1">{error}</div>}
             </div>
         </div>
+    );
+}
+
+export default function AddReviewPage() {
+    return (
+        <Suspense fallback={<Loading />}>
+            <AddReviewComponent />
+        </Suspense>
     );
 }
