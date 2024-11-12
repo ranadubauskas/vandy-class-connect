@@ -10,8 +10,6 @@ import StarRating from '../components/StarRating';
 import { useAuth } from "../lib/contexts";
 import pb from "../lib/pocketbaseClient";
 
-pb.autoCancellation(false);
-
 function CourseDetailPageComponent() {
 
   const router = useRouter();
@@ -39,7 +37,8 @@ function CourseDetailPageComponent() {
       try {
         const fetchedCourse = await pb.collection('courses').getOne(id, {
           $cancel: false,
-          expand: 'reviews.user,reviews.professors,professors'
+          expand: 'reviews.user,reviews.professors,professors',
+          autoCancellation: false,
         });
         setCourse(fetchedCourse);
 
@@ -60,7 +59,7 @@ function CourseDetailPageComponent() {
 
         // Fetch tutor user details
         const tutorPromises = fetchedTutors.map(async (userId) => {
-          const user = await pb.collection('users').getOne(userId);
+          const user = await pb.collection('users').getOne(userId, {autoCancellation: false});
           return user;
         });
         const fetchedTutorDetails = await Promise.all(tutorPromises);
