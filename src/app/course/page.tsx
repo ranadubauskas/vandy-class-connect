@@ -17,7 +17,7 @@ function CourseDetailPageComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
-  const { userData } = useAuth(); //Getting the current user
+  const { userData } = useAuth(); // Getting the current user
   const [course, setCourse] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,12 +29,9 @@ function CourseDetailPageComponent() {
   const [professors, setProfessors] = useState([]);
   const [selectedProfessor, setSelectedProfessor] = useState("");
   const [copiedEmailMessage, setCopiedEmailMessage] = useState('');
+  const [selectedRating, setSelectedRating] = useState(0);
 
   const currentUserId = userData?.id;
-  const firstName = userData?.firstName;
-  const lastName = userData?.lastName;
-  const email = userData?.email;
-  const profilePic = userData?.profilePic;
 
   useEffect(() => {
     if (!id || !currentUserId) return;
@@ -61,7 +58,7 @@ function CourseDetailPageComponent() {
         const currentTutor = fetchedTutors.includes(currentUserId);
         setIsTutor(currentTutor);
 
-        // **Fetch tutor user details**
+        // Fetch tutor user details
         const tutorPromises = fetchedTutors.map(async (userId) => {
           const user = await pb.collection('users').getOne(userId);
           return user;
@@ -98,16 +95,14 @@ function CourseDetailPageComponent() {
     }
   };
 
-
-  //Function to copy tutor email to clipboard
+  // Function to copy tutor email to clipboard
   const copyEmail = (email) => {
     navigator.clipboard.writeText(email);
     setCopiedEmailMessage('Email copied');
     setTimeout(() => setCopiedEmailMessage(''), 2000);
   }
 
-
-  //Function to toggle visibility of tutor list
+  // Function to toggle visibility of tutor list
   const toggleTutors = () => {
     setShowTutors((prev) => !prev);
   }
@@ -119,15 +114,15 @@ function CourseDetailPageComponent() {
       return;
     }
     try {
-      //Update course to include new tutor
+      // Update course to include new tutor
       await pb.collection('courses').update(id, {
         tutors: [...(course.tutors || []), currentUserId]
       });
 
-      //Fetch user to update courses tutored field
+      // Fetch user to update courses tutored field
       const curUser = await pb.collection('users').getOne(currentUserId);
 
-      //Update user to include course tutored
+      // Update user to include course tutored
       await pb.collection('users').update(currentUserId, {
         courses_tutored: [...(curUser.courses_tutored || []), id]
       });
@@ -140,7 +135,6 @@ function CourseDetailPageComponent() {
     }
   }
 
-
   if (loading) {
     return <Loading />
   }
@@ -149,15 +143,25 @@ function CourseDetailPageComponent() {
     return <div className="flex items-center justify-center h-screen">Course not found</div>;
   }
 
-  const filteredReviews = selectedProfessor
-    ? reviews.filter((review) => {
-      const reviewProfessors = review.expand?.professors || [];
-      return reviewProfessors.some(
-        (professor) => `${professor.firstName} ${professor.lastName}` === selectedProfessor
-      );
-    })
-    : reviews;
+  const filteredReviews = reviews.filter((review) => {
+    const matchesProfessor = selectedProfessor
+      ? review.expand?.professors?.some(
+          (professor) => `${professor.firstName} ${professor.lastName}` === selectedProfessor
+        )
+      : true;
+  
+    const matchesRating = selectedRating > 0 ? review.rating >= selectedRating : true;
+    return matchesProfessor && matchesRating;
+  });
+  
+  // Determine grid classes based on the number of reviews
+  let gridClasses = "grid grid-cols-1 gap-6"; // default
 
+  if (filteredReviews.length === 2) {
+    gridClasses = "grid grid-cols-1 md:grid-cols-2 gap-6";
+  } else if (filteredReviews.length >= 3) {
+    gridClasses = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+  }
 
   return (
     <>
@@ -175,7 +179,7 @@ function CourseDetailPageComponent() {
         {/* Course Code and Name as Title */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">
-            {course.code}: {course.name} {/* Dynamic course name */}
+            {course.code}: {course.name}
           </h1>
 
           {/* Buttons Section */}
@@ -209,30 +213,48 @@ function CourseDetailPageComponent() {
             </button>
           </div>
         </div>
-        <div className="mb-4">
-          <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
-          {professors.length > 0 ? (
-            <select
-              id="professorFilter"
-              value={selectedProfessor}
-              onChange={(e) => setSelectedProfessor(e.target.value)}
-              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
-            >
-              <option value="" className="text-white">All Professors</option>
-              {professors.map((professor, index) => {
-                const professorName = `${professor.firstName} ${professor.lastName}`.trim();
-                return (
-                  <option key={index} value={professorName}>
-                    {professorName}
-                  </option>
-                );
-              })}
-            </select>
-          ) : (
-            <p className="text-gray-400 inline text-white text-lg">No professors found</p>
-          )}
-        </div>
+        <div className="mb-4 flex space-x-4">
+          <div>
+            <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
+            {professors.length > 0 ? (
+              <select
+                id="professorFilter"
+                value={selectedProfessor}
+                onChange={(e) => setSelectedProfessor(e.target.value)}
+                className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
+              >
+                <option value="" className="text-white">All Professors</option>
+                {professors.map((professor, index) => {
+                  const professorName = `${professor.firstName} ${professor.lastName}`.trim();
+                  return (
+                    <option key={index} value={professorName}>
+                      {professorName}
+                    </option>
+                  );
+                })}
+              </select>
+            ) : (
+              <p className="text-gray-400 inline text-white text-lg">No professors found</p>
+            )}
+          </div>
 
+          <div>
+            <label htmlFor="ratingFilter" className="text-white text-lg mr-2">Filter by Rating:</label>
+            <select
+              id="ratingFilter"
+              value={selectedRating}
+              onChange={(e) => setSelectedRating(Number(e.target.value))}
+              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+            >
+              <option value={0}>All Ratings</option>
+              <option value={1}>1+</option>
+              <option value={2}>2+</option>
+              <option value={3}>3+</option>
+              <option value={4}>4+</option>
+              <option value={5}>5 </option>
+            </select>
+          </div>
+        </div>
         {/* Popup Message */}
         {popupMessage && (
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg">
@@ -318,8 +340,8 @@ function CourseDetailPageComponent() {
 
         {/* Reviews Section with Average Rating */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
-            {/* Number of tutors for the course */}
+        <div className="flex flex-row flex-nowrap justify-between items-center mb-4 overflow-x-auto">
+        {/* Number of tutors for the course */}
             <button
               onClick={toggleTutors}
               className="flex flex-col items-center space-y-1 focus:outline-none mb-4 lg:mb-0"
@@ -368,88 +390,102 @@ function CourseDetailPageComponent() {
             {filteredReviews.length === 0 ? (
               <p className="text-gray-600 text-lg">No reviews yet.</p>
             ) : (
-              filteredReviews.map((review, index) => {
-                const user = review.expand?.user || {};
-                const profilePicture = user.profilePicture || '/images/user.png';
-                const syllabusUrl = review.syllabus
-                  ? pb.files.getUrl(review, review.syllabus)
-                  : null;
+              <div className={gridClasses}>
+                {filteredReviews.map((review, index) => {
+                  const user = review.expand?.user || {};
+                  const profilePicture = user.profilePicture || '/images/user.png';
+                  const syllabusUrl = review.syllabus
+                    ? pb.files.getUrl(review, review.syllabus)
+                    : null;
+                  const rating = review.rating || 0;
+                  const ratingColorClass =
+                    rating === 0.0
+                      ? "bg-gray-400"   // Gray if rating is exactly 0.0
+                      : rating > 0 && rating < 2
+                        ? "bg-red-400"    // Red for (0, 2)
+                        : rating >= 2 && rating < 4
+                          ? "bg-yellow-300" // Yellow for [2, 4)
+                          : "bg-green-300"; // Green for [4, 5]
 
-                return (
-                  <div key={index}>
-                    <div className="flex flex-col md:flex-row items-start justify-between">
-                      {/* Left Section: User Info and Review */}
-                      <div className="flex items-start space-x-4">
-                        <Link href={`/profile/${user.id}`} className="w-12 h-12 rounded-full object-cover transform hover:scale-110 transition-transform duration-200">
-                          <img src={profilePicture} alt="User Profile" className="w-16 h-12" />
-                        </Link>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <Link href={`/profile/${user.id}`}>
-                              <h3 className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
-                                {user.firstName && user.lastName
-                                  ? `${user.firstName} ${user.lastName}`
-                                  : 'Anonymous'}
-                              </h3>
-                            </Link>
-                          </div>
-                          {/* Star Rating */}
-                          <StarRating rating={review.rating} readOnly={true} />
-                          {/* Review Comment */}
-                          <p className="text-gray-600">{review.comment}</p>
-                          {/* Professor Name Box */}
-                          {review.expand?.professors?.some((prof) => prof.firstName) && (
-                            <div className="mt-2 p-1 border border-gray-300 rounded bg-gray-100 inline-block">
-                              <h3 className="text-gray-800 font-semibold">
-                                Professor:{' '}
-                                {review.expand.professors
-                                  .filter((prof) => prof.firstName) // Only include professors with non-empty firstName
-                                  .map((prof, idx, filteredProfs) => (
-                                    <span key={prof.id} className="font-normal">
-                                      {prof.firstName} {prof.lastName}
-                                      {idx < filteredProfs.length - 1 ? ', ' : ''}
-                                    </span>
-                                  ))}
-                              </h3>
+                  return (
+                    <div key={index} className="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
+                      <div className="flex flex-col flex-1">
+                        <div className="flex items-start space-x-4">
+                          <Link href={`/profile/${user.id}`}
+                            className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden transform hover:scale-110 transition-transform duration-200"
+                          >
+                            <img src={profilePicture} alt="User Profile" className="w-full h-full object-cover" />
+                          </Link>
+                          <div className="flex-grow">
+                            <div className="flex items-center space-x-2">
+                              <Link href={`/profile/${user.id}`}>
+                                <h3 className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
+                                  {user.firstName && user.lastName
+                                    ? `${user.firstName} ${user.lastName}`
+                                    : 'Anonymous'}
+                                </h3>
+                              </Link>
                             </div>
-                          )}
-
+                            {/* Star Rating and Action Buttons */}
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center space-x-2 whitespace-nowrap">
+                                {/* Rating Number in a Small Box */}
+                                <div className={`text-gray-900 font-semibold text-sm p-1 rounded ${ratingColorClass}`}>
+                                  {review.rating.toFixed(1)}
+                                </div>
+                                {/* Star Rating */}
+                                <StarRating rating={review.rating} readOnly={true} />
+                              </div>
+                              {/* Action Buttons */}
+                              <div className="flex items-center space-x-2 ml-4">
+                                {/* Syllabus Download Button */}
+                                {syllabusUrl && (
+                                  <Tooltip title="Download Syllabus">
+                                    <button
+                                      className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
+                                      onClick={() => window.open(syllabusUrl, '_blank')}
+                                    >
+                                      <FaFileDownload className="text-xl" />
+                                    </button>
+                                  </Tooltip>
+                                )}
+                                {/* Report Review Button */}
+                                <Tooltip title="Report Review">
+                                  <button
+                                    aria-label="Report Review"
+                                    onClick={() => reportReview(review.id)}
+                                    className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
+                                  >
+                                    <FaFlag className="text-2xl" />
+                                  </button>
+                                </Tooltip>
+                              </div>
+                            </div>
+                            {/* Review Comment */}
+                            <p className="text-gray-600 mt-2">{review.comment}</p>
+                            {/* Professor Name Box */}
+                            {review.expand?.professors?.some((prof) => prof.firstName) && (
+                              <div className="mt-2 p-1 border border-gray-300 rounded bg-gray-100 inline-block">
+                                <h3 className="text-gray-800 font-semibold">
+                                  Professor:{' '}
+                                  {review.expand.professors
+                                    .filter((prof) => prof.firstName)
+                                    .map((prof, idx, filteredProfs) => (
+                                      <span key={prof.id} className="font-normal">
+                                        {prof.firstName} {prof.lastName}
+                                        {idx < filteredProfs.length - 1 ? ', ' : ''}
+                                      </span>
+                                    ))}
+                                </h3>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      {/* Right Section: Buttons */}
-                      <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                        {/* Syllabus Download Button */}
-                        {syllabusUrl && (
-                          <Tooltip title="Download Syllabus">
-                            <button
-                              title="Download Syllabus"
-                              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
-                              onClick={() => window.open(syllabusUrl, '_blank')}
-                            >
-                              <FaFileDownload className="text-xl" />
-                            </button>
-                          </Tooltip>
-                        )}
-                        {/* Report Review Button */}
-                        <Tooltip title="Report Review">
-                          <button
-                            aria-label="Report Review"
-                            onClick={() => reportReview(review.id)}
-                            className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
-                          >
-                            <FaFlag className="text-2xl" />
-                          </button>
-                        </Tooltip>
-                      </div>
                     </div>
-
-                    {/* Divider Line */}
-                    {index < reviews.length - 1 && (
-                      <hr className="my-6 border-t border-gray-300" />
-                    )}
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
