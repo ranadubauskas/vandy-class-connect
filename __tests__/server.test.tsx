@@ -319,36 +319,54 @@ describe('Server Functions', () => {
   });
 
   describe('editReview', () => {
-    it('should edit a review', async () => {
+    it('should edit a review and update course average rating', async () => {
       const reviewId = 'reviewId';
-      const data = { content: 'Updated review content' };
-
-      const mockReview = {
-        id: 'reviewId',
+      const courseId = 'courseId';
+      const data = {
+        rating: 5,
         content: 'Updated review content',
       };
-
+  
       const mockReviewsCollection = {
-        update: jest.fn().mockResolvedValue(mockReview),
+        update: jest.fn().mockResolvedValue({}),
+        getFullList: jest.fn().mockResolvedValue([
+          // Mock existing reviews including the updated one
+          { rating: 5 },
+          { rating: 4 },
+        ]),
       };
-
-      mockPb.collection.mockImplementation((collectionName: string) => {
+  
+      const mockCoursesCollection = {
+        update: jest.fn().mockResolvedValue({}),
+      };
+  
+      mockPb.collection.mockImplementation((collectionName) => {
         if (collectionName === 'reviews') {
           return mockReviewsCollection;
+        } else if (collectionName === 'courses') {
+          return mockCoursesCollection;
         }
         return {};
       });
-
-      const review = await editReview(reviewId, data);
-
+  
+      const result = await editReview(reviewId, data, courseId);
+  
       expect(mockPb.collection).toHaveBeenCalledWith('reviews');
       expect(mockReviewsCollection.update).toHaveBeenCalledWith(reviewId, data);
-      expect(review).toEqual(mockReview);
+      expect(mockReviewsCollection.getFullList).toHaveBeenCalledWith({
+        filter: `course="${courseId}"`,
+      });
+      expect(mockCoursesCollection.update).toHaveBeenCalledWith(courseId, {
+        averageRating: 4.5, // (5 + 4) / 2
+      });
+      expect(result).toEqual({});
     });
 
     it('should throw an error if updating review fails', async () => {
       const reviewId = 'reviewId';
       const data = { content: 'Updated review content' };
+      const courseId = 'courseId'
+
 
       const mockReviewsCollection = {
         update: jest.fn().mockRejectedValue(new Error('Update failed')),
@@ -361,34 +379,55 @@ describe('Server Functions', () => {
         return {};
       });
 
-      await expect(editReview(reviewId, data)).rejects.toThrow('Update failed');
+      await expect(editReview(reviewId, data, courseId)).rejects.toThrow('Update failed');
     });
   });
 
   describe('deleteReview', () => {
-    it('should delete a review', async () => {
+    it('should delete a review and update course average rating', async () => {
       const reviewId = 'reviewId';
-
+      const courseId = 'courseId';
+  
       const mockReviewsCollection = {
         delete: jest.fn().mockResolvedValue({}),
+        getFullList: jest.fn().mockResolvedValue([
+          // Mock existing reviews after deletion
+          { rating: 4 },
+          { rating: 5 },
+        ]),
       };
-
-      mockPb.collection.mockImplementation((collectionName: string) => {
+  
+      const mockCoursesCollection = {
+        update: jest.fn().mockResolvedValue({}),
+      };
+  
+      // Mock pb.collection to return the appropriate mock collections
+      mockPb.collection.mockImplementation((collectionName) => {
         if (collectionName === 'reviews') {
           return mockReviewsCollection;
+        } else if (collectionName === 'courses') {
+          return mockCoursesCollection;
         }
         return {};
       });
-
-      const result = await deleteReview(reviewId);
-
+  
+      const result = await deleteReview(reviewId, courseId);
+  
       expect(mockPb.collection).toHaveBeenCalledWith('reviews');
       expect(mockReviewsCollection.delete).toHaveBeenCalledWith(reviewId);
+      expect(mockReviewsCollection.getFullList).toHaveBeenCalledWith({
+        filter: `course="${courseId}"`,
+      });
+      expect(mockCoursesCollection.update).toHaveBeenCalledWith(courseId, {
+        averageRating: 4.5, // (4 + 5) / 2
+      });
       expect(result).toEqual({});
     });
 
     it('should throw an error if deleting review fails', async () => {
       const reviewId = 'reviewId';
+      const courseId = 'courseId'
+
 
       const mockReviewsCollection = {
         delete: jest.fn().mockRejectedValue(new Error('Delete failed')),
@@ -401,7 +440,7 @@ describe('Server Functions', () => {
         return {};
       });
 
-      await expect(deleteReview(reviewId)).rejects.toThrow('Delete failed');
+      await expect(deleteReview(reviewId, courseId)).rejects.toThrow('Delete failed');
     });
   });
 

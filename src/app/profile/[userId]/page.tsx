@@ -80,44 +80,52 @@ export default function Profile() {
 
     const handleSave = async () => {
         try {
-            const userId = userData?.id;
-            const formData = new FormData();
-            formData.append('firstName', firstName);
-            formData.append('lastName', lastName);
-            formData.append('email', email);
-            formData.append('graduationYear', graduationYear);
-
-            if (profilePicFile) {
-                formData.append('profilePic', profilePicFile);
-            }
-
-            const updatedUser = await editUser(userId, formData);
-
-            if (updatedUser) {
-                setFirstName(updatedUser.firstName);
-                setLastName(updatedUser.lastName);
-                setEmail(updatedUser.email);
-                setGraduationYear(updatedUser.graduationYear);
-
-                if (profilePicFile) {
-                    const newProfilePicURL = URL.createObjectURL(profilePicFile);
-                    setProfilePicPreviewURL(newProfilePicURL);
-                } else if (updatedUser.profilePic) {
-                    setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userId}/${updatedUser.profilePic}`);
-                } else {
-                    setProfilePicPreviewURL(defaultProfilePic);
-                }
-
-                await getUser(); // Refresh the user data
-                setIsEditing(false);
+          if (!userData) {
+            throw new Error('User not authenticated');
+          }
+      
+          const formData = new FormData();
+          formData.append('firstName', firstName);
+          formData.append('lastName', lastName);
+          formData.append('graduationYear', graduationYear);
+      
+          if (profilePicFile) {
+            formData.append('profilePic', profilePicFile);
+          }
+      
+          // Call the editUser function with the user's ID and formData
+          const updatedUser = await editUser(userData.id, formData);
+      
+          if (updatedUser) {
+            // Update the state with the updated user data
+            setFirstName(updatedUser.firstName);
+            setLastName(updatedUser.lastName);
+            setGraduationYear(updatedUser.graduationYear);
+      
+            // Update the profile picture preview URL
+            if (updatedUser.profilePic) {
+              setProfilePicPreviewURL(
+                `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userData.id}/${updatedUser.profilePic}`
+              );
             } else {
-                console.error("Failed to update user");
+              setProfilePicPreviewURL(defaultProfilePic);
             }
+      
+            // Refresh the user data in context
+            if (getUser) {
+              await getUser();
+            }
+      
+            setIsEditing(false);
+          } else {
+            console.error('Failed to update user');
+            setError('Failed to update profile. Please try again.');
+          }
         } catch (error) {
-            console.error("Error updating user:", error);
-            setError("Failed to update profile. Please try again.");
+          console.error('Error updating user:', error);
+          setError('Failed to update profile. Please try again.');
         }
-    };
+      };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -201,27 +209,30 @@ export default function Profile() {
                 ) : (
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-gray-700">First Name</label>
+                            <label htmlFor="firstName" className="block text-gray-700">First Name</label>
                             <input
                                 type="text"
+                                id='firstName'
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 className="border border-gray-300 rounded p-2 w-full mt-1"
                             />
                         </div>
                         <div>
-                            <label className="block text-gray-700">Last Name</label>
+                            <label htmlFor="lastName" className="block text-gray-700">Last Name</label>
                             <input
                                 type="text"
+                                id='lastName'
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 className="border border-gray-300 rounded p-2 w-full mt-1"
                             />
                         </div>
                         <div>
-                            <label className="block text-gray-700">Email</label>
+                            <label htmlFor="email" className="block text-gray-700">Email</label>
                             <input
                                 type="email"
+                                id='email'
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 readOnly
@@ -229,8 +240,9 @@ export default function Profile() {
                             />
                         </div>
                         <div>
-                            <label className="block text-gray-700">Grade</label>
+                            <label htmlFor="graduationYear" className="block text-gray-700">Grade</label>
                             <select
+                                id="graduationYear"
                                 value={graduationYear}
                                 onChange={(e) => setGraduationYear(e.target.value)}
                                 className="border border-gray-300 rounded p-2 w-full mt-1"
