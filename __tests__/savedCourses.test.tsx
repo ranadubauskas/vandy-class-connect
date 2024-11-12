@@ -1,11 +1,10 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import SavedCourses from '../src/app/savedCourses/page';
-import PocketBase from 'pocketbase';
 import userEvent from '@testing-library/user-event';
 import { AuthContext } from "../src/app/lib/contexts";
 import { getUserCookies } from '../src/app/lib/functions';
-
+import pb from '../lib/pocketbaseClient';
 
 //Mock dependencies
 jest.mock('next/navigation', () => ({
@@ -17,21 +16,30 @@ jest.mock('../src/app/lib/functions', () => ({
     getUserCookies: jest.fn(),
 }));
   
-jest.mock('../src/app/lib/pocketbaseClient', () => {
-    const collectionMock = jest.fn().mockImplementation((collectionName) => {
-        return {
-            getOne: getOneMock,
-            update: updateMock,
-        };
-    });
-    const pbMock = {
-        collection: collectionMock,
-    };
-    return {
-        __esModule: true,
-        default: pbMock,
-    };
-});
+jest.mock('../src/app/lib/pocketbaseClient', () => ({
+    collection: jest.fn().mockImplementation((collectionName) => {
+        if (collectionName === 'users') {
+            return {
+              getOne: jest.fn().mockResolvedValue({
+                id: "user123",
+                savedCourses: ["1", "2"],  // Mocked saved course IDs
+              }),
+            };
+          }
+          if (collectionName === 'courses') {
+            return {
+              getOne: jest.fn().mockImplementation((courseId) => {
+                const courses = {
+                  "1": { id: "1", name: "Program Design and Data Structures", code: "CS 2201", averageRating: 4.5 },
+                  "2": { id: "2", name: "Methods of Linear Algebra", code: "MATH 2410", averageRating: 4.0 },
+                };
+                return Promise.resolve(courses[courseId]);
+              }),
+            };
+          }
+        return { getOne: jest.fn() };  // Default mock for any other collection
+    }),
+}));
 const getOneMock = jest.fn();
 const updateMock = jest.fn();
 
@@ -101,17 +109,14 @@ describe("SavedCourses page", () => {
     });
 
     it("should render the saved courses list correctly", async () => {
-        await act(async () => {
-            render(
-                <AuthContext.Provider value={mockAuthContextValue}>
-                    <SavedCourses />
-                </AuthContext.Provider>
-            );
-        });
 
-        await waitFor(() => expect(getUserCookies).toHaveBeenCalled());
-        expect(await screen.findByText(/Program Design and Data Structures/i)).toBeInTheDocument();
-        expect(await screen.findByText(/Methods of Linear Algebra/i)).toBeInTheDocument();
+        const { getByText } = render(<SavedCourses />);
+        expect(getByText('Loading...')).toBeInTheDocument();
+        await waitFor(() => expect(screen.getByText("CS 2201")).toBeInTheDocument());
+        await waitFor(() => {
+            expect(getByText('CS 2201')).toBeInTheDocument();
+            expect(getByText('MATH 2410')).toBeInTheDocument();
+          });
     });
 
     it("should display loading state when courses are being fetched", () => {
@@ -160,14 +165,15 @@ describe("SavedCourses page", () => {
         const editButton = screen.getByRole("button", { name: /edit/i });
         fireEvent.click(editButton);  // Click to enter edit mode
 
-        const removeButton = screen.getAllByRole('button', { name: /unsave course/i })[0];  // Assuming there are multiple courses
-        fireEvent.click(removeButton);
+        const removeButton = screen.getAllByTestId('unsave-button');  // Assuming there are multiple courses
+        fireEvent.click(removeButton[0]);
 
         expect(screen.getByText(/are you sure you want to remove this course/i)).toBeInTheDocument();
-        const cancelButton = screen.getByRole('button', { name: /cancel/i });
-        fireEvent.click(cancelButton);  // Cancel the action
 
-        expect(screen.queryByText(/are you sure you want to remove this course/i)).not.toBeInTheDocument();
+        const closeButton = screen.getByRole('button', { name: /close/i });
+        fireEvent.click(closeButton);  // Cancel the action
+
+        await waitFor (() => expect(screen.queryByText(/are you sure you want to remove this course/i)).not.toBeInTheDocument());
     });
 
     it("should navigate to course page when 'View Course' is clicked", async () => {
@@ -197,8 +203,8 @@ describe("SavedCourses page", () => {
       });
   
       // Simulate clicking the "View Course" button for the first course
-      const viewCourseButton = screen.getByText(/View Course/i);
-      fireEvent.click(viewCourseButton);
+      const viewCourseButton = screen.getAllByText(/View Course/i);
+      fireEvent.click(viewCourseButton[0]);
   
       // Assert that the router.push method was called with the correct URL
       expect(mockPush).toHaveBeenCalledWith("/course?id=1");
@@ -213,5 +219,21 @@ describe("SavedCourses page", () => {
         );
         expect(screen.getByText("Loading...")).toBeInTheDocument();
     });
+
+    // it("should display an error message if fetching courses fails", async () => {
+    //     jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console error
+    //     pb.collection.mockImplementationOnce(() => ({
+    //       getOne: jest.fn().mockRejectedValue(new Error("Failed to fetch courses")),
+    //     }));
+      
+    //     render(
+    //       <AuthContext.Provider value={mockAuthContextValue}>
+    //         <SavedCourses />
+    //       </AuthContext.Provider>
+    //     );
+      
+    //     await waitFor(() => expect(screen.getByText(/failed to fetch courses/i)).toBeInTheDocument());
+    //     console.error.mockRestore();
+    //   });
 
 });

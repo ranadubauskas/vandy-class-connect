@@ -49,7 +49,7 @@ export default function savedCourses() {
       if(!userCookies) return;
 
       try {
-        const userRecord = await pb.collection('users').getOne(userCookies.id);
+        const userRecord = await pb.collection('users').getOne(userCookies.id, {autoCancellation: false});
         if (userRecord?.savedCourses?.length) {
           const courseDetails = await Promise.all(
             userRecord.savedCourses.map((courseId) =>
