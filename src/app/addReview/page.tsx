@@ -27,7 +27,7 @@ function AddReviewComponent() {
 
         const fetchCourse = async () => {
             try {
-                const fetchedCourse = await pb.collection('courses').getOne(courseId);
+                const fetchedCourse = await pb.collection('courses').getOne(courseId, { autoCancellation: false });
 
                 setCourse(fetchedCourse);
             } catch (error) {
@@ -63,6 +63,7 @@ function AddReviewComponent() {
             const professorFilter = `firstName="${professorFirstName.trim()}" && lastName="${professorLastName.trim()}"`;
             const existingProfessors = await pb.collection('professors').getFullList({
                 filter: professorFilter,
+                autoCancellation: false
             });
 
             let professorId;
@@ -101,6 +102,7 @@ function AddReviewComponent() {
             // Optionally, fetch existing reviews to calculate the average rating
             const existingReviews = await pb.collection('reviews').getFullList({
                 filter: `course="${courseId}"`,
+                autoCancellation: false
             });
 
             const totalRating = existingReviews.reduce((sum, review) => sum + (review.rating || 0), 0) + newReview.rating;

@@ -48,7 +48,7 @@ export default function Home() {
       if (!userCookies) return;
 
       try {
-        const userRecord = await pb.collection('users').getOne(userCookies.id);
+        const userRecord = await pb.collection('users').getOne(userCookies.id, { autoCancellation: false });
         if (userRecord && userRecord.savedCourses) {
           setSavedCourses(userRecord.savedCourses);
         } else {
@@ -122,7 +122,7 @@ export default function Home() {
 
   const updateSaved = async (userId, courseId, isSaved) => {
     try {
-      const userRecord = await pb.collection('users').getOne(userId);
+      const userRecord = await pb.collection('users').getOne(userId, {autocancellation: false});
 
       let updatedSavedCourses;
 
@@ -170,7 +170,7 @@ export default function Home() {
       </div>
 
       {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 mb-3">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 mb-6">
         <input
           type="text"
           value={searchQuery}
