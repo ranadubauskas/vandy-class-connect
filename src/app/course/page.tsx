@@ -209,7 +209,6 @@ function CourseDetailPageComponent() {
             </button>
           </div>
         </div>
-
         <div className="mb-4">
           <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
           {professors.length > 0 ? (
@@ -217,8 +216,8 @@ function CourseDetailPageComponent() {
               id="professorFilter"
               value={selectedProfessor}
               onChange={(e) => setSelectedProfessor(e.target.value)}
-              className="p-2 rounded border border-gray-300"
-            >
+              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
+              >
               <option value="" className="text-white">All Professors</option>
               {professors.map((professor, index) => {
                 const professorName = `${professor.firstName} ${professor.lastName}`.trim();

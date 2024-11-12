@@ -8,7 +8,6 @@ import { IoClose, IoFilterOutline } from "react-icons/io5";
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid';
 
 
 export default function Home() {
@@ -23,8 +22,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [courseSubjects, setCourseSubjects] = useState<string[]>([]);
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
-  const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
-
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -195,35 +193,54 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Subject Filter Dropdown */}
-      <div className="mb-4">
-        <button
-          className="bg-gray-200 px-4 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
-          onClick={() => setShowSubjectDropdown(!showSubjectDropdown)}
-        >
-          Filter by Subject
-        </button>
-        {showSubjectDropdown && (
-          <div className="bg-white p-4 mt-2 rounded-lg shadow-lg">
-            {courseSubjects.map((subject) => (
-              <label key={subject} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={tempSubjectFilters.includes(subject)}
-                  onChange={() => toggleTempFilter(subject)}
-                  aria-label={subject}
-                />
-                <span>{subject}</span>
-              </label>
+      {/* Filter dropdowns */}
+      <div className="mb-1 flex space-x-4 items-center">
+        {/* Subject Filter */}
+        <label htmlFor="subjectFilter" className="text-white text-lg font-bold">Filter by Subject:</label>
+        {courseSubjects.length > 0 ? (
+          <select
+            id="subjectFilter"
+            value={tempSubjectFilters[0] || ""}
+            onChange={(e) => {
+              const subject = e.target.value;
+              if (subject === "") {
+                setSubjectFilters([]); // Clear all filters if "All Subjects" is selected
+              } else {
+                setSubjectFilters((prevFilters) =>
+                  prevFilters.includes(subject)
+                    ? prevFilters
+                    : [...prevFilters, subject]
+                );
+              }
+            }}
+            className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+          >
+            <option value="" className="text-gray-700">All Subjects</option>
+            {courseSubjects.map((subject, index) => (
+              <option key={index} value={subject}>
+                {subject}
+              </option>
             ))}
-            <button
-              className="mt-2 bg-blue-500 text-white py-1 px-3 rounded-full hover:bg-blue-600 transition"
-              onClick={applyFilter}
-            >
-              Apply Filters
-            </button>
-          </div>
+          </select>
+        ) : (
+          <p className="text-gray-400 inline text-white text-lg">No Subjects Found</p>
         )}
+
+        {/* Rating Filter */}
+        <label htmlFor="ratingFilter" className="text-white text-lg font-bold">Filter by Rating:</label>
+        <select
+          id="ratingFilter"
+          value={ratingFilter || ""}
+          onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
+          className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+        >
+          <option value="" className="text-gray-700">All Ratings</option>
+          <option value="1">1+</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+          <option value="4">4+</option>
+          <option value="5">5</option>
+        </select>
       </div>
 
       {/* Display Selected Filters */}
@@ -231,7 +248,7 @@ export default function Home() {
         {subjectFilters.map((filter) => (
           <div
             key={filter}
-            className="flex items-center bg-gray-200 px-4 py-2 rounded-full text-sm sm:text-base lg:text-lg"
+            className="flex items-center bg-gray-200 px-3 py-2 rounded-full text-sm sm:text-base lg:text-lg"
           >
             <span className="mr-2">{filter}</span>
             <button
@@ -244,9 +261,10 @@ export default function Home() {
           </div>
         ))}
         {ratingFilter && (
-          <div className="flex items-center bg-gray-200 px-4 py-2 rounded-full text-sm sm:text-base lg:text-lg">
+          <div className="flex items-center bg-gray-200 px-3 py-2 rounded-full text-sm sm:text-base lg:text-lg">
             <span className="mr-2">Rating: {ratingFilter}+</span>
             <button
+              aria-label={`Remove rating filter ${ratingFilter}`}
               onClick={() => setRatingFilter(null)}
               className="text-red-500 hover:text-red-700"
             >
@@ -257,65 +275,67 @@ export default function Home() {
       </div>
 
       {/* Filter Modal */}
-      {showFilterModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-72 sm:w-80 relative">
-            <h2 className="text-xl sm:text-2xl font-semibold mb-4">Select Filters</h2>
-            <button
-              className="absolute top-2 right-2 text-gray-600"
-              onClick={() => setShowFilterModal(false)}
-              aria-label="Close filter"
-            >
-              <IoClose size={20} />
-            </button>
-
-            {/* Subject Filters */}
-            <div className="mb-4">
-              <label
-                title="Filter by Subject"
-                aria-label="Filter by Subject"
-                className="flex items-center space-x-2 font-bold">Filter by Subject:</label>
-              {courseSubjects.map((subject) => (
-                <label key={subject} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={tempSubjectFilters.includes(subject)}
-                    onChange={() => toggleTempFilter(subject)}
-                    aria-label={subject}
-                  />
-                  <span>{subject}</span>
-                </label>
-              ))}
-            </div>
-
-            {/* Rating Filter */}
-            <div className="mb-4">
-              <label className="block mb-2 font-bold">Minimum Rating:</label>
-              <select
-                id="ratingFilterSelect"
-                aria-label="Minimum Rating:"
-                value={ratingFilter || ''}
-                onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
-                className="p-2 rounded border border-gray-300 w-full"
+      {
+        showFilterModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-72 sm:w-80 relative">
+              <h2 className="text-xl sm:text-2xl font-semibold mb-4">Select Filters</h2>
+              <button
+                className="absolute top-2 right-2 text-gray-600"
+                onClick={() => setShowFilterModal(false)}
+                aria-label="Close filter"
               >
-                <option value="">All Ratings</option>
-                <option value="1">1+</option>
-                <option value="2">2+</option>
-                <option value="3">3+</option>
-                <option value="4">4+</option>
-                <option value="5">5</option>
-              </select>
-            </div>
+                <IoClose size={20} />
+              </button>
 
-            <button
-              className="mt-4 w-full bg-blue-500 text-white py-2 rounded-full"
-              onClick={applyFilter}
-            >
-              Save
-            </button>
+              {/* Subject Filters */}
+              <div className="mb-4">
+                <label
+                  title="Filter by Subject"
+                  aria-label="Filter by Subject"
+                  className="flex items-center space-x-2 font-bold">Filter by Subject:</label>
+                {courseSubjects.map((subject) => (
+                  <label key={subject} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={tempSubjectFilters.includes(subject)}
+                      onChange={() => toggleTempFilter(subject)}
+                      aria-label={subject}
+                    />
+                    <span>{subject}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Rating Filter */}
+              <div className="mb-4">
+                <label className="block mb-2 font-bold">Minimum Rating:</label>
+                <select
+                  id="ratingFilterSelect"
+                  aria-label="Minimum Rating:"
+                  value={ratingFilter || ''}
+                  onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
+                  className="p-2 rounded border border-gray-300 w-full"
+                >
+                  <option value="">All Ratings</option>
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                  <option value="4">4+</option>
+                  <option value="5">5</option>
+                </select>
+              </div>
+
+              <button
+                className="mt-4 w-full bg-blue-500 text-white py-2 rounded-full"
+                onClick={applyFilter}
+              >
+                Save
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Search Results */}
       <div className="text-white text-center mb-6 text-lg sm:text-2xl">
@@ -367,6 +387,6 @@ export default function Home() {
           })
         )}
       </div>
-    </div>
+    </div >
   );
 }
