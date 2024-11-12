@@ -18,7 +18,7 @@ export default function Profile() {
     const params = useParams();
 
     const { userId } = params;
-    
+
 
     const userVal = useContext(AuthContext);
 
@@ -36,36 +36,36 @@ export default function Profile() {
     const [otherUser, setOtherUser] = useState(null);
 
     const [isMyProfile, setIsMyProfile] = useState(false);
-    
+
     useEffect(() => {
         const fetchUser = async () => {
             const fetchedUser = await getUserByID(userId as string);
             setOtherUser(fetchedUser);
             console.log("other user: ", fetchedUser);
-    
+
             const isProfileMine = userId === userData?.id;
             setIsMyProfile(isProfileMine);
-    
+
             setFirstName(isProfileMine ? userData?.firstName : fetchedUser.firstName);
             setLastName(isProfileMine ? userData?.lastName : fetchedUser.lastName);
             setEmail(isProfileMine ? userData?.email : fetchedUser.email);
             setGraduationYear(isProfileMine ? userData?.graduationYear : fetchedUser.graduationYear);
-    
+
             const profilePicId = isProfileMine ? userData?.id : fetchedUser.id;
             const profilePicName = isProfileMine ? userData?.profilePic : fetchedUser.profilePic;
-    
+
             if (profilePicName) {
                 setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
             } else {
                 setProfilePicPreviewURL(defaultProfilePic);
             }
         };
-    
+
         if (userVal && userId) {
             fetchUser();
         }
     }, [userVal, userId]);
-    
+
 
     if (!userVal) {
         return <div>Loading...</div>; // Render a fallback UI if context is missing
@@ -165,37 +165,38 @@ export default function Profile() {
                 </div>
             </div>
 
-            <div className="bg-white shadow-lg rounded-lg p-6 max-w-5xl mx-auto">
-                <div className="text-2xl font-semibold mb-4 text-center">Profile</div>
+            <div className="bg-white shadow-lg rounded-lg p-6 max-w-5xl mx-auto justify-center items-center">
+                <div className="text-3xl font-semibold mb-4 text-center">Profile</div>
 
                 {error && <p className="text-red-500 text-center">{error}</p>}
 
                 {!isEditing ? (
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-6 justify-items-center w-full text-center">
                         <div>
-                            <label className="block text-gray-700">First Name</label>
-                            <div>{firstName}</div>
+                            <label className="block font-bold text-xl">First Name</label>
+                            <div className="text-lg">{firstName}</div> {/* Medium text for non-label elements */}
                         </div>
                         <div>
-                            <label className="block text-gray-700">Last Name</label>
-                            <div>{lastName}</div>
+                            <label className="block font-bold text-xl">Last Name</label>
+                            <div className="text-lg">{lastName}</div>
                         </div>
                         <div>
-                            <label className="block text-gray-700">Email</label>
-                            <div>{email}</div>
+                            <label className="block font-bold text-xl">Email</label>
+                            <div className="text-lg">{email}</div>
                         </div>
                         <div>
-                            <label className="block text-gray-700">Graduation Year</label>
-                            <div>{graduationYear}</div>
+                            <label className="block font-bold text-xl">Graduation Year</label>
+                            <div className="text-lg">{graduationYear}</div>
                         </div>
                         <div className="col-span-2 mt-6">
-                            {isMyProfile ? (<button
-                                onClick={() => setIsEditing(true)}
-                                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-md w-full"
-                            >
-                                Edit Profile
-                            </button>) : (<></>)}
-                            
+                            {isMyProfile ? (
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-md w-full"
+                                >
+                                    Edit Profile
+                                </button>
+                            ) : null}
                         </div>
                     </div>
                 ) : (

@@ -217,7 +217,7 @@ function CourseDetailPageComponent() {
               value={selectedProfessor}
               onChange={(e) => setSelectedProfessor(e.target.value)}
               className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
-              >
+            >
               <option value="" className="text-white">All Professors</option>
               {professors.map((professor, index) => {
                 const professorName = `${professor.firstName} ${professor.lastName}`.trim();
@@ -261,7 +261,7 @@ function CourseDetailPageComponent() {
                 <div className="flex justify-between">
                   <h3 className="font-semibold text-lg">Tutors</h3>
                   <button
-                    aria-label="Close"  
+                    aria-label="Close"
                     onClick={() => setShowTutors(false)}
                     className="text-gray-600 hover:text-gray-900 transition duration-300"
                   >
@@ -398,25 +398,28 @@ function CourseDetailPageComponent() {
                           {/* Review Comment */}
                           <p className="text-gray-600">{review.comment}</p>
                           {/* Professor Name Box */}
-                          {review.expand?.professors?.length > 0 && (
+                          {review.expand?.professors?.some((prof) => prof.firstName) && (
                             <div className="mt-2 p-1 border border-gray-300 rounded bg-gray-100 inline-block">
                               <h3 className="text-gray-800 font-semibold">
                                 Professor:{' '}
-                                {review.expand.professors.map((prof, idx) => (
-                                  <span key={prof.id} className="font-normal">
-                                    {prof.firstName} {prof.lastName}
-                                    {idx < review.expand.professors.length - 1 ? ', ' : ''}
-                                  </span>
-                                ))}
+                                {review.expand.professors
+                                  .filter((prof) => prof.firstName) // Only include professors with non-empty firstName
+                                  .map((prof, idx, filteredProfs) => (
+                                    <span key={prof.id} className="font-normal">
+                                      {prof.firstName} {prof.lastName}
+                                      {idx < filteredProfs.length - 1 ? ', ' : ''}
+                                    </span>
+                                  ))}
                               </h3>
                             </div>
                           )}
+
                         </div>
                       </div>
                       {/* Right Section: Buttons */}
                       <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                          {/* Syllabus Download Button */}
-                          {syllabusUrl && (
+                        {/* Syllabus Download Button */}
+                        {syllabusUrl && (
                           <Tooltip title="Download Syllabus">
                             <button
                               title="Download Syllabus"
@@ -425,8 +428,8 @@ function CourseDetailPageComponent() {
                             >
                               <FaFileDownload className="text-xl" />
                             </button>
-                            </Tooltip>
-                          )}
+                          </Tooltip>
+                        )}
                         {/* Report Review Button */}
                         <Tooltip title="Report Review">
                           <button
