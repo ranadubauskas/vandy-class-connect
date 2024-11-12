@@ -41,7 +41,7 @@ export default function Ratings() {
 
     const handleSaveReview = async (reviewId: string) => {
         try {
-            const updatedReview = await editReview(reviewId, reviewEditData);
+            const updatedReview = await editReview(reviewId, reviewEditData, reviewEditData.course);
             // Refresh the reviews list after updating
             const updatedReviews = reviews.map((rev) => (rev.id === updatedReview.id ? updatedReview : rev));
             setReviews(updatedReviews);
