@@ -211,30 +211,30 @@ describe('Profile Component', () => {
         });
     });
 
-    it('should navigate to reviews page when "View My Reviews" button is clicked', async () => {
+    it('should navigate to reviews page when "View Reviews" button is clicked', async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
         renderWithAuthProvider(<Profile />);
 
         await waitFor(() => {
-            expect(screen.getByText('View My Reviews')).toBeInTheDocument();
+            expect(screen.getByText('View Reviews')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText('View My Reviews'));
+        fireEvent.click(screen.getByText('View Reviews'));
 
         expect(mockPush).toHaveBeenCalledWith('/ratings/1');
     });
 
-    it('should navigate to other user\'s reviews page when "View Jane\'s Reviews" button is clicked', async () => {
+    it('should navigate to other user\'s reviews page when "View Reviews" button is clicked', async () => {
         // Mock useParams to return a different userId
         (useParams as jest.Mock).mockReturnValue({ userId: '2' });
 
         renderWithAuthProvider(<Profile />);
 
         await waitFor(() => {
-            expect(screen.getByText("View Jane's Reviews")).toBeInTheDocument();
+            expect(screen.getByText("View Reviews")).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText("View Jane's Reviews"));
+        fireEvent.click(screen.getByText("View Reviews"));
 
         expect(mockPush).toHaveBeenCalledWith('/ratings/2');
     });

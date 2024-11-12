@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useContext } from "react";
-import { getUserByID, editReview, deleteReview } from "../../server";
+import Link from "next/link";
+import { useContext, useEffect, useState } from "react";
 import StarRating from "../../components/StarRating";
 import { AuthContext } from "../../lib/contexts";
-import Link from "next/link";
+import { deleteReview, editReview, getUserByID } from "../../server";
 
 export default function RatingCard({ rating, onDelete }) {
     const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
@@ -51,15 +51,30 @@ export default function RatingCard({ rating, onDelete }) {
 
     return (
         <div className="relative min-h-64 min-w-64 bg-white rounded-lg shadow-md p-6 my-4">
-            <div className='flex justify-center items-center'>
-                <StarRating rating={starRating} readOnly={!isEditing} size={36} onRatingChange={(newRating) => {setStarRating(newRating)}}/>
-            </div>
+            <div className="flex items-center justify-center">
+                <Link href={`/profile/${user?.id}`} className="w-12 h-12 rounded-full object-cover transform hover:scale-110 transition-transform duration-200">
+                    <img
+                        src={user ? `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${user.id}/${user.profilePic}` : '/images/user.png'}
+                        alt="User Profile"
+                        className="w-12 h-12 rounded-full object-cover"
+                    />
+                </Link>
+                </div>
+
+                <div className="flex items-center justify-center">
+                    <Link href={`/profile/${user?.id}`} className="transform hover:text-blue-700 hover:scale-110 transition-transform duration-200 hover:underline">
+                        <div className="text-xl font-semibold">{user ? user.firstName + " " + user.lastName : "Loading..."}</div>
+                    </Link>
+                </div>
 
             <div className='flex justify-center items-center text-center'>
-                <div className="text-lg font-semibold">
-                    <div>{rating ? rating.expand.course.code : "Loading"}</div>
-                    <div className=" text-md font-medium">{rating ? rating.expand.course.name : "Loading"}</div>
+                <div>
+                    <div className="text-lg font-semibold">{rating ? rating.expand.course.code : "Loading"}</div>
+                    <div className=" text-lg font-medium">{rating ? rating.expand.course.name : "Loading"}</div>
                 </div>
+            </div>
+            <div className='flex justify-center items-center'>
+                <StarRating rating={starRating} readOnly={!isEditing} size={36} onRatingChange={(newRating) => {setStarRating(newRating)}}/>
             </div>
 
             {isEditing ? 
@@ -89,7 +104,8 @@ export default function RatingCard({ rating, onDelete }) {
                     placeholder="Edit your comment"
                 />
 
-            </div>) 
+            </div>)
+            
             : 
             (<div>
                 {userVal?.userData?.id === user?.id ? (<button
@@ -99,23 +115,7 @@ export default function RatingCard({ rating, onDelete }) {
                     ✏️ Edit
                 </button>) : (<></>)}
 
-                <div className="flex items-center justify-center">
-                <Link href={`/profile/${user?.id}`} className="w-12 h-12 rounded-full object-cover transform hover:scale-110 transition-transform duration-200">
-                    <img
-                        src={user ? `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${user.id}/${user.profilePic}` : '/images/user.png'}
-                        alt="User Profile"
-                        className="w-12 h-12 rounded-full object-cover"
-                    />
-                </Link>
-                </div>
-
-                <div className="flex items-center justify-center">
-                    <Link href={`/profile/${user?.id}`} className="transform hover:text-blue-700 hover:scale-110 transition-transform duration-200 hover:underline">
-                        <div className="text-lg font-semibold">{user ? user.firstName + " " + user.lastName : "Loading..."}</div>
-                    </Link>
-                </div>
-
-                <p className="text-gray-700 break-words whitespace-normal h-24 overflow-y-auto">{comment}</p>
+                <p className="text-gray-700 break-words whitespace-normal h-24 overflow-y-auto text-center">{comment}</p>
 
                 </div>
                 )

@@ -39,19 +39,6 @@ export default function Ratings() {
         fetchData();
     }, [userId]);
 
-    const handleSaveReview = async (reviewId: string) => {
-        try {
-            const updatedReview = await editReview(reviewId, reviewEditData, reviewEditData.course);
-            // Refresh the reviews list after updating
-            const updatedReviews = reviews.map((rev) => (rev.id === updatedReview.id ? updatedReview : rev));
-            setReviews(updatedReviews);
-            setIsEditingReview(null);
-        } catch (error) {
-            console.error("Error saving review:", error);
-            setError("Failed to update review.");
-        }
-    };
-
     const handleDeleteReview = (reviewId: string) => {
         setReviews(reviews.filter((review) => review.id !== reviewId));
     };
