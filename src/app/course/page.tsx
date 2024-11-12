@@ -29,6 +29,7 @@ function CourseDetailPageComponent() {
   const [professors, setProfessors] = useState([]);
   const [selectedProfessor, setSelectedProfessor] = useState("");
   const [copiedEmailMessage, setCopiedEmailMessage] = useState('');
+  const [selectedRating, setSelectedRating] = useState(0);
 
   const currentUserId = userData?.id;
 
@@ -142,15 +143,17 @@ function CourseDetailPageComponent() {
     return <div className="flex items-center justify-center h-screen">Course not found</div>;
   }
 
-  const filteredReviews = selectedProfessor
-    ? reviews.filter((review) => {
-      const reviewProfessors = review.expand?.professors || [];
-      return reviewProfessors.some(
-        (professor) => `${professor.firstName} ${professor.lastName}` === selectedProfessor
-      );
-    })
-    : reviews;
-
+  const filteredReviews = reviews.filter((review) => {
+    const matchesProfessor = selectedProfessor
+      ? review.expand?.professors?.some(
+          (professor) => `${professor.firstName} ${professor.lastName}` === selectedProfessor
+        )
+      : true;
+  
+    const matchesRating = selectedRating > 0 ? review.rating >= selectedRating : true;
+    return matchesProfessor && matchesRating;
+  });
+  
   // Determine grid classes based on the number of reviews
   let gridClasses = "grid grid-cols-1 gap-6"; // default
 
@@ -210,30 +213,48 @@ function CourseDetailPageComponent() {
             </button>
           </div>
         </div>
-        <div className="mb-4">
-          <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
-          {professors.length > 0 ? (
-            <select
-              id="professorFilter"
-              value={selectedProfessor}
-              onChange={(e) => setSelectedProfessor(e.target.value)}
-              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
-            >
-              <option value="" className="text-white">All Professors</option>
-              {professors.map((professor, index) => {
-                const professorName = `${professor.firstName} ${professor.lastName}`.trim();
-                return (
-                  <option key={index} value={professorName}>
-                    {professorName}
-                  </option>
-                );
-              })}
-            </select>
-          ) : (
-            <p className="text-gray-400 inline text-white text-lg">No professors found</p>
-          )}
-        </div>
+        <div className="mb-4 flex space-x-4">
+          <div>
+            <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
+            {professors.length > 0 ? (
+              <select
+                id="professorFilter"
+                value={selectedProfessor}
+                onChange={(e) => setSelectedProfessor(e.target.value)}
+                className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
+              >
+                <option value="" className="text-white">All Professors</option>
+                {professors.map((professor, index) => {
+                  const professorName = `${professor.firstName} ${professor.lastName}`.trim();
+                  return (
+                    <option key={index} value={professorName}>
+                      {professorName}
+                    </option>
+                  );
+                })}
+              </select>
+            ) : (
+              <p className="text-gray-400 inline text-white text-lg">No professors found</p>
+            )}
+          </div>
 
+          <div>
+            <label htmlFor="ratingFilter" className="text-white text-lg mr-2">Filter by Rating:</label>
+            <select
+              id="ratingFilter"
+              value={selectedRating}
+              onChange={(e) => setSelectedRating(Number(e.target.value))}
+              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+            >
+              <option value={0}>All Ratings</option>
+              <option value={1}>1+</option>
+              <option value={2}>2+</option>
+              <option value={3}>3+</option>
+              <option value={4}>4+</option>
+              <option value={5}>5 </option>
+            </select>
+          </div>
+        </div>
         {/* Popup Message */}
         {popupMessage && (
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg">
@@ -319,8 +340,8 @@ function CourseDetailPageComponent() {
 
         {/* Reviews Section with Average Rating */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
-            {/* Number of tutors for the course */}
+        <div className="flex flex-row flex-nowrap justify-between items-center mb-4 overflow-x-auto">
+        {/* Number of tutors for the course */}
             <button
               onClick={toggleTutors}
               className="flex flex-col items-center space-y-1 focus:outline-none mb-4 lg:mb-0"
@@ -421,7 +442,6 @@ function CourseDetailPageComponent() {
                                 {syllabusUrl && (
                                   <Tooltip title="Download Syllabus">
                                     <button
-                                      title="Download Syllabus"
                                       className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
                                       onClick={() => window.open(syllabusUrl, '_blank')}
                                     >
