@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { FaChalkboardTeacher, FaFileDownload, FaFlag, FaUsers } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
 import Loading from "../components/Loading";
+import RatingBox from '../components/ratingBox';
 import StarRating from '../components/StarRating';
 import { useAuth } from "../lib/contexts";
 import pb from "../lib/pocketbaseClient";
@@ -399,14 +400,6 @@ function CourseDetailPageComponent() {
                     ? pb.files.getUrl(review, review.syllabus)
                     : null;
                   const rating = review.rating || 0;
-                  const ratingColorClass =
-                    rating === 0.0
-                      ? "bg-gray-400"   // Gray if rating is exactly 0.0
-                      : rating > 0 && rating < 2
-                        ? "bg-red-400"    // Red for (0, 2)
-                        : rating >= 2 && rating < 4
-                          ? "bg-yellow-300" // Yellow for [2, 4)
-                          : "bg-green-300"; // Green for [4, 5]
 
                   return (
                     <div key={index} className="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
@@ -431,9 +424,7 @@ function CourseDetailPageComponent() {
                             <div className="flex items-center justify-between mt-2">
                               <div className="flex items-center space-x-2 whitespace-nowrap">
                                 {/* Rating Number in a Small Box */}
-                                <div className={`text-gray-900 font-semibold text-sm p-1 rounded ${ratingColorClass}`}>
-                                  {review.rating.toFixed(1)}
-                                </div>
+                                <RatingBox rating={review.rating || 'N/A'} size="small"/>
                                 {/* Star Rating */}
                                 <StarRating rating={review.rating} readOnly={true} />
                               </div>

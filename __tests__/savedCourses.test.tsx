@@ -1,7 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
-import SavedCourses from '../src/app/savedCourses/page';
-
 import { AuthContext } from "../src/app/lib/contexts";
 import * as functions from '../src/app/lib/functions';
 import { getUserCookies } from '../src/app/lib/functions';

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import { IoIosSearch } from "react-icons/io";
 import { IoClose, IoFilterOutline } from "react-icons/io5";
+import RatingBox from "../components/ratingBox";
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
@@ -358,19 +359,7 @@ export default function Home() {
         <div className="grid-container grid gap-6">
           {filteredCourses.map((course) => {
             const isSaved = savedCourses.includes(course.id);
-            let rating = course.averageRating.toFixed(1);
-
-            const ratingColorClass =
-              rating == undefined || rating == 0.0
-                ? "bg-gray-400"  // Gray if rating is undefined or exactly 0.0
-                : rating > 0 && rating < 2
-                  ? "bg-red-400"    // Red for (0, 2)
-                  : rating >= 2 && rating < 4
-                    ? "bg-yellow-300" // Yellow for [2, 4)
-                    : "bg-green-300"; // Green for [4, 5]
-            if (rating == 0.0) {
-              rating = "N/A";
-            }
+            const rating = course.averageRating ?? 0;
             return (
               <div
                 key={course.id}
@@ -378,9 +367,7 @@ export default function Home() {
               >
                 {/* Course details section */}
                 <div className="flex items-center space-x-4 flex-1">
-                  <div className={`text-lg p-2 rounded-lg font-bold shadow-lg ${ratingColorClass}`}>
-                    {rating}
-                  </div>
+                  <RatingBox rating={rating} /> {/* Use RatingBox here */}
                   <div className="flex-1">
                     <div className="text-lg font-bold whitespace-normal break-words">{course.code}</div>
                     <div className="text-lg whitespace-normal break-words">{course.name}</div>

@@ -18,7 +18,7 @@ type UserInfoType = {
 export async function getUserReviews(userID: string) {
     try {
         const user = await pb.collection('users').getOne(userID, {
-            expand: "reviews.course",
+            expand: "reviews.course,reviews.professors",
         });
         const expandedReviews = user.expand?.reviews || [];
         return expandedReviews;

@@ -4,11 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { FiX } from "react-icons/fi";
+import RatingBox from '../components/ratingBox';
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
-
-
-pb.autoCancellation(false);
 
 export default function savedCourses() {
   const [userCookies, setUserCookies] = useState(null);
@@ -101,26 +99,6 @@ export default function savedCourses() {
     setConfirmationOpen(true);
   };
 
-
-//   return (
-//     <div className="min-h-screen p-6 sm:p-8 lg:p-10">
-//       {/* Header */}
-//       <div className="mb-6 flex justify-between items-center">
-//         <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">My Courses</h1>
-//         <button
-//           onClick={toggleEditMode}
-//           className="ml-auto bg-white text-black px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300"
-//         >
-//           {editMode ? "Save Changes" : "Edit"}
-//         </button>
-//         {/* Error Message */}
-//       {errorMessage && (
-//         <div className="text-red-500 text-center mt-4">{errorMessage}</div>
-//       )}
-//       </div>
-
-
-
   return (
     <div className="min-h-screen p-6 sm:p-8 lg:p-10">
       {/* Header */}
@@ -128,7 +106,7 @@ export default function savedCourses() {
         <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">My Courses</h1>
         <button
           onClick={toggleEditMode}
-          className="ml-auto bg-white text-black px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+          className="ml-auto bg-gray-200 text-black px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300"
         >
           {editMode ? "Save Changes" : "Edit"}
         </button>
@@ -148,20 +126,7 @@ export default function savedCourses() {
         ) : savedCourses.length > 0 ? (
          <div className="space-y-4">
             {savedCourses.map((course) => {
-              let rating = course.averageRating.toFixed(1);
-
-              const ratingColorClass =
-                rating == undefined || rating == 0.0
-                  ? "bg-gray-400"  // Gray if rating is undefined or exactly 0.0
-                  : rating > 0 && rating < 2
-                    ? "bg-red-400"    // Red for (0, 2)
-                    : rating >= 2 && rating < 4
-                      ? "bg-yellow-300" // Yellow for [2, 4)
-                      : "bg-green-300"; // Green for [4, 5]
-              if (rating == 0.0) {
-                rating = "N/A";
-              }
-              
+              const rating = course.averageRating ?? "N/A";     
               return (
                 <div
                   key={course.id}
@@ -170,9 +135,7 @@ export default function savedCourses() {
                 
                 {/*Course Information*/}
                 <div className="flex items-center space-x-4">
-                  <div className={`text-lg p-2 rounded-lg font-bold shadow-lg ${ratingColorClass}`}>
-                    {rating}
-                  </div>
+                <RatingBox rating={rating} size="large" />
                   <div className="text-lg sm:text-2xl">
                     <span className="font-bold">{course.code}</span>: {course.name}
                   </div>

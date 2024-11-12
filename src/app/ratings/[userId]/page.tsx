@@ -1,8 +1,8 @@
 'use client';
-import { useRouter, useParams } from 'next/navigation';
-import { useState, useEffect, useContext } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
-import { deleteReview, editReview, getUserReviews } from '../../server';
+import { getUserReviews } from '../../server';
 import RatingCard from './ratingCard';
 
 export default function Ratings() {
@@ -31,6 +31,7 @@ export default function Ratings() {
                 const revs = await getUserReviews(userId as string);
                 setReviews(revs);
                 setLoading(false);
+                console.log(revs);
             } catch (err) {
                 console.error(err);
             }

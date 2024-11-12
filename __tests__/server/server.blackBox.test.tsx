@@ -628,7 +628,7 @@ describe('Server Functions', () => {
 
             expect(mockPb.collection).toHaveBeenCalledWith('users');
             expect(mockUsersCollection.getOne).toHaveBeenCalledWith(userID, {
-                expand: 'reviews.course',
+                expand: 'reviews.course,reviews.professors', // Updated to match the function's expand string
             });
             expect(reviews).toEqual(['review1', 'review2']);
         });

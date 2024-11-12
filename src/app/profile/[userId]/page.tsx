@@ -80,7 +80,6 @@ export default function Profile() {
 
     const handleViewCourses = () => {
         if (typeof window !== 'undefined') {
-
             router.push(`/savedCourses/`);
         }
     }
@@ -163,7 +162,7 @@ export default function Profile() {
                         <button 
                         onClick={handleViewCourses} 
                         className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
-                            View Tutored Courses
+                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Courses
                         </button>
                     </div>
                     <div className="w-1/3 h-12 flex flex-col items-center justify-center">
@@ -175,7 +174,7 @@ export default function Profile() {
                     </div>
                     <div className="w-1/3 flex justify-end pr-2">
                         <button onClick={() => handleViewRatings()} className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
-                            View Reviews
+                        View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Reviews
                         </button>
                     </div>
                 </div>
