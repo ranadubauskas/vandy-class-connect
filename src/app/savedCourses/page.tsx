@@ -11,10 +11,10 @@ import pb from "../lib/pocketbaseClient";
 pb.autoCancellation(false);
 
 export default function savedCourses() {
-  const [userCookies, setUserCookies] = useState(null);
-  const [savedCourses, setSavedCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
+  const [userCookies, setUserCookies] = useState(null);
+  const [savedCourses, setSavedCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
   const [courseToRemove, setCourseToRemove] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -102,23 +102,23 @@ export default function savedCourses() {
   };
 
 
-  return (
-    <div className="min-h-screen p-6 sm:p-8 lg:p-10">
-      {/* Header */}
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">My Courses</h1>
-        <button
-          onClick={toggleEditMode}
-          className="ml-auto bg-white text-black px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300"
-        >
-          {editMode ? "Save Changes" : "Edit"}
-        </button>
-        {/* Error Message */}
-      {errorMessage && (
-        <div className="text-red-500 text-center mt-4">{errorMessage}</div>
-      )}
-      </div>
-      
+//   return (
+//     <div className="min-h-screen p-6 sm:p-8 lg:p-10">
+//       {/* Header */}
+//       <div className="mb-6 flex justify-between items-center">
+//         <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">My Courses</h1>
+//         <button
+//           onClick={toggleEditMode}
+//           className="ml-auto bg-white text-black px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+//         >
+//           {editMode ? "Save Changes" : "Edit"}
+//         </button>
+//         {/* Error Message */}
+//       {errorMessage && (
+//         <div className="text-red-500 text-center mt-4">{errorMessage}</div>
+//       )}
+//       </div>
+
 
 
   return (
@@ -251,6 +251,6 @@ export default function savedCourses() {
       </DialogActions>
     </Dialog>
 
-  </div>
-  );
+</div>
+);
 }
