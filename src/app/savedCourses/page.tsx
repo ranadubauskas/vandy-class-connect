@@ -19,7 +19,7 @@ export default function savedCourses() {
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const router = useRouter();
-  
+  const [errorMessage, setErrorMessage] = useState(null); 
 
   //const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
 
@@ -38,6 +38,7 @@ export default function savedCourses() {
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
+        
       }
     };
 
@@ -57,11 +58,15 @@ export default function savedCourses() {
             )
           );
           setSavedCourses(courseDetails);
+          setErrorMessage(null);
         } else {
           console.log("No saved courses found");
+          setErrorMessage(null);
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
+        setErrorMessage("Error fetching saved courses");
+        
       } finally {
         setLoading(false);
       }

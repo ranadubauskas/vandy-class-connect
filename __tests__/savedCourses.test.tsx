@@ -4,7 +4,8 @@ import SavedCourses from '../src/app/savedCourses/page';
 import userEvent from '@testing-library/user-event';
 import { AuthContext } from "../src/app/lib/contexts";
 import { getUserCookies } from '../src/app/lib/functions';
-import pb from '../lib/pocketbaseClient';
+import pb from '../src/app/lib/pocketbaseClient';
+import * as functions from '../src/app/lib/functions';
 
 //Mock dependencies
 jest.mock('next/navigation', () => ({
@@ -220,20 +221,66 @@ describe("SavedCourses page", () => {
         expect(screen.getByText("Loading...")).toBeInTheDocument();
     });
 
-    // it("should display an error message if fetching courses fails", async () => {
-    //     jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console error
-    //     pb.collection.mockImplementationOnce(() => ({
-    //       getOne: jest.fn().mockRejectedValue(new Error("Failed to fetch courses")),
-    //     }));
-      
-    //     render(
-    //       <AuthContext.Provider value={mockAuthContextValue}>
-    //         <SavedCourses />
-    //       </AuthContext.Provider>
-    //     );
-      
-    //     await waitFor(() => expect(screen.getByText(/failed to fetch courses/i)).toBeInTheDocument());
-    //     console.error.mockRestore();
-    //   });
+    it("should save changes when 'Save Changes' is clicked", async () => {
+        const mockPush = jest.fn();
+
+        // Mock the course data
+        const courses = [
+        { id: "1", name: "Program Design and Data Structures", code: "CS 2201", averageRating: 4.5 },
+        { id: "2", name: "Methods of Linear Algebra", code: "MATH 2410", averageRating: 4.0 },
+        ];
+
+        // Render the SavedCourses component with mocked courses
+        await act(async () => {
+        render(
+        <AuthContext.Provider value={mockAuthContextValue}>
+            <SavedCourses />
+        </AuthContext.Provider>
+        );
+        });
+
+        // Simulate the user clicking the "Edit" button to enable edit mode
+        const editButton = screen.getByRole("button", { name: /edit/i });
+        fireEvent.click(editButton);  // Enter edit mode
+
+        // Simulate clicking "Save Changes"
+        const saveButton = screen.getByRole("button", { name: /save changes/i });
+        fireEvent.click(saveButton);
+
+        // Assert that "Save Changes" toggles to "Edit" button
+        expect(saveButton).toHaveTextContent("Edit");
+
+        // Assert that the course is still present after saving changes (it should not be removed)
+        expect(screen.getByText("CS 2201")).toBeInTheDocument();
+        });
+    
+        it("should display a message when there are no saved courses", async () => {
+            pb.collection.mockImplementation(() => ({
+              getOne: jest.fn().mockResolvedValue({ savedCourses: [] }), // Simulate no saved courses
+            }));
+          
+            render(
+              <AuthContext.Provider value={mockAuthContextValue}>
+                <SavedCourses />
+              </AuthContext.Provider>
+            );
+          
+            await waitFor(() => expect(screen.getByText(/you have no saved courses/i)).toBeInTheDocument());
+        });
+
+        it("should handle error when fetching saved courses fails", async () => {
+            const mockGetCookies = jest.fn().mockRejectedValue(new Error("Error fetching cookies"));
+            jest.spyOn(functions, 'getUserCookies').mockImplementation(mockGetCookies);
+        
+            render(<SavedCourses />);
+        
+            await waitFor(() => {
+              expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+            });
+
+            expect(screen.getByText("Error fetching saved courses")).toBeInTheDocument();
+          });
+
+
 
 });
