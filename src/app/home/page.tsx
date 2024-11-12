@@ -8,6 +8,7 @@ import { IoClose, IoFilterOutline } from "react-icons/io5";
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
+import './styles.css';
 
 
 export default function Home() {
@@ -345,33 +346,36 @@ export default function Home() {
       </div>
 
       {/* Course List */}
-      <div className="space-y-4">
-        {loading ? (
-          <div className="text-white text-center text-lg sm:text-2xl">Loading...</div>
-        ) : (
-          filteredCourses.map((course) => {
+      {loading ? (
+        <div className="text-white text-center text-lg sm:text-2xl">Loading...</div>
+      ) : (
+        <div className="grid-container grid gap-6">
+          {filteredCourses.map((course) => {
             const isSaved = savedCourses.includes(course.id);
             return (
               <div
                 key={course.id}
-                className="flex flex-col sm:flex-row items-center justify-between bg-white text-black p-4 sm:p-6 rounded-lg shadow-lg"
+                className="flex items-center justify-between bg-white text-black p-4 rounded-lg shadow-lg"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="text-lg sm:text-2xl bg-gray-200 p-3 rounded-lg font-bold shadow-lg">
+                {/* Course details section */}
+                <div className="flex items-center space-x-4 flex-1">
+                  <div className="text-lg bg-gray-200 p-2 rounded-lg font-bold shadow-lg">
                     {course.averageRating.toFixed(1) || "N/A"}
                   </div>
-                  <div className="text-lg sm:text-2xl">
-                    <span className="font-bold">{course.code}</span>: {course.name}
+                  <div className="flex-1">
+                    <div className="text-lg font-bold whitespace-normal break-words">{course.code}</div>
+                    <div className="text-lg whitespace-normal break-words">{course.name}</div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
+
+                {/* Actions section */}
+                <div className="flex items-center space-x-4 ml-auto">
                   <button
-                    className="mt-4 sm:mt-0 bg-gray-200 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg"
+                    className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg text-base whitespace-nowrap"
                     onClick={() => router.push(`/course?id=${course.id}`)}
                   >
                     View Course
                   </button>
-
                   <Tooltip title={isSaved ? "Unsave Course" : "Save Course"}>
                     <button
                       data-testid={`save-button-${course.id}`}
@@ -383,10 +387,12 @@ export default function Home() {
                   </Tooltip>
                 </div>
               </div>
-            )
-          })
-        )}
-      </div>
+            );
+          })}
+        </div>
+
+
+      )}
     </div >
   );
 }
