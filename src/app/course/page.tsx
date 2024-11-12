@@ -17,7 +17,7 @@ function CourseDetailPageComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
-  const { userData } = useAuth(); //Getting the current user
+  const { userData } = useAuth(); // Getting the current user
   const [course, setCourse] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,10 +31,6 @@ function CourseDetailPageComponent() {
   const [copiedEmailMessage, setCopiedEmailMessage] = useState('');
 
   const currentUserId = userData?.id;
-  const firstName = userData?.firstName;
-  const lastName = userData?.lastName;
-  const email = userData?.email;
-  const profilePic = userData?.profilePic;
 
   useEffect(() => {
     if (!id || !currentUserId) return;
@@ -61,7 +57,7 @@ function CourseDetailPageComponent() {
         const currentTutor = fetchedTutors.includes(currentUserId);
         setIsTutor(currentTutor);
 
-        // **Fetch tutor user details**
+        // Fetch tutor user details
         const tutorPromises = fetchedTutors.map(async (userId) => {
           const user = await pb.collection('users').getOne(userId);
           return user;
@@ -98,16 +94,14 @@ function CourseDetailPageComponent() {
     }
   };
 
-
-  //Function to copy tutor email to clipboard
+  // Function to copy tutor email to clipboard
   const copyEmail = (email) => {
     navigator.clipboard.writeText(email);
     setCopiedEmailMessage('Email copied');
     setTimeout(() => setCopiedEmailMessage(''), 2000);
   }
 
-
-  //Function to toggle visibility of tutor list
+  // Function to toggle visibility of tutor list
   const toggleTutors = () => {
     setShowTutors((prev) => !prev);
   }
@@ -119,15 +113,15 @@ function CourseDetailPageComponent() {
       return;
     }
     try {
-      //Update course to include new tutor
+      // Update course to include new tutor
       await pb.collection('courses').update(id, {
         tutors: [...(course.tutors || []), currentUserId]
       });
 
-      //Fetch user to update courses tutored field
+      // Fetch user to update courses tutored field
       const curUser = await pb.collection('users').getOne(currentUserId);
 
-      //Update user to include course tutored
+      // Update user to include course tutored
       await pb.collection('users').update(currentUserId, {
         courses_tutored: [...(curUser.courses_tutored || []), id]
       });
@@ -139,7 +133,6 @@ function CourseDetailPageComponent() {
       console.error('Error adding tutor:', error);
     }
   }
-
 
   if (loading) {
     return <Loading />
@@ -158,6 +151,14 @@ function CourseDetailPageComponent() {
     })
     : reviews;
 
+  // Determine grid classes based on the number of reviews
+  let gridClasses = "grid grid-cols-1 gap-6"; // default
+
+  if (filteredReviews.length === 2) {
+    gridClasses = "grid grid-cols-1 md:grid-cols-2 gap-6";
+  } else if (filteredReviews.length >= 3) {
+    gridClasses = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+  }
 
   return (
     <>
@@ -175,7 +176,7 @@ function CourseDetailPageComponent() {
         {/* Course Code and Name as Title */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">
-            {course.code}: {course.name} {/* Dynamic course name */}
+            {course.code}: {course.name}
           </h1>
 
           {/* Buttons Section */}
@@ -368,7 +369,7 @@ function CourseDetailPageComponent() {
             {filteredReviews.length === 0 ? (
               <p className="text-gray-600 text-lg">No reviews yet.</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className={gridClasses}>
                 {filteredReviews.map((review, index) => {
                   const user = review.expand?.user || {};
                   const profilePicture = user.profilePicture || '/images/user.png';
@@ -386,16 +387,15 @@ function CourseDetailPageComponent() {
                           : "bg-green-300"; // Green for [4, 5]
 
                   return (
-                    <div key={index} className="bg-white p-4 rounded-lg shadow-md">
-                      <div className="flex flex-col md:flex-row items-start justify-between">
-                        {/* Left Section: User Info and Review */}
+                    <div key={index} className="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
+                      <div className="flex flex-col flex-1">
                         <div className="flex items-start space-x-4">
                           <Link href={`/profile/${user.id}`}
                             className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden transform hover:scale-110 transition-transform duration-200"
                           >
-                            <img src={profilePicture} alt="User Profile" className="w-16 h-12" />
+                            <img src={profilePicture} alt="User Profile" className="w-full h-full object-cover" />
                           </Link>
-                          <div>
+                          <div className="flex-grow">
                             <div className="flex items-center space-x-2">
                               <Link href={`/profile/${user.id}`}>
                                 <h3 className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
@@ -405,25 +405,51 @@ function CourseDetailPageComponent() {
                                 </h3>
                               </Link>
                             </div>
-                            {/* Star Rating */}
-                            <div className="flex items-center space-x-2 mt-0">
-                              {/* Rating Number in a Small Box */}
-                              <div className={`text-gray-900 font-semibold text-sm p-1 rounded ${ratingColorClass}`}>
-                                {review.rating.toFixed(1)}
+                            {/* Star Rating and Action Buttons */}
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center space-x-2 whitespace-nowrap">
+                                {/* Rating Number in a Small Box */}
+                                <div className={`text-gray-900 font-semibold text-sm p-1 rounded ${ratingColorClass}`}>
+                                  {review.rating.toFixed(1)}
+                                </div>
+                                {/* Star Rating */}
+                                <StarRating rating={review.rating} readOnly={true} />
                               </div>
-
-                              {/* Star Rating */}
-                              <StarRating rating={review.rating} readOnly={true} />
+                              {/* Action Buttons */}
+                              <div className="flex items-center space-x-2 ml-4">
+                                {/* Syllabus Download Button */}
+                                {syllabusUrl && (
+                                  <Tooltip title="Download Syllabus">
+                                    <button
+                                      title="Download Syllabus"
+                                      className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
+                                      onClick={() => window.open(syllabusUrl, '_blank')}
+                                    >
+                                      <FaFileDownload className="text-xl" />
+                                    </button>
+                                  </Tooltip>
+                                )}
+                                {/* Report Review Button */}
+                                <Tooltip title="Report Review">
+                                  <button
+                                    aria-label="Report Review"
+                                    onClick={() => reportReview(review.id)}
+                                    className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
+                                  >
+                                    <FaFlag className="text-2xl" />
+                                  </button>
+                                </Tooltip>
+                              </div>
                             </div>
                             {/* Review Comment */}
-                            <p className="text-gray-600">{review.comment}</p>
+                            <p className="text-gray-600 mt-2">{review.comment}</p>
                             {/* Professor Name Box */}
                             {review.expand?.professors?.some((prof) => prof.firstName) && (
                               <div className="mt-2 p-1 border border-gray-300 rounded bg-gray-100 inline-block">
                                 <h3 className="text-gray-800 font-semibold">
                                   Professor:{' '}
                                   {review.expand.professors
-                                    .filter((prof) => prof.firstName) // Only include professors with non-empty firstName
+                                    .filter((prof) => prof.firstName)
                                     .map((prof, idx, filteredProfs) => (
                                       <span key={prof.id} className="font-normal">
                                         {prof.firstName} {prof.lastName}
@@ -433,33 +459,7 @@ function CourseDetailPageComponent() {
                                 </h3>
                               </div>
                             )}
-
                           </div>
-                        </div>
-                        {/* Right Section: Buttons */}
-                        <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                          {/* Syllabus Download Button */}
-                          {syllabusUrl && (
-                            <Tooltip title="Download Syllabus">
-                              <button
-                                title="Download Syllabus"
-                                className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
-                                onClick={() => window.open(syllabusUrl, '_blank')}
-                              >
-                                <FaFileDownload className="text-xl" />
-                              </button>
-                            </Tooltip>
-                          )}
-                          {/* Report Review Button */}
-                          <Tooltip title="Report Review">
-                            <button
-                              aria-label="Report Review"
-                              onClick={() => reportReview(review.id)}
-                              className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
-                            >
-                              <FaFlag className="text-2xl" />
-                            </button>
-                          </Tooltip>
                         </div>
                       </div>
                     </div>

@@ -20,7 +20,16 @@ function AddReviewComponent() {
     const [syllabusFile, setSyllabusFile] = useState(null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const userId = userData.id;
+    const [wordCount, setWordCount] = useState(0);
+    const maxWordCount = 400;
+    const userId = userData?.id;
+
+    const handleCommentChange = (e) => {
+        const newComment = e.target.value;
+        const words = newComment.trim().split(/\s+/).filter(Boolean); // Split by whitespace and remove empty strings
+        setComment(newComment);
+        setWordCount(words.length);
+    };
 
     useEffect(() => {
         if (!courseId) return;
@@ -46,6 +55,11 @@ function AddReviewComponent() {
     };
 
     const handleSave = async () => {
+        if (wordCount > maxWordCount) {
+            setError(`Your comment exceeds the maximum word limit of ${maxWordCount} words.`);
+            return;
+        }
+
         if (!rating || rating <= 0) {
             setError('Please provide a valid rating.');
             return;
@@ -177,10 +191,13 @@ function AddReviewComponent() {
 
                 {/* Rating Input Section with Stars */}
                 <div className="flex items-center mt-4">
+                    <label htmlFor="rating" className="text-lg font-semibold mr-2">
+                        Rating:<span className="text-red-500">*</span>
+                    </label>
                     {/* Input for Rating */}
                     <input
                         type="number"
-                        className="w-20 p-2 border border-gray-300 rounded mr-4"
+                        className="w-12 p-2 border border-gray-300 rounded mr-2"
                         max="5"
                         min="0"
                         step="0.1" // Allows for partial ratings like 3.4
@@ -231,15 +248,28 @@ function AddReviewComponent() {
                 </div>
 
                 {/* Comment Input */}
-                <div className="mt-4">
+                <div className="relative mt-4">
                     <textarea
-                        className="w-full p-4 border border-gray-300 rounded-lg"
+                        className="w-full p-4 border border-gray-300 rounded-lg mt-1"
                         rows={5}
                         placeholder="Enter your review here..."
                         value={comment}
-                        onChange={(e) => setComment(e.target.value)}
+                        onChange={handleCommentChange}
                     />
+                    {/* Position the asterisk outside the top-right corner of the textarea */}
+                    <span className="absolute top-0 -right-4 text-red-500 text-xl">*</span>
+                    <div className="text-right mt-1 text-sm">
+                        <span className={wordCount > maxWordCount ? 'text-red-500' : 'text-gray-500'}>
+                            {wordCount}/{maxWordCount} words
+                        </span>
+                    </div>
+                    {wordCount > maxWordCount && (
+                        <div className="text-red-500 mt-2">
+                            Your comment exceeds the maximum word limit of {maxWordCount} words.
+                        </div>
+                    )}
                 </div>
+
 
                 {/* Save Button */}
                 <div className="mt-6">
