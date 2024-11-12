@@ -111,7 +111,7 @@ describe('AddReviewPage Component', () => {
     });
 
     await waitFor(() => {
-      expect(mockCoursesCollection.getOne).toHaveBeenCalledWith('courseId');
+      expect(mockCoursesCollection.getOne).toHaveBeenCalledWith('courseId', {autoCancellation: false});
       expect(screen.getByText('CS101: Introduction to Computer Science')).toBeInTheDocument();
     });
   });
