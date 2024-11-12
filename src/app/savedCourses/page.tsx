@@ -1,16 +1,16 @@
 'use client';
-
-import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip } from "@mui/material";
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { FaTimes } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
+import { Tooltip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton } from "@mui/material";
 import { FiX } from "react-icons/fi";
+import PocketBase from 'pocketbase';
+import { FaTimes } from 'react-icons/fa';
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 
-pb.autoCancellation(false);
 
-export default function SavedCourses() {
+
+export default function savedCourses() {
   const [userCookies, setUserCookies] = useState(null);
   const [savedCourses, setSavedCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +19,9 @@ export default function SavedCourses() {
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const router = useRouter();
+  
+
+  //const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
 
   useEffect(() => {
     const fetchCookies = async () => {
@@ -27,7 +30,7 @@ export default function SavedCourses() {
         const cookies = await getUserCookies();
         if (cookies) {
           setUserCookies(cookies);
-          setSavedCourses(cookies.savedCourses);
+          setSavedCourses(cookies.savedCourses || []);
           console.log(cookies.savedCourses);
 
         } else {
@@ -142,6 +145,7 @@ export default function SavedCourses() {
                       <button
                         onClick={() => promptRemoveCourse(course.id)}
                         className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
+                        data-testid="unsave-button"
                         >
                           <FiX size={24}/>
                         </button>
