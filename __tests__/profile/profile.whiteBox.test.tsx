@@ -104,7 +104,7 @@ describe('Profile Component', () => {
         // Cast to HTMLImageElement to access the src property
         const profilePics = screen.getAllByAltText("Profile Picture");
         const profilePicPreview = profilePics[0] as HTMLImageElement; // Adjust index as needed
-        expect(profilePicPreview.src).toContain(defaultProfilePic);
+        expect(profilePicPreview.src).toContain('/images/user.png');
     });
 
     it("should display error message if profile update fails in handleSave", async () => {

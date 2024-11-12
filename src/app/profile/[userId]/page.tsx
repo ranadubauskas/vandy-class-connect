@@ -8,7 +8,7 @@ import './style.css';
 
 
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
-export const defaultProfilePic = '/images/user.png'; // Default picture path
+const defaultProfilePic = '/images/user.png'; // Default picture path
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
