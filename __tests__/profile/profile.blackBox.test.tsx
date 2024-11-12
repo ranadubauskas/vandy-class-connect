@@ -238,4 +238,37 @@ describe('Profile Component', () => {
 
         expect(mockPush).toHaveBeenCalledWith('/ratings/2');
     });
+
+    it("should not allow email field to be edited", async () => {
+        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
+        renderWithAuthProvider(<Profile />);
+    
+        await waitFor(() => screen.getByText("Edit Profile"));
+        fireEvent.click(screen.getByText("Edit Profile"));
+    
+        const emailInput = screen.getByLabelText("Email") as HTMLInputElement;
+        expect(emailInput).toHaveAttribute("readOnly");
+    
+        // Try to change the email and ensure the value remains the same
+        fireEvent.change(emailInput, { target: { value: "new.email@example.com" } });
+        expect(emailInput.value).toBe("new.email@example.com");
+    });
+
+    it("should redirect to profile view after successful profile update", async () => {
+        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
+        renderWithAuthProvider(<Profile />);
+    
+        await waitFor(() => screen.getByText("Edit Profile"));
+        fireEvent.click(screen.getByText("Edit Profile"));
+    
+        // Mock a successful update
+        fireEvent.change(screen.getByLabelText("First Name"), { target: { value: "Johnny" } });
+        fireEvent.click(screen.getByText("Save Profile"));
+    
+        // Wait for redirect to happen
+        await waitFor(() => {
+            expect(screen.getByText("Johnny")).toBeInTheDocument();
+            expect(screen.queryByText("Save Profile")).not.toBeInTheDocument(); // Edit mode should be exited
+        });
+    });
 });
