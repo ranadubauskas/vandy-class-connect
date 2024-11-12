@@ -100,7 +100,7 @@ export default function Home() {
           )
         );
       }
-
+      filtered.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
       setFilteredCourses(filtered);
     };
 
@@ -170,7 +170,7 @@ export default function Home() {
       </div>
 
       {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 mb-8">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 mb-3">
         <input
           type="text"
           value={searchQuery}
@@ -195,54 +195,59 @@ export default function Home() {
       </div>
 
       {/* Filter dropdowns */}
-      <div className="mb-1 flex space-x-4 items-center">
+      <div className="flex space-x-4 items-center">
         {/* Subject Filter */}
-        <label htmlFor="subjectFilter" className="text-white text-lg font-bold">Filter by Subject:</label>
-        {courseSubjects.length > 0 ? (
-          <select
-            id="subjectFilter"
-            value={tempSubjectFilters[0] || ""}
-            onChange={(e) => {
-              const subject = e.target.value;
-              if (subject === "") {
-                setSubjectFilters([]); // Clear all filters if "All Subjects" is selected
-              } else {
-                setSubjectFilters((prevFilters) =>
-                  prevFilters.includes(subject)
-                    ? prevFilters
-                    : [...prevFilters, subject]
-                );
-              }
-            }}
-            className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
-          >
-            <option value="" className="text-gray-700">All Subjects</option>
-            {courseSubjects.map((subject, index) => (
-              <option key={index} value={subject}>
-                {subject}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <p className="text-gray-400 inline text-white text-lg">No Subjects Found</p>
-        )}
+        <div className="flex items-center space-x-1">
+          <label htmlFor="subjectFilter" className="text-white text-lg font-bold">Filter by Subject:</label>
+          {courseSubjects.length > 0 ? (
+            <select
+              id="subjectFilter"
+              value={tempSubjectFilters[0] || ""}
+              onChange={(e) => {
+                const subject = e.target.value;
+                if (subject === "") {
+                  setSubjectFilters([]); // Clear all filters if "All Subjects" is selected
+                } else {
+                  setSubjectFilters((prevFilters) =>
+                    prevFilters.includes(subject)
+                      ? prevFilters
+                      : [...prevFilters, subject]
+                  );
+                }
+              }}
+              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+            >
+              <option value="" className="text-gray-700">All Subjects</option>
+              {courseSubjects.map((subject, index) => (
+                <option key={index} value={subject}>
+                  {subject}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-gray-400 inline text-white text-lg">No Subjects Found</p>
+          )}
+        </div>
 
         {/* Rating Filter */}
-        <label htmlFor="ratingFilter" className="text-white text-lg font-bold">Filter by Rating:</label>
-        <select
-          id="ratingFilter"
-          value={ratingFilter || ""}
-          onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
-          className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
-        >
-          <option value="" className="text-gray-700">All Ratings</option>
-          <option value="1">1+</option>
-          <option value="2">2+</option>
-          <option value="3">3+</option>
-          <option value="4">4+</option>
-          <option value="5">5</option>
-        </select>
+        <div className="flex items-center space-x-1">
+          <label htmlFor="ratingFilter" className="text-white text-lg font-bold">Filter by Rating:</label>
+          <select
+            id="ratingFilter"
+            value={ratingFilter || ""}
+            onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
+            className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+          >
+            <option value="" className="text-gray-700">All Ratings</option>
+            <option value="1">1+</option>
+            <option value="2">2+</option>
+            <option value="3">3+</option>
+            <option value="4">4+</option>
+            <option value="5">5</option>
+          </select>
+        </div>
       </div>
+
 
       {/* Display Selected Filters */}
       <div className="mb-4 flex flex-wrap gap-2">
@@ -263,7 +268,8 @@ export default function Home() {
         ))}
         {ratingFilter && (
           <div className="flex items-center bg-gray-200 px-3 py-2 rounded-full text-sm sm:text-base lg:text-lg">
-            <span className="mr-2">Rating: {ratingFilter}+</span>
+            <span className="mr-1 font-semibold">Rating:</span>
+            <span className="mr-2">{ratingFilter}+</span>
             <button
               aria-label={`Remove rating filter ${ratingFilter}`}
               onClick={() => setRatingFilter(null)}
@@ -290,7 +296,7 @@ export default function Home() {
               </button>
 
               {/* Subject Filters */}
-              <div className="mb-4">
+              <div className="mb-2">
                 <label
                   title="Filter by Subject"
                   aria-label="Filter by Subject"
@@ -352,6 +358,19 @@ export default function Home() {
         <div className="grid-container grid gap-6">
           {filteredCourses.map((course) => {
             const isSaved = savedCourses.includes(course.id);
+            let rating = course.averageRating.toFixed(1);
+
+            const ratingColorClass =
+              rating == undefined || rating == 0.0
+                ? "bg-gray-400"  // Gray if rating is undefined or exactly 0.0
+                : rating > 0 && rating < 2
+                  ? "bg-red-400"    // Red for (0, 2)
+                  : rating >= 2 && rating < 4
+                    ? "bg-yellow-300" // Yellow for [2, 4)
+                    : "bg-green-300"; // Green for [4, 5]
+            if (rating == 0.0) {
+              rating = "N/A";
+            }
             return (
               <div
                 key={course.id}
@@ -359,8 +378,8 @@ export default function Home() {
               >
                 {/* Course details section */}
                 <div className="flex items-center space-x-4 flex-1">
-                  <div className="text-lg bg-gray-200 p-2 rounded-lg font-bold shadow-lg">
-                    {course.averageRating.toFixed(1) || "N/A"}
+                  <div className={`text-lg p-2 rounded-lg font-bold shadow-lg ${ratingColorClass}`}>
+                    {rating}
                   </div>
                   <div className="flex-1">
                     <div className="text-lg font-bold whitespace-normal break-words">{course.code}</div>
