@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useParams, useRouter } from 'next/navigation';
 import { AuthContext } from '../../src/app/lib/contexts';
-import Profile, { defaultProfilePic } from '../../src/app/profile/[userId]/page';
+import Profile from '../../src/app/profile/[userId]/page';
 import { editUser, getUserByID } from '../../src/app/server';
 
 // Mock next/navigation hooks
