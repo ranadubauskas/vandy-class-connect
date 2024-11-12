@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import SavedCourses from '../src/app/savedCourses/page';
-import userEvent from '@testing-library/user-event';
+
 import { AuthContext } from "../src/app/lib/contexts";
 import { getUserCookies } from '../src/app/lib/functions';
 import pb from '../src/app/lib/pocketbaseClient';

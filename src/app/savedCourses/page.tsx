@@ -9,6 +9,7 @@ import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 
 
+pb.autoCancellation(false);
 
 export default function savedCourses() {
   const [userCookies, setUserCookies] = useState(null);
@@ -21,7 +22,6 @@ export default function savedCourses() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState(null); 
 
-  //const pb = new PocketBase('https://vandy-class-connect.pockethost.io');
 
   useEffect(() => {
     const fetchCookies = async () => {
@@ -35,12 +35,13 @@ export default function savedCourses() {
 
         } else {
           console.log("No saved courses found");
+          setErrorMessage(null);
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
         setErrorMessage("Error fetching saved courses");
         
-      }
+      } 
     };
 
     fetchCookies();
@@ -128,15 +129,31 @@ export default function savedCourses() {
           </div>
         ) : savedCourses.length > 0 ? (
          <div className="space-y-4">
-            {savedCourses.map((course) => (
-              <div
-                key={course.id}
-                className="flex items-center justify-between bg-white text-black p-4 sm:p-6 rounded-lg shadow-lg"
-              >
+            {savedCourses.map((course) => {
+              let rating = course.averageRating.toFixed(1);
+
+              const ratingColorClass =
+                rating == undefined || rating == 0.0
+                  ? "bg-gray-400"  // Gray if rating is undefined or exactly 0.0
+                  : rating > 0 && rating < 2
+                    ? "bg-red-400"    // Red for (0, 2)
+                    : rating >= 2 && rating < 4
+                      ? "bg-yellow-300" // Yellow for [2, 4)
+                      : "bg-green-300"; // Green for [4, 5]
+              if (rating == 0.0) {
+                rating = "N/A";
+              }
+              
+              return (
+                <div
+                  key={course.id}
+                  className="flex items-center justify-between bg-white text-black p-4 sm:p-6 rounded-lg shadow-lg"
+                >
+                
                 {/*Course Information*/}
                 <div className="flex items-center space-x-4">
-                  <div className="text-lg sm:text-2xl bg-gray-200 p-3 rounded-lg font-bold">
-                    {course.averageRating?.toFixed(1) || "N/A"}
+                  <div className={`text-lg p-2 rounded-lg font-bold shadow-lg ${ratingColorClass}`}>
+                    {rating}
                   </div>
                   <div className="text-lg sm:text-2xl">
                     <span className="font-bold">{course.code}</span>: {course.name}
@@ -164,7 +181,8 @@ export default function savedCourses() {
                   )}
                 </div>
               </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="text-gray-600 text-center text-lg mt-8">
