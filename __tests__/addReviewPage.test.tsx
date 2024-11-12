@@ -35,6 +35,7 @@ describe('AddReviewPage Component', () => {
   let mockCoursesCollection: any;
   let mockProfessorsCollection: any;
   let mockReviewsCollection: any;
+  let mockUsersCollection: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -68,6 +69,11 @@ describe('AddReviewPage Component', () => {
       getFullList: jest.fn(), // Ensure getFullList is mocked here
     };
 
+    mockUsersCollection = {
+      getOne: jest.fn().mockResolvedValue({ reviews: [] }),
+      update: jest.fn().mockResolvedValue({}),
+    };
+
     // Mock pb.collection to return the appropriate mock collection
     (pb.collection as jest.Mock).mockImplementation((collectionName: string) => {
       if (collectionName === 'courses') {
@@ -76,6 +82,8 @@ describe('AddReviewPage Component', () => {
         return mockProfessorsCollection;
       } else if (collectionName === 'reviews') {
         return mockReviewsCollection;
+      } else if (collectionName === 'users') {
+        return mockUsersCollection;
       } else {
         return {
           getOne: jest.fn(),
