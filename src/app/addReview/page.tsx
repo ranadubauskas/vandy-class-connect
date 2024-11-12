@@ -120,7 +120,6 @@ function AddReviewComponent() {
                 formData.append('syllabus', syllabusFile);
                 await pb.collection('courses').update(courseId, formData);
             }
-            router.push(`/course?id=${courseId}`);
 
             const fetchedUserReviews = await pb.collection('users').getOne(userId, {
                 expand: 'reviews'
@@ -130,9 +129,8 @@ function AddReviewComponent() {
 
             await pb.collection('users').update(userId, {
                 reviews: userReviews
-            })
-
-
+            });
+            router.push(`/course?id=${courseId}`);
         } catch (error) {
             console.error('Error saving review:', error);
             setError('Error saving review.');
