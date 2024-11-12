@@ -29,6 +29,7 @@ function CourseDetailPageComponent() {
   const [professors, setProfessors] = useState([]);
   const [selectedProfessor, setSelectedProfessor] = useState("");
   const [copiedEmailMessage, setCopiedEmailMessage] = useState('');
+  const [selectedRating, setSelectedRating] = useState(0);
 
   const currentUserId = userData?.id;
   const firstName = userData?.firstName;
@@ -149,14 +150,17 @@ function CourseDetailPageComponent() {
     return <div className="flex items-center justify-center h-screen">Course not found</div>;
   }
 
-  const filteredReviews = selectedProfessor
-    ? reviews.filter((review) => {
-      const reviewProfessors = review.expand?.professors || [];
-      return reviewProfessors.some(
+  const filteredReviews = reviews.filter((review) => {
+    const matchesProfessor = selectedProfessor
+      ? review.expand?.professors?.some(
         (professor) => `${professor.firstName} ${professor.lastName}` === selectedProfessor
-      );
-    })
-    : reviews;
+      )
+      : true;
+
+    const matchesRating = selectedRating > 0 ? review.rating >= selectedRating : true;
+    return matchesProfessor && matchesRating;
+  });
+  console.log(filteredReviews);
 
 
   return (
@@ -209,28 +213,47 @@ function CourseDetailPageComponent() {
             </button>
           </div>
         </div>
-        <div className="mb-4">
-          <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
-          {professors.length > 0 ? (
+        <div className="mb-4 flex space-x-4">
+          <div>
+            <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
+            {professors.length > 0 ? (
+              <select
+                id="professorFilter"
+                value={selectedProfessor}
+                onChange={(e) => setSelectedProfessor(e.target.value)}
+                className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
+              >
+                <option value="" className="text-white">All Professors</option>
+                {professors.map((professor, index) => {
+                  const professorName = `${professor.firstName} ${professor.lastName}`.trim();
+                  return (
+                    <option key={index} value={professorName}>
+                      {professorName}
+                    </option>
+                  );
+                })}
+              </select>
+            ) : (
+              <p className="text-gray-400 inline text-white text-lg">No professors found</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="ratingFilter" className="text-white text-lg mr-2">Filter by Rating:</label>
             <select
-              id="professorFilter"
-              value={selectedProfessor}
-              onChange={(e) => setSelectedProfessor(e.target.value)}
-              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
+              id="ratingFilter"
+              value={selectedRating}
+              onChange={(e) => setSelectedRating(Number(e.target.value))}
+              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
             >
-              <option value="" className="text-white">All Professors</option>
-              {professors.map((professor, index) => {
-                const professorName = `${professor.firstName} ${professor.lastName}`.trim();
-                return (
-                  <option key={index} value={professorName}>
-                    {professorName}
-                  </option>
-                );
-              })}
+              <option value={0}>All Ratings</option>
+              <option value={1}>1+</option>
+              <option value={2}>2+</option>
+              <option value={3}>3+</option>
+              <option value={4}>4+</option>
+              <option value={5}>5 </option>
             </select>
-          ) : (
-            <p className="text-gray-400 inline text-white text-lg">No professors found</p>
-          )}
+          </div>
         </div>
 
         {/* Popup Message */}
@@ -374,13 +397,25 @@ function CourseDetailPageComponent() {
                 const syllabusUrl = review.syllabus
                   ? pb.files.getUrl(review, review.syllabus)
                   : null;
+                const rating = review.rating || 0;
+                const ratingColorClass =
+                  rating === 0.0
+                    ? "bg-gray-400"   // Gray if rating is exactly 0.0
+                    : rating > 0 && rating < 2
+                      ? "bg-red-400"    // Red for (0, 2)
+                      : rating >= 2 && rating < 4
+                        ? "bg-yellow-300" // Yellow for [2, 4)
+                        : "bg-green-300"; // Green for [4, 5]
+
 
                 return (
                   <div key={index}>
                     <div className="flex flex-col md:flex-row items-start justify-between">
                       {/* Left Section: User Info and Review */}
                       <div className="flex items-start space-x-4">
-                        <Link href={`/profile/${user.id}`} className="w-12 h-12 rounded-full object-cover transform hover:scale-110 transition-transform duration-200">
+                        <Link href={`/profile/${user.id}`}
+                          className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden transform hover:scale-110 transition-transform duration-200"
+                        >
                           <img src={profilePicture} alt="User Profile" className="w-16 h-12" />
                         </Link>
                         <div>
@@ -394,7 +429,15 @@ function CourseDetailPageComponent() {
                             </Link>
                           </div>
                           {/* Star Rating */}
-                          <StarRating rating={review.rating} readOnly={true} />
+                          <div className="flex items-center space-x-2 mt-0">
+                            {/* Rating Number in a Small Box */}
+                            <div className={`text-gray-900 font-semibold text-sm p-1 rounded ${ratingColorClass}`}>
+                              {review.rating.toFixed(1)}
+                            </div>
+
+                            {/* Star Rating */}
+                            <StarRating rating={review.rating} readOnly={true} />
+                          </div>
                           {/* Review Comment */}
                           <p className="text-gray-600">{review.comment}</p>
                           {/* Professor Name Box */}
