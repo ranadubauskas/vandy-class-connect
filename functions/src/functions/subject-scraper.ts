@@ -1,9 +1,10 @@
 import * as yes from "@vanderbilt/yes-api";
 import { nanoid } from "nanoid";
 import { parseArgs } from "util";
-import client from "../pocketbase";
+import { client } from "../pocketbase";
 import { IFunction } from "../types/functions";
 import { YesSubjectResponse } from "../types/yes-api";
+import minimist from 'minimist';
 
 /**
  * CLI Arguments for the Subject Scraper function
@@ -19,33 +20,18 @@ export default {
    * @returns SubjectScraperArguments
    */
   parseArguments() {
-    const {
-      values,
-      positionals
-    } = parseArgs({
-      options: {
-        /**
-         * Whether or not to save the subjects to the database
-         */
-        save: {
-          type: 'boolean',
-          default: false
-        },
-        /**
-         * The maximum number of subjects to return/save
-         */
-        limit: {
-          type: 'string',
-          default: Number.MAX_VALUE.toString()
-        }
+    const argv = minimist(process.argv.slice(2), {
+      boolean: ['save'],
+      default: {
+        save: false,
+        limit: Number.MAX_VALUE.toString(),
       },
-      strict: false
-    })
+    });
 
     return {
-      save: Boolean(values.save),
-      limit: Number(values.limit)
-    } satisfies SubjectScraperArguments
+      save: argv.save,
+      limit: Number(argv.limit),
+    } satisfies SubjectScraperArguments;
   },
   /** 
    * Executes the Subject Scraper function to get subjects from YES

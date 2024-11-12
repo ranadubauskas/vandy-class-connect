@@ -188,6 +188,7 @@ function CourseDetailPageComponent() {
               <button
                 className="bg-white text-black py-2 px-6 rounded-full shadow-lg hover:bg-gray-300 transition duration-300"
                 onClick={() => window.open(course.syllabus, '_blank')}
+                title="Download Syllabus"
               >
                 Download Syllabus
               </button>
@@ -442,6 +443,7 @@ function CourseDetailPageComponent() {
                                 {syllabusUrl && (
                                   <Tooltip title="Download Syllabus">
                                     <button
+                                      title="Download Syllabus"
                                       className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
                                       onClick={() => window.open(syllabusUrl, '_blank')}
                                     >

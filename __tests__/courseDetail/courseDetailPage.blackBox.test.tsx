@@ -185,57 +185,67 @@ describe('CourseDetailPage Component', () => {
 
     it('should open syllabus when "Download Syllabus" button is clicked in a review', async () => {
         mockGet.mockReturnValue('courseId');
-
+      
         const mockReviewSyllabusUrl = 'http://example.com/review-syllabus.pdf';
-
+      
         const mockCourseData = {
-            id: 'courseId',
-            code: 'CS101',
-            name: 'Introduction to Computer Science',
-            expand: {
-                reviews: [
-                    {
-                        id: 'review1',
-                        rating: 5,
-                        comment: 'Excellent course!',
-                        syllabus: 'review-syllabus.pdf',
-                        expand: {
-                            user: {
-                                id: 'user1',
-                                firstName: 'Alice',
-                                lastName: 'Doe',
-                                profilePicture: 'user1.jpg',
-                                email: 'alice@example.com',
-                            },
-                        },
-                    },
-                ],
-                professors: [],
-            },
-            tutors: [],
+          id: 'courseId',
+          code: 'CS101',
+          name: 'Introduction to Computer Science',
+          expand: {
+            reviews: [
+              {
+                id: 'review1',
+                rating: 5,
+                comment: 'Excellent course!',
+                syllabus: 'review-syllabus.pdf',
+                expand: {
+                  user: { id: 'user1', firstName: 'Alice', lastName: 'Doe' },
+                  professors: [],
+                },
+              },
+            ],
+            professors: [],
+          },
+          tutors: [],
         };
-
+      
+        // Mock pb.files.getUrl
+        (pb.files.getUrl as jest.Mock).mockImplementation((record, filename) => {
+          if (filename === 'review-syllabus.pdf') {
+            return mockReviewSyllabusUrl;
+          }
+          return '';
+        });
+      
+        // Mock getOne
         (mockCoursesCollection.getOne as jest.Mock).mockResolvedValue(mockCourseData);
-        (pb.files.getUrl as jest.Mock).mockReturnValue('http://example.com/review-syllabus.pdf');
-
+      
+        // Mock window.open
+        const windowOpenSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      
         await act(async () => {
-            render(<CourseDetailPage />);
+          render(<CourseDetailPage />);
         });
-
+      
         await waitFor(() => {
-            expect(screen.getByText('Excellent course!')).toBeInTheDocument();
+          expect(screen.getByText('Excellent course!')).toBeInTheDocument();
         });
-
-        // Click the syllabus download button in the review
-        const downloadButton = screen.getByTitle('Download Syllabus');
-        fireEvent.click(downloadButton);
-
-        expect(pb.files.getUrl).toHaveBeenCalledWith(
-            mockCourseData.expand.reviews[0],
-            'review-syllabus.pdf'
-        );
+      
+        // Verify the "Download Syllabus" button is rendered for the review
+        const downloadButtons = screen.getAllByTitle('Download Syllabus');
+        expect(downloadButtons.length).toBeGreaterThan(0);
+        console.log('downloadByttons', downloadButtons)
+      
+        // Click the "Download Syllabus" button
+        fireEvent.click(downloadButtons[0]);
+      
         expect(window.open).toHaveBeenCalledWith(mockReviewSyllabusUrl, '_blank');
-    });
+      
+        // Restore window.open
+        windowOpenSpy.mockRestore();
+      });
+      
 
     it('should display "Email copied" message after copying an email', async () => {
         mockGet.mockReturnValue('courseId');
