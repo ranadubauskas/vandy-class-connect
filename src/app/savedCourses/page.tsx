@@ -32,23 +32,26 @@ export default function savedCourses() {
           setUserCookies(cookies);
           setSavedCourses(cookies.savedCourses || []);
           console.log(cookies.savedCourses);
-
         } else {
           console.log("No saved courses found");
+          setErrorMessage("No saved courses found");
+          setLoading(false); // Add this line
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
-        setErrorMessage("Error fetching saved courses");
-        
+        setErrorMessage("Error fetching saved courses"); // Add this line
+        setLoading(false); // Add this line
       }
     };
-
     fetchCookies();
   }, []);
 
   useEffect(() => {
     const fetchSavedCourses = async () => {
-      if(!userCookies) return;
+      if(!userCookies) {
+        setLoading(false);
+        return;
+      }
 
       try {
         const userRecord = await pb.collection('users').getOne(userCookies.id, {autoCancellation: false});
@@ -125,6 +128,10 @@ export default function savedCourses() {
         {loading ? (
           <div className="text-gray-600 text-center text-2xl mt-8">
             Loading...
+          </div>
+        ) : errorMessage ? (
+          <div className="text-red-600 text-center text-lg mt-8">
+            {errorMessage}
           </div>
         ) : savedCourses.length > 0 ? (
          <div className="space-y-4">
