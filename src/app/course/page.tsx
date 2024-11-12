@@ -29,6 +29,7 @@ function CourseDetailPageComponent() {
   const [professors, setProfessors] = useState([]);
   const [selectedProfessor, setSelectedProfessor] = useState("");
   const [copiedEmailMessage, setCopiedEmailMessage] = useState('');
+  const [selectedRating, setSelectedRating] = useState(0);
 
   const currentUserId = userData?.id;
   const firstName = userData?.firstName;
@@ -149,14 +150,17 @@ function CourseDetailPageComponent() {
     return <div className="flex items-center justify-center h-screen">Course not found</div>;
   }
 
-  const filteredReviews = selectedProfessor
-    ? reviews.filter((review) => {
-      const reviewProfessors = review.expand?.professors || [];
-      return reviewProfessors.some(
+  const filteredReviews = reviews.filter((review) => {
+    const matchesProfessor = selectedProfessor
+      ? review.expand?.professors?.some(
         (professor) => `${professor.firstName} ${professor.lastName}` === selectedProfessor
-      );
-    })
-    : reviews;
+      )
+      : true;
+
+    const matchesRating = selectedRating > 0 ? review.rating >= selectedRating : true;
+    return matchesProfessor && matchesRating;
+  });
+  console.log(filteredReviews);
 
 
   return (
@@ -209,28 +213,47 @@ function CourseDetailPageComponent() {
             </button>
           </div>
         </div>
-        <div className="mb-4">
-          <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
-          {professors.length > 0 ? (
+        <div className="mb-4 flex space-x-4">
+          <div>
+            <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
+            {professors.length > 0 ? (
+              <select
+                id="professorFilter"
+                value={selectedProfessor}
+                onChange={(e) => setSelectedProfessor(e.target.value)}
+                className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
+              >
+                <option value="" className="text-white">All Professors</option>
+                {professors.map((professor, index) => {
+                  const professorName = `${professor.firstName} ${professor.lastName}`.trim();
+                  return (
+                    <option key={index} value={professorName}>
+                      {professorName}
+                    </option>
+                  );
+                })}
+              </select>
+            ) : (
+              <p className="text-gray-400 inline text-white text-lg">No professors found</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="ratingFilter" className="text-white text-lg mr-2">Filter by Rating:</label>
             <select
-              id="professorFilter"
-              value={selectedProfessor}
-              onChange={(e) => setSelectedProfessor(e.target.value)}
-              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md  hover:bg-gray-300 transition"
+              id="ratingFilter"
+              value={selectedRating}
+              onChange={(e) => setSelectedRating(Number(e.target.value))}
+              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
             >
-              <option value="" className="text-white">All Professors</option>
-              {professors.map((professor, index) => {
-                const professorName = `${professor.firstName} ${professor.lastName}`.trim();
-                return (
-                  <option key={index} value={professorName}>
-                    {professorName}
-                  </option>
-                );
-              })}
+              <option value={0}>All Ratings</option>
+              <option value={1}>1+</option>
+              <option value={2}>2+</option>
+              <option value={3}>3+</option>
+              <option value={4}>4+</option>
+              <option value={5}>5 </option>
             </select>
-          ) : (
-            <p className="text-gray-400 inline text-white text-lg">No professors found</p>
-          )}
+          </div>
         </div>
 
         {/* Popup Message */}
@@ -368,6 +391,7 @@ function CourseDetailPageComponent() {
             {filteredReviews.length === 0 ? (
               <p className="text-gray-600 text-lg">No reviews yet.</p>
             ) : (
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredReviews.map((review, index) => {
                   const user = review.expand?.user || {};
@@ -404,6 +428,7 @@ function CourseDetailPageComponent() {
                                     : 'Anonymous'}
                                 </h3>
                               </Link>
+
                             </div>
                             {/* Star Rating */}
                             <div className="flex items-center space-x-2 mt-0">
