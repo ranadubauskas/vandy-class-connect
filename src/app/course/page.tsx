@@ -391,108 +391,106 @@ function CourseDetailPageComponent() {
             {filteredReviews.length === 0 ? (
               <p className="text-gray-600 text-lg">No reviews yet.</p>
             ) : (
-              filteredReviews.map((review, index) => {
-                const user = review.expand?.user || {};
-                const profilePicture = user.profilePicture || '/images/user.png';
-                const syllabusUrl = review.syllabus
-                  ? pb.files.getUrl(review, review.syllabus)
-                  : null;
-                const rating = review.rating || 0;
-                const ratingColorClass =
-                  rating === 0.0
-                    ? "bg-gray-400"   // Gray if rating is exactly 0.0
-                    : rating > 0 && rating < 2
-                      ? "bg-red-400"    // Red for (0, 2)
-                      : rating >= 2 && rating < 4
-                        ? "bg-yellow-300" // Yellow for [2, 4)
-                        : "bg-green-300"; // Green for [4, 5]
 
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredReviews.map((review, index) => {
+                  const user = review.expand?.user || {};
+                  const profilePicture = user.profilePicture || '/images/user.png';
+                  const syllabusUrl = review.syllabus
+                    ? pb.files.getUrl(review, review.syllabus)
+                    : null;
+                  const rating = review.rating || 0;
+                  const ratingColorClass =
+                    rating === 0.0
+                      ? "bg-gray-400"   // Gray if rating is exactly 0.0
+                      : rating > 0 && rating < 2
+                        ? "bg-red-400"    // Red for (0, 2)
+                        : rating >= 2 && rating < 4
+                          ? "bg-yellow-300" // Yellow for [2, 4)
+                          : "bg-green-300"; // Green for [4, 5]
 
-                return (
-                  <div key={index}>
-                    <div className="flex flex-col md:flex-row items-start justify-between">
-                      {/* Left Section: User Info and Review */}
-                      <div className="flex items-start space-x-4">
-                        <Link href={`/profile/${user.id}`}
-                          className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden transform hover:scale-110 transition-transform duration-200"
-                        >
-                          <img src={profilePicture} alt="User Profile" className="w-16 h-12" />
-                        </Link>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <Link href={`/profile/${user.id}`}>
-                              <h3 className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
-                                {user.firstName && user.lastName
-                                  ? `${user.firstName} ${user.lastName}`
-                                  : 'Anonymous'}
-                              </h3>
-                            </Link>
-                          </div>
-                          {/* Star Rating */}
-                          <div className="flex items-center space-x-2 mt-0">
-                            {/* Rating Number in a Small Box */}
-                            <div className={`text-gray-900 font-semibold text-sm p-1 rounded ${ratingColorClass}`}>
-                              {review.rating.toFixed(1)}
+                  return (
+                    <div key={index} className="bg-white p-4 rounded-lg shadow-md">
+                      <div className="flex flex-col md:flex-row items-start justify-between">
+                        {/* Left Section: User Info and Review */}
+                        <div className="flex items-start space-x-4">
+                          <Link href={`/profile/${user.id}`}
+                            className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden transform hover:scale-110 transition-transform duration-200"
+                          >
+                            <img src={profilePicture} alt="User Profile" className="w-16 h-12" />
+                          </Link>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <Link href={`/profile/${user.id}`}>
+                                <h3 className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
+                                  {user.firstName && user.lastName
+                                    ? `${user.firstName} ${user.lastName}`
+                                    : 'Anonymous'}
+                                </h3>
+                              </Link>
+
                             </div>
-
                             {/* Star Rating */}
-                            <StarRating rating={review.rating} readOnly={true} />
-                          </div>
-                          {/* Review Comment */}
-                          <p className="text-gray-600">{review.comment}</p>
-                          {/* Professor Name Box */}
-                          {review.expand?.professors?.some((prof) => prof.firstName) && (
-                            <div className="mt-2 p-1 border border-gray-300 rounded bg-gray-100 inline-block">
-                              <h3 className="text-gray-800 font-semibold">
-                                Professor:{' '}
-                                {review.expand.professors
-                                  .filter((prof) => prof.firstName) // Only include professors with non-empty firstName
-                                  .map((prof, idx, filteredProfs) => (
-                                    <span key={prof.id} className="font-normal">
-                                      {prof.firstName} {prof.lastName}
-                                      {idx < filteredProfs.length - 1 ? ', ' : ''}
-                                    </span>
-                                  ))}
-                              </h3>
-                            </div>
-                          )}
+                            <div className="flex items-center space-x-2 mt-0">
+                              {/* Rating Number in a Small Box */}
+                              <div className={`text-gray-900 font-semibold text-sm p-1 rounded ${ratingColorClass}`}>
+                                {review.rating.toFixed(1)}
+                              </div>
 
+                              {/* Star Rating */}
+                              <StarRating rating={review.rating} readOnly={true} />
+                            </div>
+                            {/* Review Comment */}
+                            <p className="text-gray-600">{review.comment}</p>
+                            {/* Professor Name Box */}
+                            {review.expand?.professors?.some((prof) => prof.firstName) && (
+                              <div className="mt-2 p-1 border border-gray-300 rounded bg-gray-100 inline-block">
+                                <h3 className="text-gray-800 font-semibold">
+                                  Professor:{' '}
+                                  {review.expand.professors
+                                    .filter((prof) => prof.firstName) // Only include professors with non-empty firstName
+                                    .map((prof, idx, filteredProfs) => (
+                                      <span key={prof.id} className="font-normal">
+                                        {prof.firstName} {prof.lastName}
+                                        {idx < filteredProfs.length - 1 ? ', ' : ''}
+                                      </span>
+                                    ))}
+                                </h3>
+                              </div>
+                            )}
+
+                          </div>
                         </div>
-                      </div>
-                      {/* Right Section: Buttons */}
-                      <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                        {/* Syllabus Download Button */}
-                        {syllabusUrl && (
-                          <Tooltip title="Download Syllabus">
+                        {/* Right Section: Buttons */}
+                        <div className="flex items-center space-x-4 mt-4 md:mt-0">
+                          {/* Syllabus Download Button */}
+                          {syllabusUrl && (
+                            <Tooltip title="Download Syllabus">
+                              <button
+                                title="Download Syllabus"
+                                className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
+                                onClick={() => window.open(syllabusUrl, '_blank')}
+                              >
+                                <FaFileDownload className="text-xl" />
+                              </button>
+                            </Tooltip>
+                          )}
+                          {/* Report Review Button */}
+                          <Tooltip title="Report Review">
                             <button
-                              title="Download Syllabus"
-                              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
-                              onClick={() => window.open(syllabusUrl, '_blank')}
+                              aria-label="Report Review"
+                              onClick={() => reportReview(review.id)}
+                              className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
                             >
-                              <FaFileDownload className="text-xl" />
+                              <FaFlag className="text-2xl" />
                             </button>
                           </Tooltip>
-                        )}
-                        {/* Report Review Button */}
-                        <Tooltip title="Report Review">
-                          <button
-                            aria-label="Report Review"
-                            onClick={() => reportReview(review.id)}
-                            className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
-                          >
-                            <FaFlag className="text-2xl" />
-                          </button>
-                        </Tooltip>
+                        </div>
                       </div>
                     </div>
-
-                    {/* Divider Line */}
-                    {index < reviews.length - 1 && (
-                      <hr className="my-6 border-t border-gray-300" />
-                    )}
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
