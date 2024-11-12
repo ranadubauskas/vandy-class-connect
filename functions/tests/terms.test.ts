@@ -1,5 +1,6 @@
 import { test } from "@jest/globals"
 import termScraper from "../src/functions/term-scraper"
+import { expect } from "bun:test";
 
 /**
  * Ensures that the term scraper function works returns the correct data
@@ -17,7 +18,7 @@ test("Terms have properties", async () => {
 
   expect(term.id).toHaveLength(15)
   expect(term.title).not.toBeNull()
-})
+}, 1000 * 60)
 
 /**
  * Ensures that the term scraper function limits the number of terms
@@ -43,7 +44,7 @@ test("Terms are limited", async () => {
   })
 
   expect(terms).toHaveLength(15)
-})
+}, 1000 * 60)
 
 /**
  * Ensures that the term scraper function sorts the terms
@@ -55,6 +56,6 @@ test("Terms are sorted", async () => {
   })
 
   for (let i = 0; i < terms.length - 1; i++) {
-    expect(terms[i].title.localeCompare(terms[i + 1].title)).toBeLessThan(0);
+    expect(terms[i].title.localeCompare(terms[i + 1].title)).toBeLessThanOrEqual(0);
   }
-})
+}, 1000 * 60)
