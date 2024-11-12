@@ -38,6 +38,7 @@ export default function savedCourses() {
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
+        setErrorMessage("Error fetching saved courses");
         
       }
     };
@@ -112,7 +113,12 @@ export default function savedCourses() {
         >
           {editMode ? "Save Changes" : "Edit"}
         </button>
+        {/* Error Message */}
+      {errorMessage && (
+        <div className="text-red-500 text-center mt-4">{errorMessage}</div>
+      )}
       </div>
+      
 
       {/* Saved courses List */}
       <div className="bg-white p-6 rounded-lg shadow-lg">

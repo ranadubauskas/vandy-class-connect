@@ -7,6 +7,7 @@ import { getUserCookies } from '../src/app/lib/functions';
 import pb from '../src/app/lib/pocketbaseClient';
 import * as functions from '../src/app/lib/functions';
 
+
 //Mock dependencies
 jest.mock('next/navigation', () => ({
     useRouter: jest.fn(),
@@ -16,7 +17,7 @@ jest.mock('next/navigation', () => ({
 jest.mock('../src/app/lib/functions', () => ({
     getUserCookies: jest.fn(),
 }));
-  
+jest.mock('../src/app/lib/pocketbaseClient');
 jest.mock('../src/app/lib/pocketbaseClient', () => ({
     collection: jest.fn().mockImplementation((collectionName) => {
         if (collectionName === 'users') {
@@ -36,6 +37,7 @@ jest.mock('../src/app/lib/pocketbaseClient', () => ({
                 };
                 return Promise.resolve(courses[courseId]);
               }),
+              update: jest.fn(), // Mock update as a jest.fn()
             };
           }
         return { getOne: jest.fn() };  // Default mock for any other collection
@@ -268,19 +270,90 @@ describe("SavedCourses page", () => {
             await waitFor(() => expect(screen.getByText(/you have no saved courses/i)).toBeInTheDocument());
         });
 
-        it("should handle error when fetching saved courses fails", async () => {
-            const mockGetCookies = jest.fn().mockRejectedValue(new Error("Error fetching cookies"));
-            jest.spyOn(functions, 'getUserCookies').mockImplementation(mockGetCookies);
+        // it("should handle error when fetching saved courses fails", async () => {
+        //     const mockGetCookies = jest.fn().mockRejectedValue(new Error("Error fetching cookies"));
+        //     jest.spyOn(functions, 'getUserCookies').mockImplementation(mockGetCookies);
         
-            render(<SavedCourses />);
+        //     render(<SavedCourses />);
         
-            await waitFor(() => {
-              expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+        //     await waitFor(() => {
+        //       expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+        //     });
+
+        //     expect(screen.getByText("Error fetching saved courses")).toBeInTheDocument();
+        //   });
+        it("should remove course when 'Remove' is clicked in the confirmation dialog", async () => {
+            // Mock user cookies with saved courses
+            const mockGetCookies = jest.fn().mockResolvedValue({
+                savedCourses: ['1'],
+                id: 'user123' // Mock user ID for PocketBase
             });
+            jest.spyOn(functions, 'getUserCookies').mockImplementation(mockGetCookies);
+            
+            // Mock PocketBase client and the 'getOne' method to return mock courses
+            const mockCourses = [{ id: '1', code: 'CS101', name: 'Intro to Computer Science' }];
+            const getOneMock = jest.fn(id => Promise.resolve(mockCourses.find(course => course.id === id)));
+            jest.spyOn(pb.collection('courses'), 'getOne').mockImplementation(getOneMock);
+            
+            // Mock the update method to simulate a successful update
+            const updateMock = jest.fn().mockResolvedValue({});
+            const mockUsersCollection = {
+                update: updateMock,
+                getOne: jest.fn() // Optionally mock other methods if needed
+              };
 
-            expect(screen.getByText("Error fetching saved courses")).toBeInTheDocument();
+              jest.spyOn(pb, 'collection').mockImplementation((name) => {
+                if (name === 'users') {
+                  return mockUsersCollection;
+                }
+                return {}; // Mock other collections as needed
+              });
+          
+            // Render the component
+            render(<SavedCourses />);
+            
+            // Wait for the course to load
+            await waitFor(() => expect(screen.queryByText("Loading...")).not.toBeInTheDocument());
+            
+            const editButton = screen.getByRole("button", { name: /edit/i });
+            fireEvent.click(editButton);  // Enter edit mode
+            // Click the "Unsave Course" button to open the confirmation dialog
+            fireEvent.click(screen.getByTestId("unsave-button"));
+            
+            // Click the "Remove" button in the confirmation dialog
+            fireEvent.click(screen.getByText("Remove"));
+            
+            // Wait for the course to be removed from the list
+            await waitFor(() => expect(screen.queryByText('Intro to Computer Science')).not.toBeInTheDocument());
           });
-
-
+        
+          it("should handle error when fetching saved courses fails", async () => {
+            // Mock user cookies to simulate a user being logged in
+            const mockGetCookies = jest.fn().mockResolvedValue({
+                savedCourses: [],
+                id: 'user123' // Mock user ID
+            });
+            jest.spyOn(functions, 'getUserCookies').mockImplementation(mockGetCookies);
+            
+            // Mock the PocketBase client to simulate an error when fetching courses
+            const fetchSavedCoursesErrorMock = jest.fn().mockRejectedValue(new Error("Error fetching saved courses"));
+            
+            // Mock the pb.collection('users').getOne method to throw an error
+            jest.spyOn(pb.collection('users'), 'getOne').mockImplementation(fetchSavedCoursesErrorMock);
+            
+            const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+            // Render the component
+            render(<SavedCourses />);
+            
+            // Wait for the loading state to complete and for any error handling to occur
+            await waitFor(() => expect(screen.queryByText("Loading...")).not.toBeInTheDocument());
+            
+            await waitFor(() => expect(screen.getByText("Error fetching saved courses")).toBeInTheDocument());
+    
+            // Ensure the fetch error was properly logged
+            expect(console.error).toHaveBeenCalledWith("Error fetching saved courses:", expect.any(Error));
+            consoleErrorMock.mockRestore();
+        });
+        
 
 });
