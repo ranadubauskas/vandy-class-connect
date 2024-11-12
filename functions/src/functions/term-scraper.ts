@@ -55,12 +55,35 @@ export default {
   async execute(args: TermScraperArguments) {
     let terms: YesTermResponse[] = []
 
-    //  Get the terms from the YES API
-    await yes.getTerms(
-      (term: YesTermResponse, timestamp: unknown) => {
-        terms.push(term)
-      }
-    )
+    const getTermsPromise = new Promise<YesTermResponse[]>((resolve) => {
+      yes.getTerms(
+        (term: YesTermResponse, timestamp: unknown) => {
+          if (terms.length >= args.limit) {
+            resolve(terms)
+            return
+          }
+
+          terms.push(term)
+        }
+      )
+    })
+
+    const limitPromise = new Promise<YesTermResponse[]>((resolve) => {
+      setInterval(() => {
+        if (terms.length >= args.limit) {
+          resolve(terms)
+        }
+      }, 1000)
+    })
+
+    await Promise.race([getTermsPromise, limitPromise])
+
+    // //  Get the terms from the YES API
+    // await yes.getTerms(
+    //   (term: YesTermResponse, timestamp: unknown) => {
+    //     terms.push(term)
+    //   }
+    // )
 
     //  Add IDs to the terms, sort them, and limit them
     terms = terms

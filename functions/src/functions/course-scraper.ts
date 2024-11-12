@@ -69,24 +69,39 @@ export default {
   async execute(args: CourseScraperArguments) {
     let courses: YesCourseResponse[] = []
 
-    //  Get all sections for the term
-    await yes.getAllSections(
-      {
-        id: args.term,
-        title: ""
-      },
-      false,
-      (section: YesSectionResponse, _) => {
-        console.log(`Found course: ${section.course.name}`)
-        courses.push(section.course)
-      }
-    )
+    const getSectionsPromise = new Promise<YesCourseResponse[]>((resolve) => {
+      yes.getAllSections(
+        {
+          id: args.term,
+          title: ""
+        },
+        false,
+        (section: YesSectionResponse, timestamp: unknown) => {
+          if (courses.length >= args.limit) {
+            resolve(courses)
+            return
+          }
+
+          courses.push(section.course)
+        }
+      )
+    })
+
+    const limitPromise = new Promise<YesCourseResponse[]>((resolve) => {
+      setInterval(() => {
+        if (courses.length >= args.limit) {
+          resolve(courses)
+        }
+      }, 1000)
+    })
+
+    await Promise.race([getSectionsPromise, limitPromise])
 
     //  Add IDs to the courses, sort them, and limit them
     courses = courses
       .map(course => ({
+        ...course,
         id: nanoid(15),
-        ...course
       }))
       .toSorted((a, b) => a.name.localeCompare(b.name))
       .toSpliced(args.limit)

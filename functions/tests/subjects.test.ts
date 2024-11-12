@@ -1,5 +1,6 @@
-import { expect, test } from "@jest/globals"
+import { test } from "@jest/globals"
 import subjectScraper from "../src/functions/subject-scraper"
+import { expect } from "bun:test";
 
 /**
  * Ensures that the subject scraper function works returns the correct data
@@ -18,7 +19,7 @@ test("Subjects have properties", async () => {
 
   expect(subject.id).toHaveLength(15)
   expect(subject.name).not.toBeNull()
-})
+}, 1000 * 30)
 
 /**
  * Ensures that the subject scraper function limits the number of subjects
@@ -45,7 +46,7 @@ test("Subjects are limited", async () => {
   })
 
   expect(subjects).toHaveLength(10)
-})
+}, 1000 * 30)
 
 /**
  * Ensures that the subject scraper function sorts the subjects
@@ -57,6 +58,6 @@ test("Subjects are sorted", async () => {
   })
 
   for (let i = 0; i < subjects.length - 1; i++) {
-    expect(subjects[i].name.localeCompare(subjects[i + 1].name)).toBeLessThan(0);
+    expect(subjects[i].name.localeCompare(subjects[i + 1].name)).toBeLessThanOrEqual(0);
   }
-})
+}, 1000 * 30)

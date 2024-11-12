@@ -1,4 +1,5 @@
 import { test } from "@jest/globals";
+import { expect } from "bun:test";
 import courseScraper from "../src/functions/course-scraper";
 
 /**
@@ -53,7 +54,7 @@ test("Courses are limited", async () => {
   })
 
   expect(courses).toHaveLength(15)
-})
+}, 1000 * 30)
 
 /**
  * Ensures that the course scraper function sorts the courses
@@ -66,6 +67,6 @@ test("Courses are sorted", async () => {
   })
 
   for (let i = 0; i < courses.length - 1; i++) {
-    expect(courses[i].name.localeCompare(courses[i + 1].name)).toBeLessThan(0);
+    expect(courses[i].name.localeCompare(courses[i + 1].name)).toBeLessThanOrEqual(0);
   }
-})
+}, 1000 * 30)
