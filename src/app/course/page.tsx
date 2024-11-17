@@ -78,17 +78,17 @@ function CourseDetailPageComponent() {
     fetchCourse();
   }, [id, currentUserId]);
 
-  const reportReview = async (reviewId) => {
+  const reportReview = async (reviewId, userId) => {
     try {
       // Create the data object using the correct relation record IDs
       const data = {
         review: reviewId,
-        reporter: currentUserId
+        reporter: currentUserId,
+        reviewCreator: userId
       };
 
       // Create the review report entry in PocketBase
       await pb.collection('reviewReports').create(data);
-
       // Set the popup message
       setPopupMessage('Review has been reported and will be reviewed further.');
     } catch (error) {
@@ -147,14 +147,14 @@ function CourseDetailPageComponent() {
   const filteredReviews = reviews.filter((review) => {
     const matchesProfessor = selectedProfessor
       ? review.expand?.professors?.some(
-          (professor) => `${professor.firstName} ${professor.lastName}` === selectedProfessor
-        )
+        (professor) => `${professor.firstName} ${professor.lastName}` === selectedProfessor
+      )
       : true;
-  
+
     const matchesRating = selectedRating > 0 ? review.rating >= selectedRating : true;
     return matchesProfessor && matchesRating;
   });
-  
+
   // Determine grid classes based on the number of reviews
   let gridClasses = "grid grid-cols-1 gap-6"; // default
 
@@ -342,8 +342,8 @@ function CourseDetailPageComponent() {
 
         {/* Reviews Section with Average Rating */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
-        <div className="flex flex-row flex-nowrap justify-between items-center mb-4 overflow-x-auto">
-        {/* Number of tutors for the course */}
+          <div className="flex flex-row flex-nowrap justify-between items-center mb-4 overflow-x-auto">
+            {/* Number of tutors for the course */}
             <button
               onClick={toggleTutors}
               className="flex flex-col items-center space-y-1 focus:outline-none mb-4 lg:mb-0"
@@ -424,7 +424,7 @@ function CourseDetailPageComponent() {
                             <div className="flex items-center justify-between mt-2">
                               <div className="flex items-center space-x-2 whitespace-nowrap">
                                 {/* Rating Number in a Small Box */}
-                                <RatingBox rating={review.rating || 'N/A'} size="small"/>
+                                <RatingBox rating={review.rating || 'N/A'} size="small" />
                                 {/* Star Rating */}
                                 <StarRating rating={review.rating} readOnly={true} />
                               </div>
@@ -446,7 +446,7 @@ function CourseDetailPageComponent() {
                                 <Tooltip title="Report Review">
                                   <button
                                     aria-label="Report Review"
-                                    onClick={() => reportReview(review.id)}
+                                    onClick={() => reportReview(review.id, user.id)}
                                     className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
                                   >
                                     <FaFlag className="text-2xl" />

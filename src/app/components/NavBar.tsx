@@ -39,6 +39,11 @@ export default function NavBar() {
             >
               Profile
             </Link>
+            {userData.admin && (
+              <Link href="/admin" className="text-white hover:text-gray-300 text-sm sm:text-lg">
+                Admin
+              </Link>
+            )}
             <button
               className="text-white hover:text-gray-300 text-sm sm:text-lg"
               onClick={logoutUser}

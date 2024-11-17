@@ -8,7 +8,7 @@ export async function getUserCookies() {
 
         const allCookies = cookieStore.getAll();  // Fetch all cookies from the cookie store
         const hasRequiredCookies = allCookies.some(cookie => 
-            ["id", "firstName", "lastName", "email", "savedCourses"].includes(cookie.name)
+            ["id", "firstName", "lastName", "email", "savedCourses", "admin"].includes(cookie.name)
         );
 
         if (!hasRequiredCookies) {
@@ -49,4 +49,5 @@ export async function logout() {
     allCookies.delete("profilePic");
     allCookies.delete("reviews");
     allCookies.delete("savedCourses");
+    allCookies.delete("admin");
 }

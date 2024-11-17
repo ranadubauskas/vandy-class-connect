@@ -40,7 +40,6 @@ export default function Home() {
         console.error('Error fetching cookies:', error);
       }
     };
-
     fetchCookies();
   }, []);
 

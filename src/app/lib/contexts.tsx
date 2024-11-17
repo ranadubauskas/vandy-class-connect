@@ -12,6 +12,7 @@ interface UserInfoType {
   email: string;
   graduationYear: string;
   profilePic: string;
+  admin: boolean;
 }
 
 interface AuthContextData {
