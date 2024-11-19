@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import { IoIosSearch } from "react-icons/io";
 import { IoClose, IoFilterOutline } from "react-icons/io5";
+import RatingBox from "../components/ratingBox";
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
@@ -39,7 +40,6 @@ export default function Home() {
         console.error('Error fetching cookies:', error);
       }
     };
-
     fetchCookies();
   }, []);
 
@@ -195,7 +195,7 @@ export default function Home() {
       </div>
 
       {/* Filter dropdowns */}
-      <div className="flex space-x-4 items-center">
+      <div className="flex space-x-4 items-center mb-2">
         {/* Subject Filter */}
         <div className="flex items-center space-x-1">
           <label htmlFor="subjectFilter" className="text-white text-lg font-bold">Filter by Subject:</label>
@@ -254,8 +254,9 @@ export default function Home() {
         {subjectFilters.map((filter) => (
           <div
             key={filter}
-            className="flex items-center bg-gray-200 px-3 py-2 rounded-full text-sm sm:text-base lg:text-lg"
+            className="flex items-center bg-gray-200 px-2 py-1 rounded-full text-sm sm:text-base lg:text-lg"
           >
+            <span className="mr-1 text-s font-semibold">Subject:</span>
             <span className="mr-2">{filter}</span>
             <button
               aria-label={`Remove filter ${filter}`}
@@ -267,9 +268,9 @@ export default function Home() {
           </div>
         ))}
         {ratingFilter && (
-          <div className="flex items-center bg-gray-200 px-3 py-2 rounded-full text-sm sm:text-base lg:text-lg">
-            <span className="mr-1 font-semibold">Rating:</span>
-            <span className="mr-2">{ratingFilter}+</span>
+          <div className="flex items-center bg-gray-200 px-2 py-1 rounded-full text-sm sm:text-base lg:text-lg">
+            <span className="mr-1 text-s font-semibold">Rating:</span>
+            <span className="mr-2 text-s">{ratingFilter}+</span>
             <button
               aria-label={`Remove rating filter ${ratingFilter}`}
               onClick={() => setRatingFilter(null)}
@@ -358,31 +359,17 @@ export default function Home() {
         <div className="grid-container grid gap-6">
           {filteredCourses.map((course) => {
             const isSaved = savedCourses.includes(course.id);
-            let rating = course.averageRating.toFixed(1);
-
-            const ratingColorClass =
-              rating == undefined || rating == 0.0
-                ? "bg-gray-400"  // Gray if rating is undefined or exactly 0.0
-                : rating > 0 && rating < 2
-                  ? "bg-red-400"    // Red for (0, 2)
-                  : rating >= 2 && rating < 4
-                    ? "bg-yellow-300" // Yellow for [2, 4)
-                    : "bg-green-300"; // Green for [4, 5]
-            if (rating == 0.0) {
-              rating = "N/A";
-            }
+            const rating = course.averageRating ?? 0;
             return (
               <div
                 key={course.id}
                 className="flex items-center justify-between bg-white text-black p-4 rounded-lg shadow-lg"
               >
                 {/* Course details section */}
-                <div className="flex items-center space-x-4 flex-1">
-                  <div className={`text-lg p-2 rounded-lg font-bold shadow-lg ${ratingColorClass}`}>
-                    {rating}
-                  </div>
+                <div className="flex items-center space-x-4 flex-1 course-card">
+                  <RatingBox rating={rating} />
                   <div className="flex-1">
-                    <div className="text-lg font-bold whitespace-normal break-words">{course.code}</div>
+                    <div className="text-lg font-bold whitespace-normal break-words course-subject">{course.code}</div>
                     <div className="text-lg whitespace-normal break-words">{course.name}</div>
                   </div>
                 </div>
@@ -390,9 +377,9 @@ export default function Home() {
                 {/* Actions section */}
                 <div className="flex items-center space-x-4 ml-auto">
                   <button
-                    className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg text-base whitespace-nowrap"
-                    onClick={() => router.push(`/course?id=${course.id}`)}
-                  >
+                    className="view-course bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg text-base whitespace-nowrap"
+                    onClick={() => router.push(`/course?code=${course.code}&id=${course.id}`)}
+                    >
                     View Course
                   </button>
                   <Tooltip title={isSaved ? "Unsave Course" : "Save Course"}>

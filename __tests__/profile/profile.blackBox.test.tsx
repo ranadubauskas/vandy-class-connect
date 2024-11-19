@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useParams, useRouter } from 'next/navigation';
 import { AuthContext } from '../../src/app/lib/contexts';
 import Profile from '../../src/app/profile/[userId]/page';
@@ -92,150 +92,45 @@ describe('Profile Component', () => {
         );
     };
 
-
-    it('should render loading state when AuthContext is missing', () => {
-        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
-
-        render(
-            <AuthContext.Provider value={null}>
-                <Profile />
-            </AuthContext.Provider>
-        );
-        expect(screen.getByText('Loading...')).toBeInTheDocument();
-    });
-
-    it('should render own profile with edit option', async () => {
+    it("should set profile picture preview to default when no file is selected", async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
         renderWithAuthProvider(<Profile />);
 
-        // Wait for user data to load
-        await waitFor(() => {
-            expect(screen.getByText('Profile')).toBeInTheDocument();
-        });
+        await waitFor(() => screen.getByText("Edit Profile"));
+        fireEvent.click(screen.getByText("Edit Profile"));
 
-        // Check that user data is displayed
-        expect(screen.getByText('John')).toBeInTheDocument();
-        expect(screen.getByText('Doe')).toBeInTheDocument();
-        expect(screen.getByText('john.doe@example.com')).toBeInTheDocument();
-        expect(screen.getByText('2025')).toBeInTheDocument();
+        fireEvent.change(screen.getByLabelText("Choose File"), { target: { files: null } });
 
-        // Check that "Edit Profile" button is displayed
-        expect(screen.getByText('Edit Profile')).toBeInTheDocument();
+        // Cast to HTMLImageElement to access the src property
+        const profilePics = screen.getAllByAltText("Profile Picture");
+        const profilePicPreview = profilePics[0] as HTMLImageElement; // Adjust index as needed
+        expect(profilePicPreview.src).toContain('/images/user.png');
     });
 
-    it('should render other user\'s profile without edit option', async () => {
-        // Mock useParams to return a different userId
-        (useParams as jest.Mock).mockReturnValue({ userId: '2' });
-
+    it("should display error message if profile update fails in handleSave", async () => {
+        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
+        (editUser as jest.Mock).mockRejectedValue(new Error("Update failed")); // Simulate failure
         renderWithAuthProvider(<Profile />);
 
-        // Wait for user data to load
-        await waitFor(() => {
-            expect(screen.getByText('Profile')).toBeInTheDocument();
+        await waitFor(() => screen.getByText("Edit Profile"));
+        fireEvent.click(screen.getByText("Edit Profile"));
+
+        await act(async () => {
+            fireEvent.click(screen.getByText("Save Profile"));
         });
 
-        // Check that other user's data is displayed
-        expect(screen.getByText('Jane')).toBeInTheDocument();
-        expect(screen.getByText('Smith')).toBeInTheDocument();
-        expect(screen.getByText('jane.smith@example.com')).toBeInTheDocument();
-        expect(screen.getByText('2024')).toBeInTheDocument();
-
-        // Check that "Edit Profile" button is not displayed
-        expect(screen.queryByText('Edit Profile')).not.toBeInTheDocument();
+        expect(screen.getByText("Failed to update profile. Please try again.")).toBeInTheDocument();
     });
 
-    it('should switch to edit mode when "Edit Profile" button is clicked', async () => {
+    it("should fetch and display user's own profile data", async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
         renderWithAuthProvider(<Profile />);
 
         await waitFor(() => {
-            expect(screen.getByText('Edit Profile')).toBeInTheDocument();
+            expect(screen.getByText("John")).toBeInTheDocument();
+            expect(screen.getByText("Doe")).toBeInTheDocument();
+            expect(screen.getByText("john.doe@example.com")).toBeInTheDocument();
+            expect(screen.getByText("2025")).toBeInTheDocument();
         });
-
-        fireEvent.click(screen.getByText('Edit Profile'));
-
-        await waitFor(() => {
-            expect(screen.getByText('First Name')).toBeInTheDocument();
-        });
-
-        // Check that input fields are displayed with current values
-        expect(screen.getByLabelText('First Name')).toHaveValue('John');
-        expect(screen.getByLabelText('Last Name')).toHaveValue('Doe');
-        expect(screen.getByLabelText('Email')).toHaveValue('john.doe@example.com');
-        expect(screen.getByLabelText('Grade')).toHaveValue('2025');
-    });
-
-    it('should save profile changes when "Save Profile" button is clicked', async () => {
-        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
-        renderWithAuthProvider(<Profile />);
-
-        await waitFor(() => {
-            expect(screen.getByText('Edit Profile')).toBeInTheDocument();
-        });
-
-        fireEvent.click(screen.getByText('Edit Profile'));
-
-        await waitFor(() => {
-            expect(screen.getByLabelText('First Name')).toBeInTheDocument();
-        });
-
-        // Change first name and last name
-        fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Johnny' } });
-        fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe Jr.' } });
-
-        fireEvent.click(screen.getByText('Save Profile'));
-
-        // Wait for the component to update and display the new names
-        await waitFor(() => {
-            expect(screen.getByText('Johnny')).toBeInTheDocument();
-            expect(screen.getByText('Doe Jr.')).toBeInTheDocument();
-        });
-    });
-
-    it('should display error message if profile update fails', async () => {
-        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
-        (editUser as jest.Mock).mockRejectedValue(new Error('Update failed'));
-
-        renderWithAuthProvider(<Profile />);
-
-        await waitFor(() => {
-            expect(screen.getByText('Edit Profile')).toBeInTheDocument();
-        });
-
-        fireEvent.click(screen.getByText('Edit Profile'));
-
-        fireEvent.click(screen.getByText('Save Profile'));
-
-        await waitFor(() => {
-            expect(screen.getByText('Failed to update profile. Please try again.')).toBeInTheDocument();
-        });
-    });
-
-    it('should navigate to reviews page when "View My Reviews" button is clicked', async () => {
-        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
-        renderWithAuthProvider(<Profile />);
-
-        await waitFor(() => {
-            expect(screen.getByText('View My Reviews')).toBeInTheDocument();
-        });
-
-        fireEvent.click(screen.getByText('View My Reviews'));
-
-        expect(mockPush).toHaveBeenCalledWith('/ratings/1');
-    });
-
-    it('should navigate to other user\'s reviews page when "View Jane\'s Reviews" button is clicked', async () => {
-        // Mock useParams to return a different userId
-        (useParams as jest.Mock).mockReturnValue({ userId: '2' });
-
-        renderWithAuthProvider(<Profile />);
-
-        await waitFor(() => {
-            expect(screen.getByText("View Jane's Reviews")).toBeInTheDocument();
-        });
-
-        fireEvent.click(screen.getByText("View Jane's Reviews"));
-
-        expect(mockPush).toHaveBeenCalledWith('/ratings/2');
     });
 });

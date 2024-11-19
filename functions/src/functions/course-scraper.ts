@@ -1,17 +1,17 @@
-import * as yes from "@vanderbilt/yes-api"
-import { nanoid } from "nanoid"
-import { parseArgs } from "util"
-import client from "../pocketbase"
-import { IFunction } from "../types/functions"
-import { YesCourseResponse, YesSectionResponse } from "../types/yes-api"
+// src/functions/course-scraper.ts
+
+import minimist from "minimist";
+import { nanoid } from "nanoid";
+import { IFunction } from "../types/functions";
+import { YesCourseResponse, YesSectionResponse } from "../types/yes-api";
 
 /**
  * CLI Arguments for the Course Scraper function
  */
 export interface CourseScraperArguments {
-  save: boolean
-  limit: number
-  term: string
+  save: boolean;
+  limit: number;
+  term: string;
 }
 
 export default {
@@ -20,118 +20,108 @@ export default {
    * @returns CourseScraperArguments
    */
   parseArguments() {
-    const {
-      values,
-      positionals
-    } = parseArgs({
-      options: {
-        /**
-         * Whether or not to save the courses to the database
-         */
-        save: {
-          type: 'boolean',
-          default: false
-        },
-        /**
-         * The maximum number of courses to return/save
-         */
-        limit: {
-          type: 'string',
-          default: Number.MAX_VALUE.toString()
-        },
-        /**
-         * The term to scrape courses from the YES API
-         */
-        term: {
-          type: 'string',
-          default: "1040",
-          /**
-           * Please note that these are the Term IDs. 1040 is the most recent term,
-           * Spring 2025 with 1015 being the oldest, Fall 2023.
-           */
-          choices: ["1015", "1020", "1025", "1030", "1035", "1040"]
-        }
+    const argv = minimist(process.argv.slice(2), {
+      boolean: ["save"],
+      string: ["term", "limit"],
+      default: {
+        save: false,
+        limit: Number.MAX_VALUE.toString(),
+        term: "1040",
       },
-      strict: false
-    })
+    });
 
     return {
-      save: Boolean(values.save),
-      limit: Number(values.limit),
-      term: values.term as string
-    } satisfies CourseScraperArguments
+      save: argv.save,
+      limit: Number(argv.limit),
+      term: argv.term as string,
+    } satisfies CourseScraperArguments;
   },
+
   /**
    * Executes the Course Scraper function to get courses from YES
    * @param args CourseScraperArguments
+   * @param dependencies Optional dependencies for testing
    * @returns YesCourseResponse[]
    */
-  async execute(args: CourseScraperArguments) {
-    let courses: YesCourseResponse[] = []
+  async execute(
+    args: CourseScraperArguments,
+    dependencies?: {
+      yes?: typeof import("@vanderbilt/yes-api");
+      client?: typeof import("../pocketbase").default;
+      authenticateClient?: typeof import("../pocketbase").authenticateClient;
+    }
+  ) {
+    // Use the provided dependencies or default to actual modules
+    const yes = dependencies?.yes ?? (await import("@vanderbilt/yes-api"));
+    const client = dependencies?.client ?? (await import("../pocketbase")).default;
+    const authenticateClient =
+      dependencies?.authenticateClient ?? (await import("../pocketbase")).authenticateClient;
+
+    let courses: YesCourseResponse[] = [];
 
     const getSectionsPromise = new Promise<YesCourseResponse[]>((resolve) => {
       yes.getAllSections(
         {
           id: args.term,
-          title: ""
+          title: "",
         },
         false,
         (section: YesSectionResponse, timestamp: unknown) => {
           if (courses.length >= args.limit) {
-            resolve(courses)
-            return
+            resolve(courses);
+            return;
           }
 
-          courses.push(section.course)
+          courses.push(section.course);
         }
-      )
-    })
+      );
+    });
 
     const limitPromise = new Promise<YesCourseResponse[]>((resolve) => {
       setInterval(() => {
         if (courses.length >= args.limit) {
-          resolve(courses)
+          resolve(courses);
         }
-      }, 1000)
-    })
+      }, 1000);
+    });
 
-    await Promise.race([getSectionsPromise, limitPromise])
+    await Promise.race([getSectionsPromise, limitPromise]);
 
     //  Add IDs to the courses, sort them, and limit them
     courses = courses
-      .map(course => ({
+      .map((course) => ({
         ...course,
         id: nanoid(15),
       }))
-      .toSorted((a, b) => a.name.localeCompare(b.name))
-      .toSpliced(args.limit)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, args.limit);
 
     //  Save the courses to the database
     if (args.save) {
-      let index = 0
+      await authenticateClient();
 
       const promises = courses.map((course, index) => {
         return new Promise<void>((resolve, reject) => {
-         //  Important: A timeout is needed to prevent 429
-          const timeout = setTimeout(async () => {
+          //  Important: A timeout is needed to prevent 429
+          setTimeout(async () => {
             try {
-              console.log(`Saving course: ${course.name}`)
-              
-              await client.collection('courses').create(course)
-              
-              resolve()
+              console.log(`Saving course: ${course.name}`);
+
+              await client.collection("courses").create(course);
+
+              resolve();
             } catch (error) {
-              console.error(JSON.stringify(error, null, 2))
+              console.error(JSON.stringify(error, null, 2));
 
-              reject(error)
+              reject(error);
             }
-          }, index++ * 250)
+          }, index * 250);
         });
-      })
+      });
 
-      await Promise.all(promises)
+      await Promise.all(promises);
     }
 
-    return courses
-  }
-} satisfies IFunction<CourseScraperArguments, YesCourseResponse[]>
+    return courses;
+  },
+} satisfies IFunction<CourseScraperArguments, YesCourseResponse[]>;

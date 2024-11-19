@@ -1,16 +1,16 @@
-import * as yes from "@vanderbilt/yes-api"
-import { parseArgs } from "util"
-import { IFunction } from "../types/functions"
-import { YesTermResponse } from "../types/yes-api"
-import { nanoid } from "nanoid"
-import client from "../pocketbase"
+// src/functions/term-scraper.ts
+
+import { IFunction } from "../types/functions";
+import { YesTermResponse } from "../types/yes-api";
+import { nanoid } from "nanoid";
+import minimist from "minimist";
 
 /**
  * CLI Arguments for the Term Scraper function
  */
 export interface TermScraperArguments {
-  save: boolean
-  limit: number
+  save: boolean;
+  limit: number;
 }
 
 export default {
@@ -19,114 +19,105 @@ export default {
    * @returns TermScraperArguments
    */
   parseArguments() {
-    const {
-      values,
-      positionals
-    } = parseArgs({
-      options: {
-        /**
-         * Whether or not to save the courses to the database
-         */
-        save: {
-          type: 'boolean',
-          default: false
-        },
-        /**
-         * The maximum number of terms to return/save
-         */
-        limit: {
-          type: 'string',
-          default: Number.MAX_VALUE.toString()
-        },
+    const argv = minimist(process.argv.slice(2), {
+      boolean: ["save"],
+      default: {
+        save: false,
+        limit: Number.MAX_VALUE.toString(),
       },
-      strict: false
-    })
+    });
 
     return {
-      save: Boolean(values.save),
-      limit: Number(values.limit)
-    } satisfies TermScraperArguments
+      save: argv.save,
+      limit: Number(argv.limit),
+    } satisfies TermScraperArguments;
   },
+
   /**
    * Executes the Term Scraper function to get terms from YES
    * @param args TermScraperArguments
+   * @param dependencies Optional dependencies for testing
    * @returns YesTermResponse[]
    */
-  async execute(args: TermScraperArguments) {
-    let terms: YesTermResponse[] = []
+  async execute(
+    args: TermScraperArguments,
+    dependencies?: {
+      yesApi?: typeof import("@vanderbilt/yes-api");
+      client?: typeof import("../pocketbase").default;
+      authenticateClient?: typeof import("../pocketbase").authenticateClient;
+    }
+  ) {
+    // Use the provided dependencies or default to actual modules
+    const yes = dependencies?.yesApi ?? (await import("@vanderbilt/yes-api"));
+    const client = dependencies?.client ?? (await import("../pocketbase")).default;
+    const authenticateClient =
+      dependencies?.authenticateClient ?? (await import("../pocketbase")).authenticateClient;
+
+    let terms: YesTermResponse[] = [];
 
     const getTermsPromise = new Promise<YesTermResponse[]>((resolve) => {
-      yes.getTerms(
-        (term: YesTermResponse, timestamp: unknown) => {
-          if (terms.length >= args.limit) {
-            resolve(terms)
-            return
-          }
-
-          terms.push(term)
+      yes.getTerms((term: YesTermResponse, timestamp: unknown) => {
+        if (terms.length >= args.limit) {
+          resolve(terms);
+          return;
         }
-      )
-    })
+
+        terms.push(term);
+      });
+    });
 
     const limitPromise = new Promise<YesTermResponse[]>((resolve) => {
       setInterval(() => {
         if (terms.length >= args.limit) {
-          resolve(terms)
+          resolve(terms);
         }
-      }, 1000)
-    })
+      }, 1000);
+    });
 
-    await Promise.race([getTermsPromise, limitPromise])
-
-    // //  Get the terms from the YES API
-    // await yes.getTerms(
-    //   (term: YesTermResponse, timestamp: unknown) => {
-    //     terms.push(term)
-    //   }
-    // )
+    await Promise.race([getTermsPromise, limitPromise]);
 
     //  Add IDs to the terms, sort them, and limit them
     terms = terms
-      .map(term => {
-        let id = term.id
+      .map((term) => {
+        let id = term.id;
         if (id.length < 15) {
-          id = id + nanoid(15 - id.length)
+          id = id + nanoid(15 - id.length);
         }
 
         return {
           id,
           title: term.title,
-        }
+        };
       })
-      .toSorted((a, b) => a.title.localeCompare(b.title))
-      .toSpliced(args.limit)
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .slice(0, args.limit);
 
     //  Save the terms to the database
     if (args.save) {
-      let index = 0;
+      await authenticateClient();
 
       const promises = terms.map((term, index) => {
         return new Promise<void>((resolve, reject) => {
-         //  Important: A timeout is needed to prevent 429
-          const timeout = setTimeout(async () => {
+          //  Important: A timeout is needed to prevent 429
+          setTimeout(async () => {
             try {
-              console.log(`Saving term: ${term.title}`)
-              
-              await client.collection('terms').create(term)
-              
-              resolve()
-            } catch (error) {
-              console.error(JSON.stringify(error, null, 2))
+              console.log(`Saving term: ${term.title}`);
 
-              reject(error)
+              await client.collection("terms").create(term);
+
+              resolve();
+            } catch (error) {
+              console.error(JSON.stringify(error, null, 2));
+
+              reject(error);
             }
-          }, index++ * 250)
-        })
-      })
-    
-      await Promise.all(promises)
+          }, index * 250);
+        });
+      });
+
+      await Promise.all(promises);
     }
 
-    return terms
-  }
-} satisfies IFunction<TermScraperArguments, YesTermResponse[]>
+    return terms;
+  },
+} satisfies IFunction<TermScraperArguments, YesTermResponse[]>;

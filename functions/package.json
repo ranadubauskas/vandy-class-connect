@@ -10,13 +10,14 @@
   },
   "scripts": {
     "start": "bun src/index.ts",
-    "test": "jest"
+    "test": "bun test --coverage"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "@vanderbilt/yes-api": "^1.0.8",
+    "minimist": "^1.2.8",
     "nanoid": "^5.0.7",
     "pocketbase": "^0.21.5"
   }

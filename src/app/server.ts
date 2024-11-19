@@ -12,13 +12,14 @@ type UserInfoType = {
     email: string;
     graduationYear: string;
     profilePic: string;
+    admin: boolean;
 };
 
 
 export async function getUserReviews(userID: string) {
     try {
         const user = await pb.collection('users').getOne(userID, {
-            expand: "reviews.course",
+            expand: "reviews.course,reviews.professors",
         });
         const expandedReviews = user.expand?.reviews || [];
         return expandedReviews;
@@ -47,6 +48,7 @@ export async function signIn(email: string, password: string): Promise<UserInfoT
         allCookies.set("email", userAuthData.record.email);
         allCookies.set("graduationYear", userAuthData.record.graduationYear);
         allCookies.set("username", userAuthData.record.username);
+        allCookies.set("admin", userAuthData.record.admin);
 
         // Extract the user record
         const userRecord = userAuthData.record;
@@ -60,6 +62,7 @@ export async function signIn(email: string, password: string): Promise<UserInfoT
             email: userRecord.email,
             graduationYear: userRecord.graduationYear,
             profilePic: userRecord.profilePic,
+            admin: userRecord.admin
         };
 
         return userInfo;
@@ -102,7 +105,6 @@ export async function register(formData: FormData) {
         if (password !== passwordConfirm) {
             throw new Error("Passwords do not match.");
         }
-
 
         const newUser = await pb.collection('users').create({
             username,

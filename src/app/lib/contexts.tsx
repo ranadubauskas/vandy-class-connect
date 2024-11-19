@@ -1,4 +1,3 @@
-// lib/contexts.js
 'use client';
 import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -12,6 +11,7 @@ interface UserInfoType {
   email: string;
   graduationYear: string;
   profilePic: string;
+  admin?: boolean;
 }
 
 interface AuthContextData {

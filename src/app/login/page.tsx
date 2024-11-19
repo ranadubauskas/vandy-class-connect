@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '../lib/contexts';
 import { signIn } from '../server';
+import Loading from "../components/Loading";
 
 export default function Login() {
     const [email, setEmail] = useState('');
