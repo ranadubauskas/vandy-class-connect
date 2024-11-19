@@ -6,17 +6,17 @@
 2. npm run dev
 3. Open: http://localhost:3000
 
-## Testing the App:
-## White Box Testing:
-### Framework:
+## Testing the Application:
+### White Box Testing:
+#### Framework:
 - [Jest](https://jestjs.io/)
-### Commands:
+#### Commands:
 1. npm run test
 2. Coverage: npm run test:coverage
-## Black Box Testing:
-### Framework:
+### Black Box Testing:
+#### Framework:
 - [Cypress](https://www.cypress.io/app)
-### Commands:
+#### Commands:
 1. npx cypress open
 
 
