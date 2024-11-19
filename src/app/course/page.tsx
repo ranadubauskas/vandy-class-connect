@@ -17,7 +17,7 @@ function CourseDetailPageComponent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = searchParams.get('id');
+  const code = searchParams.get('code');
   const { userData } = useAuth(); // Getting the current user
   const [course, setCourse] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -35,13 +35,15 @@ function CourseDetailPageComponent() {
   const currentUserId = userData?.id;
 
   useEffect(() => {
-    if (!id || !currentUserId) return;
+    if (!code) return; // Fetch course details even if not logged in
     const fetchCourse = async () => {
       try {
-        const fetchedCourse = await pb.collection('courses').getOne(id, {
-          $cancel: false,
-          expand: 'reviews.user,reviews.professors,professors'
-        });
+        const fetchedCourse = await pb.collection('courses').getFirstListItem(
+          `code = "${code}"`, // Use a filter to match the course code
+          {
+            expand: 'reviews.user,reviews.professors,professors', // Expand relationships as needed
+          }
+        );
         setCourse(fetchedCourse);
 
         if (fetchedCourse.syllabus) {
@@ -56,7 +58,7 @@ function CourseDetailPageComponent() {
         setAverageRating(avgRating);
 
         const fetchedTutors = fetchedCourse.tutors || [];
-        const currentTutor = fetchedTutors.includes(currentUserId);
+        const currentTutor = currentUserId ? fetchedTutors.includes(currentUserId) : false;
         setIsTutor(currentTutor);
 
         // Fetch tutor user details
@@ -76,9 +78,13 @@ function CourseDetailPageComponent() {
       }
     };
     fetchCourse();
-  }, [id, currentUserId]);
+  }, [code, currentUserId]);
 
   const reportReview = async (reviewId, userId) => {
+    if (!currentUserId) {
+      setPopupMessage('You must be logged in to report a review.');
+      return;
+    }
     try {
       // Create the data object using the correct relation record IDs
       const data = {
@@ -109,14 +115,17 @@ function CourseDetailPageComponent() {
   }
 
   const addTutor = async () => {
-    if (!currentUserId || !course) return;
+    if (!currentUserId || !course) {
+      setPopupMessage('You must be logged in to tutor this course.');
+      return;
+    }
     if (isTutor) {
       setPopupMessage('You have already added yourself as a tutor for this course.');
       return;
     }
     try {
       // Update course to include new tutor
-      await pb.collection('courses').update(id, {
+      await pb.collection('courses').update(course.id, {
         tutors: [...(course.tutors || []), currentUserId]
       });
 
@@ -125,7 +134,7 @@ function CourseDetailPageComponent() {
 
       // Update user to include course tutored
       await pb.collection('users').update(currentUserId, {
-        courses_tutored: [...(curUser.courses_tutored || []), id]
+        courses_tutored: [...(curUser.courses_tutored || []), course.id]
       });
 
       setIsTutor(true);
@@ -171,9 +180,9 @@ function CourseDetailPageComponent() {
         <div className="mb-8">
           <button
             className="text-white text-xl hover:bg-gray-400 transition duration-300 px-2 py-1 rounded"
-            onClick={() => router.push('/home')}
+            onClick={() => router.back()}
           >
-            ← Back to Search Page
+            ← Back
           </button>
         </div>
 
@@ -184,38 +193,42 @@ function CourseDetailPageComponent() {
           </h1>
 
           {/* Buttons Section */}
-          <div className="flex flex-wrap sm:flex-nowrap space-y-4 sm:space-y-0 sm:space-x-4">
-            {course.syllabus && (
+          <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full sm:w-auto">
+            <div className="flex flex-wrap sm:flex-nowrap gap-4 w-full">
+              {course.syllabus && (
+                <button
+                  className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
+                  onClick={() => window.open(course.syllabus, '_blank')}
+                  title="Download Syllabus"
+                >
+                  Download Syllabus
+                </button>
+              )}
               <button
-                className="bg-white text-black py-2 px-6 rounded-full shadow-lg hover:bg-gray-300 transition duration-300"
-                onClick={() => window.open(course.syllabus, '_blank')}
-                title="Download Syllabus"
+                className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
+                onClick={() => router.push(`/addReview?code=${course.code}&id=${course.id}`)}
               >
-                Download Syllabus
+                Add a Review
               </button>
-            )}
-            <button
-              className="bg-white text-black py-2 px-6 rounded-full shadow-lg hover:bg-gray-300 transition duration-300"
-              onClick={() => router.push(`/addReview?id=${course.id}`)}
-            >
-              Add a Review
-            </button>
-            <button
-              className="bg-white text-black py-2 px-6 rounded-full shadow-lg hover:bg-gray-300 transition duration-300"
-              onClick={toggleTutors}
-            >
-              Find a Tutor
-            </button>
+              <button
+                className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
+                onClick={toggleTutors}
+              >
+                Find a Tutor
+              </button>
 
-            <button
-              className="bg-white text-black py-2 px-6 rounded-full shadow-lg hover:bg-gray-300 transition duration-300"
-              onClick={addTutor}
-            >
-              Tutor this Course
-            </button>
+              <button
+                className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
+                onClick={addTutor}
+              >
+                Tutor this Course
+              </button>
+            </div>
           </div>
         </div>
-        <div className="mb-4 flex space-x-4">
+
+        {/* Filters */}
+        <div className="mb-4 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
           <div>
             <label htmlFor="professorFilter" className="text-white text-lg mr-2">Filter by Professor:</label>
             {professors.length > 0 ? (
@@ -257,6 +270,7 @@ function CourseDetailPageComponent() {
             </select>
           </div>
         </div>
+
         {/* Popup Message */}
         {popupMessage && (
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg">
@@ -342,27 +356,27 @@ function CourseDetailPageComponent() {
 
         {/* Reviews Section with Average Rating */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
-          <div className="flex flex-row flex-nowrap justify-between items-center mb-4 overflow-x-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4">
             {/* Number of tutors for the course */}
             <button
               onClick={toggleTutors}
-              className="flex flex-col items-center space-y-1 focus:outline-none mb-4 lg:mb-0"
+              className="flex flex-col items-center space-y-1 focus:outline-none mb-4 md:mb-0 flex-1"
             >
               <div className="flex items-center space-x-2">
-                <span className="text-5xl font-bold text-gray-900">
+                <span className="text-4xl md:text-5xl font-bold text-gray-900">
                   {tutorDetails.length}
                 </span>
-                <FaChalkboardTeacher className="text-blue-500 text-5xl" />
+                <FaChalkboardTeacher className="text-blue-500 text-4xl md:text-5xl" />
               </div>
-              <p className="text-gray-500 text-center leading-tight">
+              <p className="text-gray-500 text-center leading-tight text-sm md:text-base">
                 Tutors for <br /> this Course
               </p>
             </button>
 
             {/* Average Rating Section */}
-            <div className="flex flex-col items-center flex-grow mb-4 lg:mb-0">
-              <h2 className="text-3xl font-semibold mt-2">Average Rating</h2>
-              <div className="text-5xl font-bold text-gray-900 mt-1">
+            <div className="flex flex-col items-center mb-4 md:mb-0 flex-1">
+              <h2 className="text-2xl md:text-3xl font-semibold mt-2 text-center">Average Rating</h2>
+              <div className="text-4xl md:text-5xl font-bold text-gray-900 mt-1">
                 {averageRating.toFixed(1)}
               </div>
               <div className="mt-1">
@@ -371,14 +385,14 @@ function CourseDetailPageComponent() {
             </div>
 
             {/* Number of reviews */}
-            <div className="flex flex-col items-center space-y-1">
+            <div className="flex flex-col items-center space-y-1 flex-1">
               <div className="flex items-center space-x-2">
-                <span className="text-5xl font-bold text-gray-900">
+                <span className="text-4xl md:text-5xl font-bold text-gray-900">
                   {reviews.length}
                 </span>
-                <FaUsers className="text-blue-500 text-5xl" />
+                <FaUsers className="text-blue-500 text-4xl md:text-5xl" />
               </div>
-              <p className="text-gray-500 text-center leading-tight">
+              <p className="text-gray-500 text-center leading-tight text-sm md:text-base">
                 Reviews for <br /> this Course
               </p>
             </div>
@@ -400,28 +414,50 @@ function CourseDetailPageComponent() {
                     ? pb.files.getUrl(review, review.syllabus)
                     : null;
                   const rating = review.rating || 0;
+                  const isAnonymous = review.anonymous;
+
+                  // Determine display name based on the anonymous flag
+                  const displayName = isAnonymous
+                    ? 'Anonymous'
+                    : user.firstName && user.lastName
+                    ? `${user.firstName} ${user.lastName}`
+                    : 'Anonymous';
 
                   return (
                     <div key={index} className="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
                       <div className="flex flex-col flex-1">
                         <div className="flex items-start space-x-4">
-                          <Link href={`/profile/${user.id}`}
-                            className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden transform hover:scale-110 transition-transform duration-200"
-                          >
-                            <img src={profilePicture} alt="User Profile" className="w-full h-full object-cover" />
-                          </Link>
+                          {isAnonymous ? (
+                            // If anonymous, display default profile picture without link
+                            <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden">
+                              <img src="/images/user.png" alt="Anonymous User" className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            // If not anonymous, display profile picture with link
+                            <Link href={`/profile/${user.id}`}
+                              className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden transform hover:scale-110 transition-transform duration-200"
+                            >
+                              <img src={profilePicture} alt="User Profile" className="w-full h-full object-cover" />
+                            </Link>
+                          )}
                           <div className="flex-grow">
                             <div className="flex items-center space-x-2">
-                              <Link href={`/profile/${user.id}`}>
-                                <h3 className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
-                                  {user.firstName && user.lastName
-                                    ? `${user.firstName} ${user.lastName}`
-                                    : 'Anonymous'}
+                              {isAnonymous ? (
+                                // If anonymous, display name without link
+                                <h3 className="font-semibold">
+                                  {displayName}
                                 </h3>
-                              </Link>
+                              ) : (
+                                // If not anonymous, display name with link
+                                <Link href={`/profile/${user.id}`}>
+                                  <h3 className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
+                                    {displayName}
+                                  </h3>
+                                </Link>
+                              )}
                             </div>
                             {/* Star Rating and Action Buttons */}
-                            <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center justify-between mt-2 flex-wrap">
                               <div className="flex items-center space-x-2 whitespace-nowrap">
                                 {/* Rating Number in a Small Box */}
                                 <RatingBox rating={review.rating || 'N/A'} size="small" />
@@ -429,7 +465,7 @@ function CourseDetailPageComponent() {
                                 <StarRating rating={review.rating} readOnly={true} />
                               </div>
                               {/* Action Buttons */}
-                              <div className="flex items-center space-x-2 ml-4">
+                              <div className="flex items-center space-x-2 mt-2 sm:mt-0">
                                 {/* Syllabus Download Button */}
                                 {syllabusUrl && (
                                   <Tooltip title="Download Syllabus">

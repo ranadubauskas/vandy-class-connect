@@ -10,6 +10,7 @@ function AddReviewComponent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const courseId = searchParams.get('id');
+    const code = searchParams.get('code');
     const { userData } = useAuth();
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -24,20 +25,30 @@ function AddReviewComponent() {
     const maxWordCount = 400;
     const userId = userData?.id;
 
+    // State variable for anonymous review
+    const [isAnonymous, setIsAnonymous] = useState(false);
+
+    // State variable for star size
+    const [starSize, setStarSize] = useState(40);
+
     const handleCommentChange = (e) => {
         const newComment = e.target.value;
-        const words = newComment.trim().split(/\s+/).filter(Boolean); // Split by whitespace and remove empty strings
+        const words = newComment.trim().split(/\s+/).filter(Boolean);
         setComment(newComment);
         setWordCount(words.length);
     };
 
     useEffect(() => {
         if (!courseId) return;
-
         const fetchCourse = async () => {
             try {
-                const fetchedCourse = await pb.collection('courses').getOne(courseId, { autoCancellation: false });
-
+                const fetchedCourse = await pb.collection('courses').getFirstListItem(
+                    `code="${code}"`,
+                    {
+                        expand: 'reviews.user,reviews.professors,professors',
+                        autoCancellation: false,
+                    }
+                );
                 setCourse(fetchedCourse);
             } catch (error) {
                 console.error('Error fetching course:', error);
@@ -47,7 +58,28 @@ function AddReviewComponent() {
         };
 
         fetchCourse();
+
     }, [courseId]);
+
+    // Adjust star size based on screen width
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 640) { // sm breakpoint
+                setStarSize(30);
+            } else {
+                setStarSize(40);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        // Set initial size
+        handleResize();
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
 
     // Handling syllabus file upload
     const handleFileChange = (e) => {
@@ -55,6 +87,11 @@ function AddReviewComponent() {
     };
 
     const handleSave = async () => {
+        if (!course) {
+            setError('Course data is still loading. Please wait a moment and try again.');
+            return;
+        }
+
         if (wordCount > maxWordCount) {
             setError(`Your comment exceeds the maximum word limit of ${maxWordCount} words.`);
             return;
@@ -69,6 +106,7 @@ function AddReviewComponent() {
             setError('Please provide a comment.');
             return;
         }
+
         setSaving(true);
         setError('');
 
@@ -101,7 +139,8 @@ function AddReviewComponent() {
                 comment,
                 user: userData.id,
                 syllabus: syllabusFile,
-                professors: [professorId], // Add professor relation
+                professors: [professorId],
+                anonymous: isAnonymous,
             };
 
             const newReview = await pb.collection('reviews').create(reviewData);
@@ -113,7 +152,7 @@ function AddReviewComponent() {
             const existingReviewIds = course.reviews || [];
             const updatedReviews = [...existingReviewIds, newReview.id];
 
-            // Optionally, fetch existing reviews to calculate the average rating
+            // Fetch existing reviews to calculate the average rating
             const existingReviews = await pb.collection('reviews').getFullList({
                 filter: `course="${courseId}"`,
                 autoCancellation: false
@@ -144,7 +183,8 @@ function AddReviewComponent() {
             await pb.collection('users').update(userId, {
                 reviews: userReviews
             });
-            router.push(`/course?id=${courseId}`);
+
+            router.push(`/course?id=${courseId}&code=${code}`);
         } catch (error) {
             console.error('Error saving review:', error);
             setError('Error saving review.');
@@ -153,15 +193,12 @@ function AddReviewComponent() {
         }
     };
 
-    if (loading) {
-        return <Loading />
-    }
 
-    if (!course) {
+    if (!course && !loading) {
         return <div>Course not found</div>;
     }
 
-    const handleRatingChange = (newRating: number) => {
+    const handleRatingChange = (newRating) => {
         setRating(newRating);
     };
 
@@ -181,7 +218,7 @@ function AddReviewComponent() {
             {/* Course Title */}
             <div className="mb-6">
                 <h1 className="text-white text-4xl font-bold text-left">
-                    {course.code}: {course.name}
+                    {course ? `${course.code}: ${course.name}` : 'Loading Course...'}
                 </h1>
             </div>
 
@@ -190,34 +227,40 @@ function AddReviewComponent() {
                 <h2 className="text-3xl font-semibold hover:bg-gray-300 transition duration-300">Add a Review</h2>
 
                 {/* Rating Input Section with Stars */}
-                <div className="flex items-center mt-4">
-                    <label htmlFor="rating" className="text-lg font-semibold mr-2">
-                        Rating:<span className="text-red-500">*</span>
-                    </label>
-                    {/* Input for Rating */}
-                    <input
-                        type="number"
-                        className="w-12 p-2 border border-gray-300 rounded mr-2"
-                        max="5"
-                        min="0"
-                        step="0.1" // Allows for partial ratings like 3.4
-                        value={rating}
-                        aria-label="Rating Input"
-                        onChange={(e) => {
-                            const value = parseFloat(e.target.value);
-                            if (!isNaN(value)) {
-                                setRating(value);
-                            } else {
-                                setRating(0);
-                            }
-                        }}
-                        placeholder="Rating"
-                    />
-                    {/* Dynamically render larger stars based on the input */}
-                    <StarRating rating={rating} onRatingChange={handleRatingChange} size={40} />
+                <div className="flex flex-wrap items-start mt-4">
+                    <div className="flex items-center flex-nowrap flex-grow">
+                        <label htmlFor="rating" className="text-lg font-semibold mr-2 flex-shrink-0">
+                            Rating:<span className="text-red-500">*</span>
+                        </label>
+                        {/* Input for Rating */}
+                        <input
+                            type="number"
+                            className="w-20 p-2 border border-gray-300 rounded mr-2 flex-shrink-0"
+                            max="5"
+                            min="0"
+                            step="0.1"
+                            value={rating}
+                            aria-label="Rating Input"
+                            onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                if (!isNaN(value) && value <= 5) {
+                                    setRating(value);
+                                } else if (value > 5) {
+                                    setRating(5);
+                                } else {
+                                    setRating(0);
+                                }
+                            }}
+                            placeholder="Rating"
+                        />
+                        {/* Dynamically render larger stars based on the input */}
+                        <div className="flex-shrink-0">
+                            <StarRating rating={rating} onRatingChange={handleRatingChange} size={starSize} />
+                        </div>
+                    </div>
 
                     {/* Upload Syllabus Section */}
-                    <div className="ml-8">
+                    <div className="w-full sm:w-auto mt-4 sm:mt-0 flex-shrink-0">
                         <label htmlFor="syllabus-upload" className="text-lg font-semibold mr-3">
                             Upload Syllabus:
                         </label>
@@ -230,6 +273,7 @@ function AddReviewComponent() {
                         />
                     </div>
                 </div>
+
                 <div className="flex items-center mt-4 space-x-4">
                     <input
                         type="text"
@@ -245,6 +289,19 @@ function AddReviewComponent() {
                         value={professorLastName}
                         onChange={(e) => setProfessorLastName(e.target.value)}
                     />
+                </div>
+
+                {/* Anonymous Checkbox */}
+                <div className="mt-4">
+                    <label className="inline-flex items-center">
+                        <input
+                            type="checkbox"
+                            className="form-checkbox h-5 w-5 text-blue-600"
+                            checked={isAnonymous}
+                            onChange={(e) => setIsAnonymous(e.target.checked)}
+                        />
+                        <span className="ml-2 text-gray-700">Post review anonymously</span>
+                    </label>
                 </div>
 
                 {/* Comment Input */}
@@ -270,16 +327,20 @@ function AddReviewComponent() {
                     )}
                 </div>
 
-
                 {/* Save Button */}
                 <div className="mt-6">
                     <button
-                        className={`bg-blue-500 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-blue-700 ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`bg-blue-500 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-blue-700 ${saving || !course ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={handleSave}
-                        disabled={saving}
+                        disabled={saving || !course}
                     >
                         {saving ? 'Saving...' : 'Save Review'}
                     </button>
+                    {loading && !course && (
+                        <div className="text-gray-500 mt-2">
+                            Loading course data...
+                        </div>
+                    )}
                 </div>
                 {/* Error Message */}
                 {error && <div className="text-red-500 mt-2 mb-1">{error}</div>}

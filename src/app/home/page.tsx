@@ -195,7 +195,7 @@ export default function Home() {
       </div>
 
       {/* Filter dropdowns */}
-      <div className="flex space-x-4 items-center">
+      <div className="flex space-x-4 items-center mb-2">
         {/* Subject Filter */}
         <div className="flex items-center space-x-1">
           <label htmlFor="subjectFilter" className="text-white text-lg font-bold">Filter by Subject:</label>
@@ -254,8 +254,9 @@ export default function Home() {
         {subjectFilters.map((filter) => (
           <div
             key={filter}
-            className="flex items-center bg-gray-200 px-3 py-2 rounded-full text-sm sm:text-base lg:text-lg"
+            className="flex items-center bg-gray-200 px-2 py-1 rounded-full text-sm sm:text-base lg:text-lg"
           >
+            <span className="mr-1 text-s font-semibold">Subject:</span>
             <span className="mr-2">{filter}</span>
             <button
               aria-label={`Remove filter ${filter}`}
@@ -267,9 +268,9 @@ export default function Home() {
           </div>
         ))}
         {ratingFilter && (
-          <div className="flex items-center bg-gray-200 px-3 py-2 rounded-full text-sm sm:text-base lg:text-lg">
-            <span className="mr-1 font-semibold">Rating:</span>
-            <span className="mr-2">{ratingFilter}+</span>
+          <div className="flex items-center bg-gray-200 px-2 py-1 rounded-full text-sm sm:text-base lg:text-lg">
+            <span className="mr-1 text-s font-semibold">Rating:</span>
+            <span className="mr-2 text-s">{ratingFilter}+</span>
             <button
               aria-label={`Remove rating filter ${ratingFilter}`}
               onClick={() => setRatingFilter(null)}
@@ -377,8 +378,8 @@ export default function Home() {
                 <div className="flex items-center space-x-4 ml-auto">
                   <button
                     className="view-course bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg text-base whitespace-nowrap"
-                    onClick={() => router.push(`/course?id=${course.id}`)}
-                  >
+                    onClick={() => router.push(`/course?code=${course.code}&id=${course.id}`)}
+                    >
                     View Course
                   </button>
                   <Tooltip title={isSaved ? "Unsave Course" : "Save Course"}>
