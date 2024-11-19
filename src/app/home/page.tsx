@@ -365,10 +365,10 @@ export default function Home() {
                 className="flex items-center justify-between bg-white text-black p-4 rounded-lg shadow-lg"
               >
                 {/* Course details section */}
-                <div className="flex items-center space-x-4 flex-1">
-                  <RatingBox rating={rating} /> {/* Use RatingBox here */}
+                <div className="flex items-center space-x-4 flex-1 course-card">
+                  <RatingBox rating={rating} />
                   <div className="flex-1">
-                    <div className="text-lg font-bold whitespace-normal break-words">{course.code}</div>
+                    <div className="text-lg font-bold whitespace-normal break-words course-subject">{course.code}</div>
                     <div className="text-lg whitespace-normal break-words">{course.name}</div>
                   </div>
                 </div>
@@ -376,7 +376,7 @@ export default function Home() {
                 {/* Actions section */}
                 <div className="flex items-center space-x-4 ml-auto">
                   <button
-                    className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg text-base whitespace-nowrap"
+                    className="view-course bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg text-base whitespace-nowrap"
                     onClick={() => router.push(`/course?id=${course.id}`)}
                   >
                     View Course

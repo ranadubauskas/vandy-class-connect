@@ -106,7 +106,6 @@ export async function register(formData: FormData) {
             throw new Error("Passwords do not match.");
         }
 
-
         const newUser = await pb.collection('users').create({
             username,
             email,

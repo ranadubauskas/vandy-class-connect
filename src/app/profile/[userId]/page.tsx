@@ -32,6 +32,7 @@ export default function Profile() {
     const [profilePicPreviewURL, setProfilePicPreviewURL] = useState(defaultProfilePic);
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
 
     const [otherUser, setOtherUser] = useState(null);
 
@@ -39,37 +40,39 @@ export default function Profile() {
 
     useEffect(() => {
         const fetchUser = async () => {
-            const fetchedUser = await getUserByID(userId as string);
-            setOtherUser(fetchedUser);
-            console.log("other user: ", fetchedUser);
+            try {
+                const fetchedUser = await getUserByID(userId as string);
 
-            const isProfileMine = userId === userData?.id;
-            setIsMyProfile(isProfileMine);
+                const isProfileMine = userId === userData?.id;
+                setIsMyProfile(isProfileMine);
 
-            setFirstName(isProfileMine ? userData?.firstName : fetchedUser.firstName);
-            setLastName(isProfileMine ? userData?.lastName : fetchedUser.lastName);
-            setEmail(isProfileMine ? userData?.email : fetchedUser.email);
-            setGraduationYear(isProfileMine ? userData?.graduationYear : fetchedUser.graduationYear);
+                setFirstName(isProfileMine ? userData?.firstName : fetchedUser.firstName);
+                setLastName(isProfileMine ? userData?.lastName : fetchedUser.lastName);
+                setEmail(isProfileMine ? userData?.email : fetchedUser.email);
+                setGraduationYear(isProfileMine ? userData?.graduationYear : fetchedUser.graduationYear);
 
-            const profilePicId = isProfileMine ? userData?.id : fetchedUser.id;
-            const profilePicName = isProfileMine ? userData?.profilePic : fetchedUser.profilePic;
+                const profilePicId = isProfileMine ? userData?.id : fetchedUser.id;
+                const profilePicName = isProfileMine ? userData?.profilePic : fetchedUser.profilePic;
 
-            if (profilePicName) {
-                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
-            } else {
-                setProfilePicPreviewURL(defaultProfilePic);
+                if (profilePicName) {
+                    setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
+                } else {
+                    setProfilePicPreviewURL(defaultProfilePic);
+                }
+
+                setOtherUser(fetchedUser);
+            } catch (error) {
+                console.error('Error fetching user:', error);
+                setError('Failed to load profile data.');
+            } finally {
+                setLoading(false); // Ensure loading is set to false regardless of success or failure
             }
         };
 
-        if (userVal && userId) {
+        if (userVal && userData && userId) {
             fetchUser();
         }
-    }, [userVal, userId]);
-
-
-    if (!userVal) {
-        return <div>Loading...</div>; // Render a fallback UI if context is missing
-    }
+    }, [userVal, userData, userId]);
 
     const handleViewRatings = () => {
         if (typeof window !== 'undefined') {
@@ -86,52 +89,52 @@ export default function Profile() {
 
     const handleSave = async () => {
         try {
-          if (!userData) {
-            throw new Error('User not authenticated');
-          }
-      
-          const formData = new FormData();
-          formData.append('firstName', firstName);
-          formData.append('lastName', lastName);
-          formData.append('graduationYear', graduationYear);
-      
-          if (profilePicFile) {
-            formData.append('profilePic', profilePicFile);
-          }
-      
-          // Call the editUser function with the user's ID and formData
-          const updatedUser = await editUser(userData.id, formData);
-      
-          if (updatedUser) {
-            // Update the state with the updated user data
-            setFirstName(updatedUser.firstName);
-            setLastName(updatedUser.lastName);
-            setGraduationYear(updatedUser.graduationYear);
-      
-            // Update the profile picture preview URL
-            if (updatedUser.profilePic) {
-              setProfilePicPreviewURL(
-                `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userData.id}/${updatedUser.profilePic}`
-              );
+            if (!userData) {
+                throw new Error('User not authenticated');
+            }
+
+            const formData = new FormData();
+            formData.append('firstName', firstName);
+            formData.append('lastName', lastName);
+            formData.append('graduationYear', graduationYear);
+
+            if (profilePicFile) {
+                formData.append('profilePic', profilePicFile);
+            }
+
+            // Call the editUser function with the user's ID and formData
+            const updatedUser = await editUser(userData.id, formData);
+
+            if (updatedUser) {
+                // Update the state with the updated user data
+                setFirstName(updatedUser.firstName);
+                setLastName(updatedUser.lastName);
+                setGraduationYear(updatedUser.graduationYear);
+
+                // Update the profile picture preview URL
+                if (updatedUser.profilePic) {
+                    setProfilePicPreviewURL(
+                        `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${userData.id}/${updatedUser.profilePic}`
+                    );
+                } else {
+                    setProfilePicPreviewURL(defaultProfilePic);
+                }
+
+                // Refresh the user data in context
+                if (getUser) {
+                    await getUser();
+                }
+
+                setIsEditing(false);
             } else {
-              setProfilePicPreviewURL(defaultProfilePic);
+                console.error('Failed to update user');
+                setError('Failed to update profile. Please try again.');
             }
-      
-            // Refresh the user data in context
-            if (getUser) {
-              await getUser();
-            }
-      
-            setIsEditing(false);
-          } else {
-            console.error('Failed to update user');
-            setError('Failed to update profile. Please try again.');
-          }
         } catch (error) {
-          console.error('Error updating user:', error);
-          setError('Failed to update profile. Please try again.');
+            console.error('Error updating user:', error);
+            setError('Failed to update profile. Please try again.');
         }
-      };
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -154,14 +157,22 @@ export default function Profile() {
         return profilePicPreviewURL || defaultProfilePic;
     };
 
+    if (loading || !userVal || !userData) {
+        return (
+          <div data-testid="loading-indicator" className="text-center text-2xl mt-10 text-white">
+            Loading...
+          </div>
+        );
+      }
+
     return (
         <div>
             <div className="flex items-center justify-center h-[30vh]">
                 <div className="flex mb-4 max-w-5xl w-full">
                     <div className="w-1/3 flex justify-start pl-2">
-                        <button 
-                        onClick={handleViewCourses} 
-                        className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
+                        <button
+                            onClick={handleViewCourses}
+                            className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
                             View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Courses
                         </button>
                     </div>
@@ -174,7 +185,7 @@ export default function Profile() {
                     </div>
                     <div className="w-1/3 flex justify-end pr-2">
                         <button onClick={() => handleViewRatings()} className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
-                        View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Reviews
+                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Reviews
                         </button>
                     </div>
                 </div>

@@ -46,7 +46,7 @@ export default function Ratings() {
 
     return (
         <>
-            <div className="min-h-screen p-10">
+            <div className="min-h-screen p-10 reviews-container">
                 {loading ? (<div className="text-white text-center text-2xl">Loading...</div>) 
                 : (
                     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10'>

@@ -7,7 +7,7 @@ export async function getUserCookies() {
         const cookieStore = await cookies();  // cookies() is already asynchronous and used to get the cookie store
 
         const allCookies = cookieStore.getAll();  // Fetch all cookies from the cookie store
-        const hasRequiredCookies = allCookies.some(cookie => 
+        const hasRequiredCookies = allCookies.some(cookie =>
             ["id", "firstName", "lastName", "email", "savedCourses", "admin"].includes(cookie.name)
         );
 
@@ -38,7 +38,7 @@ export async function getUserCookies() {
 }
 
 export async function logout() {
-    const allCookies = await cookies(); 
+    const allCookies = await cookies();
     //Get all cookies and loop through, deleting each one
     allCookies.delete("id");
     allCookies.delete("username");

@@ -166,7 +166,7 @@ function CourseDetailPageComponent() {
 
   return (
     <>
-      <div className="min-h-screen p-6 sm:p-8 lg:p-10">
+      <div className="min-h-screen p-6 sm:p-8 lg:p-10 review-card">
         {/* Back to Search Link */}
         <div className="mb-8">
           <button
@@ -178,7 +178,7 @@ function CourseDetailPageComponent() {
         </div>
 
         {/* Course Code and Name as Title */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 course-details">
           <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">
             {course.code}: {course.name}
           </h1>
@@ -435,7 +435,7 @@ function CourseDetailPageComponent() {
                                   <Tooltip title="Download Syllabus">
                                     <button
                                       title="Download Syllabus"
-                                      className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
+                                      className="download-syllabus bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
                                       onClick={() => window.open(syllabusUrl, '_blank')}
                                     >
                                       <FaFileDownload className="text-xl" />
@@ -445,6 +445,7 @@ function CourseDetailPageComponent() {
                                 {/* Report Review Button */}
                                 <Tooltip title="Report Review">
                                   <button
+                                    data-testid={`report-review-${review.id}`}
                                     aria-label="Report Review"
                                     onClick={() => reportReview(review.id, user.id)}
                                     className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"

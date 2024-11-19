@@ -52,18 +52,26 @@ export default function About() {
           <h2 className="text-xl sm:text-2xl font-bold text-white text-center sm:text-left">FAQ</h2>
           <div className="mt-4">
             {faqData.map((faq, index) => (
-              <Disclosure key={index}>
+              <Disclosure key={index} data-testid={`faq-item-${index}`}>
                 {({ open }) => (
                   <div className="mb-4 sm:mb-6">
-                    <Disclosure.Button className="flex justify-between items-center w-full px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-left text-white bg-gray-700 rounded-lg hover:bg-gray-600 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75">
-                      <span>{faq.question}</span>
+                    <Disclosure.Button className="flex justify-between items-center w-full px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-left text-white bg-gray-700 rounded-lg hover:bg-gray-600 focus:outline-none focus-visible:ring focus-visible:ring-opacity-75"
+                      data-testid={`faq-button-${index}`}
+                    >
+                      <span data-testid={`faq-question-${index}`}>{faq.question}</span>
                       {open ? (
-                        <ChevronUpIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" /> // Up arrow when expanded
+                        <ChevronUpIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                          data-testid={`chevron-up-${index}`}
+                        /> // Up arrow when expanded
                       ) : (
-                        <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" /> // Down arrow when collapsed
+                        <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                          data-testid={`chevron-down-${index}`}
+                        /> // Down arrow when collapsed
                       )}
                     </Disclosure.Button>
-                    <Disclosure.Panel className="px-3 sm:px-4 pt-4 pb-2 text-sm sm:text-base text-gray-200">
+                    <Disclosure.Panel className="px-3 sm:px-4 pt-4 pb-2 text-sm sm:text-base text-gray-200"
+                      data-testid={`faq-answer-${index}`}
+                    >
                       {faq.answer}
                     </Disclosure.Panel>
                   </div>
