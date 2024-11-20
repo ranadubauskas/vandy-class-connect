@@ -68,8 +68,19 @@ export default function Home() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
+        const cachedCourses = localStorage.getItem('courses');
+        if (cachedCourses) {
+          const parsedCourses = JSON.parse(cachedCourses);
+          setCourses(parsedCourses);
+          setCourseSubjects(Array.from(new Set(parsedCourses.map(course => course.subject))));
+          setLoading(false);
+          return;
+        }
         const courses = await getAllCourses();
         setCourses(courses);
+        // Cache courses in localStorage
+        localStorage.setItem('courses', JSON.stringify(courses));
+        console.log('local storage courses: ', localStorage.getItem('courses'));
         const subjects = Array.from(new Set(courses.map(course => course.subject)));
         setCourseSubjects(subjects);
         setLoading(false);

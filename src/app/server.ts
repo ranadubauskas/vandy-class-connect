@@ -1,6 +1,7 @@
 
 'use server'
 import { cookies } from 'next/headers';
+import { User, Review } from './lib/interfaces';
 import pb from './lib/pocketbaseClient';
 
 
@@ -16,23 +17,23 @@ type UserInfoType = {
 };
 
 
-export async function getUserReviews(userID: string) {
+export async function getUserReviews(userId: string): Promise<Review[]> {
     try {
-        const user = await pb.collection('users').getOne(userID, {
-            expand: "reviews.course,reviews.professors",
+        const reviews = await pb.collection('reviews').getFullList<Review>(200, {
+            filter: `user = "${userId}"`,
+            expand: 'user,course,professors',
         });
-        const expandedReviews = user.expand?.reviews || [];
-        return expandedReviews;
+        return reviews;
     } catch (error) {
-        console.error(error);
-        return [];
+        console.error('Error fetching user reviews:', error);
+        throw error;
     }
 }
 
 export async function signIn(email: string, password: string): Promise<UserInfoType> {
     if (!email || !password) {
         throw new Error('Invalid email or password');
-      }
+    }
     try {
         // Authenticate the user
         const userAuthData = await pb.collection('users').authWithPassword(email, password);
@@ -106,6 +107,9 @@ export async function register(formData: FormData) {
             throw new Error("Passwords do not match.");
         }
 
+        const defaultProfilePicUrl = '/images/user.png';
+
+
         const newUser = await pb.collection('users').create({
             username,
             email,
@@ -114,7 +118,8 @@ export async function register(formData: FormData) {
             passwordConfirm,
             firstName: firstName,
             lastName: lastName,
-            graduationYear: graduationYear
+            graduationYear: graduationYear,
+            profilePic: defaultProfilePicUrl
         });
 
         const userData = {
@@ -134,7 +139,7 @@ export async function register(formData: FormData) {
         allCookies.set("lastName", newUser.lastName);
         allCookies.set("email", newUser.email);
         allCookies.set("graduationYear", newUser.graduationYear);
-        allCookies.set("profilePic", null);
+        allCookies.set("profilePic", defaultProfilePicUrl);
         allCookies.set("reviews", newUser.reviews);
 
         return userData;
@@ -204,7 +209,7 @@ export async function editReview(reviewId, data, courseId) {
 export async function deleteReview(reviewId, courseId) {
     try {
         const deletedReview = await pb.collection("reviews").delete(reviewId);
-        
+
         const existingReviews = await pb.collection('reviews').getFullList({
             filter: `course="${courseId}"`,
         });
@@ -277,14 +282,14 @@ export async function getCourseByID(courseID: string) {
     }
 }
 
-export async function getUserByID(userID: string) {
+export async function getUserByID(userId) {
     try {
-        const fetchedUser = await pb.collection('users').getOne(userID);
-        return fetchedUser;
+      const user = await pb.collection('users').getOne<User>(userId);
+      return user;
     } catch (error) {
-        console.error('Error fetching review:', error);
-        return null;
+      console.error('Error fetching user by ID:', error);
+      throw error;
     }
-}
+  }
 
 

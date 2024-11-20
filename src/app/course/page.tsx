@@ -10,6 +10,7 @@ import RatingBox from '../components/ratingBox';
 import StarRating from '../components/StarRating';
 import { useAuth } from "../lib/contexts";
 import pb from "../lib/pocketbaseClient";
+import localforage from 'localforage';
 
 pb.autoCancellation(false);
 
@@ -35,50 +36,78 @@ function CourseDetailPageComponent() {
   const currentUserId = userData?.id;
 
   useEffect(() => {
-    if (!code) return; // Fetch course details even if not logged in
+    if (!code) return;
     const fetchCourse = async () => {
+      const cacheExpiry = 5 * 60 * 1000; // 5 minutes in milliseconds
+      const now = Date.now();
+      let foundCourse = null;
+
       try {
+        foundCourse = await localforage.getItem(`course_${code}`);
+        if (foundCourse && now - foundCourse.cachedAt < cacheExpiry) {
+          initializeState(foundCourse);
+          // Use the cached course data
+          setCourse(foundCourse);
+          setLoading(false);
+          return;
+        } 
         const fetchedCourse = await pb.collection('courses').getFirstListItem(
           `code = "${code}"`, // Use a filter to match the course code
           {
             expand: 'reviews.user,reviews.professors,professors', // Expand relationships as needed
           }
         );
-        setCourse(fetchedCourse);
-
         if (fetchedCourse.syllabus) {
           fetchedCourse.syllabus = pb.files.getUrl(fetchedCourse, fetchedCourse.syllabus);
         }
-
-        const fetchedReviews = fetchedCourse.expand?.reviews || [];
-        setReviews(fetchedReviews);
-
-        const totalRating = fetchedReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-        const avgRating = fetchedReviews.length ? totalRating / fetchedReviews.length : fetchedCourse.averageRating || 0;
-        setAverageRating(avgRating);
-
-        const fetchedTutors = fetchedCourse.tutors || [];
-        const currentTutor = currentUserId ? fetchedTutors.includes(currentUserId) : false;
-        setIsTutor(currentTutor);
-
-        // Fetch tutor user details
-        const tutorPromises = fetchedTutors.map(async (userId) => {
-          const user = await pb.collection('users').getOne(userId);
-          return user;
-        });
-        const fetchedTutorDetails = await Promise.all(tutorPromises);
-        setTutorDetails(fetchedTutorDetails);
-
-        const professorList = fetchedCourse.expand?.professors || [];
-        setProfessors(professorList);
+        fetchedCourse.cachedAt = now;
+        await localforage.setItem(`course_${code}`, fetchedCourse);
+        initializeState(fetchedCourse);
       } catch (error) {
         console.error('Error fetching course:', error);
       } finally {
         setLoading(false);
       }
     };
+    const initializeState = async (courseData) => {
+      setCourse(courseData);
+      setReviews(courseData.expand?.reviews || []);
+      setProfessors(courseData.expand?.professors || []);
+  
+      const totalRating = courseData.expand?.reviews.reduce(
+        (sum, review) => sum + (review.rating || 0),
+        0
+      );
+      const avgRating = courseData.expand?.reviews.length
+        ? totalRating / courseData.expand?.reviews.length
+        : courseData.averageRating || 0;
+      setAverageRating(avgRating);
+  
+      const fetchedTutors = courseData.tutors || [];
+      const currentTutor = currentUserId ? fetchedTutors.includes(currentUserId) : false;
+      setIsTutor(currentTutor);
+  
+      // Fetch tutor user details
+      const fetchedTutorDetails = await fetchTutorDetails(fetchedTutors);
+      setTutorDetails(fetchedTutorDetails);
+    };
+
     fetchCourse();
   }, [code, currentUserId]);
+
+
+  const fetchTutorDetails = async (tutors) => {
+    if (!tutors.length) return [];
+    const tutorPromises = tutors.map(async (userId) => {
+      try {
+        return await pb.collection('users').getOne(userId);
+      } catch (error) {
+        console.error('Error fetching tutor details:', error);
+        return null;
+      }
+    });
+    return (await Promise.all(tutorPromises)).filter(Boolean);
+  };
 
   const reportReview = async (reviewId, userId) => {
     if (!currentUserId) {
@@ -420,8 +449,8 @@ function CourseDetailPageComponent() {
                   const displayName = isAnonymous
                     ? 'Anonymous'
                     : user.firstName && user.lastName
-                    ? `${user.firstName} ${user.lastName}`
-                    : 'Anonymous';
+                      ? `${user.firstName} ${user.lastName}`
+                      : 'Anonymous';
 
                   return (
                     <div key={index} className="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">

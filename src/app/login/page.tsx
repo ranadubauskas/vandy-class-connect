@@ -2,8 +2,10 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '../lib/contexts';
-import { signIn } from '../server';
+import { signIn, getUserByID, getUserReviews} from '../server';
 import Loading from "../components/Loading";
+import localforage from 'localforage';
+
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -18,6 +20,15 @@ export default function Login() {
         try {
             const user = await signIn(email, password);
             loginUser(user);
+            const userId = user.id;
+            const userInfo = await getUserByID(userId);
+            await localforage.setItem(`user_${userId}`, userInfo);
+            const userReviews = await getUserReviews(userId);
+            const cachedReviews = {
+              reviews: userReviews,
+              cachedAt: Date.now(),
+            };
+            await localforage.setItem(`user_reviews_${userId}`, cachedReviews);
             router.push('/home');
         } catch (err) {
             console.error(err);

@@ -6,38 +6,68 @@ import StarRating from "../../components/StarRating";
 import { AuthContext } from "../../lib/contexts";
 import { deleteReview, editReview, getUserByID } from "../../server";
 
-export default function RatingCard({ rating, onDelete }) {
+export default function RatingCard({ rating, onDelete, onEdit }) {
     const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
+    const defaultProfilePic = '/images/user.png';
     const userVal = useContext(AuthContext);
 
     if (!userVal) return null;
 
-    const [user, setUser] = useState(null);
+    const user = rating.expand?.user;
+
     const [isEditing, setEditing] = useState(false);
     const [comment, setComment] = useState(rating.comment);
     const [starRating, setStarRating] = useState(rating.rating);
 
-    useEffect(() => {
-        const fetchReview = async () => {
-            try {
-                const fetchedUser = await getUserByID(rating.user);
-                setUser(fetchedUser);
-            } catch (error) {
-                console.error("Error fetching review: ", error);
-            }
-        };
-        fetchReview();
-    }, [rating]);
+    // useEffect(() => {
+    //     const fetchReview = async () => {
+    //         try {
+    //             const fetchedUser = await getUserByID(rating.user);
+    //             setUser(fetchedUser);
+    //         } catch (error) {
+    //             console.error("Error fetching review: ", error);
+    //         }
+    //     };
+    //     fetchReview();
+    // }, [rating]);
 
-    const handleSave = () => {
-        setEditing(false);
-        editReview(rating.id, { comment, rating: starRating }, rating.expand.course.id);
+    const handleSave = async () => {
+        try {
+            const updatedReviewData = { comment, rating: starRating };
+            await editReview(rating.id, updatedReviewData, rating.expand.course.id);
+            setEditing(false);
+
+            // Create the updated review object
+            const updatedReview = {
+                ...rating,
+                comment,
+                rating: starRating,
+            };
+
+            // Call the onEdit callback with the updated review
+            if (onEdit) {
+                onEdit(updatedReview);
+            }
+        } catch (error) {
+            console.error("Error saving review: ", error);
+        }
     };
 
     const handleDelete = async () => {
-        setEditing(false);
-        await deleteReview(rating.id, rating.expand.course.id);
-        onDelete();
+        try {
+            setEditing(false);
+            await deleteReview(rating.id, rating.expand.course.id);
+            onDelete();
+        } catch (error) {
+            console.error("Error deleting review: ", error);
+        }
+    };
+    const getProfilePicUrl = (): string => {
+        if (user?.profilePic && user.profilePic.trim() !== '') {
+            return `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${user.id}/${user.profilePic}`;
+        } else {
+            return defaultProfilePic;
+        }
     };
 
     return (
@@ -76,11 +106,7 @@ export default function RatingCard({ rating, onDelete }) {
             <div className="flex flex-col items-center w-full mt-4">
                 <Link href={`/profile/${user?.id}`}>
                     <img
-                        src={
-                            user
-                                ? `${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${user.id}/${user.profilePic}`
-                                : '/images/user.png'
-                        }
+                        src={getProfilePicUrl()}
                         alt="User Profile"
                         className="w-12 h-12 rounded-full object-cover"
                     />

@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
 import { editUser, getUserByID } from '../../server';
+import localforage from 'localforage';
 import './style.css';
 
 
@@ -41,26 +42,19 @@ export default function Profile() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const fetchedUser = await getUserByID(userId as string);
-
-                const isProfileMine = userId === userData?.id;
-                setIsMyProfile(isProfileMine);
-
-                setFirstName(isProfileMine ? userData?.firstName : fetchedUser.firstName);
-                setLastName(isProfileMine ? userData?.lastName : fetchedUser.lastName);
-                setEmail(isProfileMine ? userData?.email : fetchedUser.email);
-                setGraduationYear(isProfileMine ? userData?.graduationYear : fetchedUser.graduationYear);
-
-                const profilePicId = isProfileMine ? userData?.id : fetchedUser.id;
-                const profilePicName = isProfileMine ? userData?.profilePic : fetchedUser.profilePic;
-
-                if (profilePicName) {
-                    setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
-                } else {
-                    setProfilePicPreviewURL(defaultProfilePic);
+                const cachedUser = await localforage.getItem(`user_${userId}`);
+                if (cachedUser) {
+                    initializeUserData(cachedUser);
+                    setLoading(false);
+                    return;
                 }
 
-                setOtherUser(fetchedUser);
+                // Fetch user from server
+                const fetchedUser = await getUserByID(userId as string);
+
+                // Cache the fetched user data
+                await localforage.setItem(`user_${userId}`, fetchedUser);
+                initializeUserData(fetchedUser);
             } catch (error) {
                 console.error('Error fetching user:', error);
                 setError('Failed to load profile data.');
@@ -69,6 +63,25 @@ export default function Profile() {
             }
         };
 
+        const initializeUserData = (user) => {
+            const isProfileMine = userId === userData?.id;
+            setIsMyProfile(isProfileMine);
+
+            setFirstName(user.firstName);
+            setLastName(user.lastName);
+            setEmail(user.email);
+            setGraduationYear(user.graduationYear);
+
+            const profilePicId = isProfileMine ? userData?.id : user.id;
+            const profilePicName = isProfileMine ? userData?.profilePic : user.profilePic;
+
+            if (profilePicName) {
+                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
+            } else {
+                setProfilePicPreviewURL(defaultProfilePic);
+            }
+            setOtherUser(user);
+        };
         if (userVal && userData && userId) {
             fetchUser();
         }
@@ -110,7 +123,6 @@ export default function Profile() {
                 setFirstName(updatedUser.firstName);
                 setLastName(updatedUser.lastName);
                 setGraduationYear(updatedUser.graduationYear);
-
                 // Update the profile picture preview URL
                 if (updatedUser.profilePic) {
                     setProfilePicPreviewURL(
@@ -119,13 +131,12 @@ export default function Profile() {
                 } else {
                     setProfilePicPreviewURL(defaultProfilePic);
                 }
-
                 // Refresh the user data in context
                 if (getUser) {
                     await getUser();
                 }
-
                 setIsEditing(false);
+                await localforage.setItem(`user_${userData.id}`, updatedUser);
             } else {
                 console.error('Failed to update user');
                 setError('Failed to update profile. Please try again.');
@@ -159,11 +170,11 @@ export default function Profile() {
 
     if (loading || !userVal || !userData) {
         return (
-          <div data-testid="loading-indicator" className="text-center text-2xl mt-10 text-white">
-            Loading...
-          </div>
+            <div data-testid="loading-indicator" className="text-center text-2xl mt-10 text-white">
+                Loading...
+            </div>
         );
-      }
+    }
 
     return (
         <div>
