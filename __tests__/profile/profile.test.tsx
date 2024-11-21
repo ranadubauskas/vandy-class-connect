@@ -64,7 +64,6 @@ describe('Profile Component', () => {
                 firstName: formData.get('firstName'),
                 lastName: formData.get('lastName'),
                 graduationYear: formData.get('graduationYear'),
-                // Include other fields as necessary
             };
             return Promise.resolve(updatedUser);
         });

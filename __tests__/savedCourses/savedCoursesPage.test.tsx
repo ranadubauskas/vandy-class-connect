@@ -137,4 +137,34 @@ describe("SavedCourses page", () => {
 
         await waitFor(() => expect(screen.queryByText(/are you sure you want to remove this course/i)).not.toBeInTheDocument());
     });
+    it("should toggle edit mode when Edit button is clicked", async () => {
+        render(<SavedCourses />);
+        const editButton = screen.getByText("Edit");
+
+        // Initial state: "Edit" mode off
+        expect(editButton.textContent).toBe("Edit");
+
+        // Click to toggle to "Save Changes"
+        act(() => {
+            editButton.click();
+        });
+        expect(editButton.textContent).toBe("Save Changes");
+
+        // Click again to toggle back to "Edit"
+        act(() => {
+            editButton.click();
+        });
+        expect(editButton.textContent).toBe("Edit");
+    });
+
+    it("should set error message when fetchCookies fails", async () => {
+        // Mock getUserCookies to throw an error
+        (getUserCookies as jest.Mock).mockRejectedValue(new Error("Error fetching cookies"));
+
+        render(<SavedCourses />);
+
+        // Wait for error message to appear
+        await waitFor(() => expect(screen.getByText("Error fetching saved courses")).toBeInTheDocument());
+    });
+
 });

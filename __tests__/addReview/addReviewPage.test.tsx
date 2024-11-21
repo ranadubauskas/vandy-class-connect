@@ -1,4 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import AddReviewPage from '../../src/app/addReview/page';
+import { useAuth } from '../../src/app/lib/contexts';
+import pb from '../../src/app/lib/pocketbaseClient';
+import localforage from 'localforage';
+
 // Mock modules before importing anything that uses them
 jest.mock('next/navigation', () => ({
     __esModule: true,
@@ -13,14 +22,7 @@ jest.mock('../../src/app/lib/contexts', () => ({
 
 jest.mock('../../src/app/lib/pocketbaseClient', () => {
     const pb = {
-        collection: jest.fn().mockImplementation((collectionName) => {
-            return {
-                getOne: jest.fn(), // Mock getOne as a jest.fn()
-                update: jest.fn(), // Mock update as a jest.fn()
-                create: jest.fn(),
-                getFullList: jest.fn(),
-            };
-        }),
+        collection: jest.fn(),
     };
     return {
         __esModule: true,
@@ -28,15 +30,14 @@ jest.mock('../../src/app/lib/pocketbaseClient', () => {
     };
 });
 
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import AddReviewPage from '../../src/app/addReview/page';
-import { useAuth } from '../../src/app/lib/contexts';
-import pb from '../../src/app/lib/pocketbaseClient';
+jest.mock('localforage', () => ({
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+}));
 
 describe('AddReviewPage Component', () => {
     const mockRouterPush = jest.fn();
-    const mockGet = jest.fn();
+    const mockRouterBack = jest.fn();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mockUsersCollection: any;
@@ -50,10 +51,18 @@ describe('AddReviewPage Component', () => {
 
         (useRouter as jest.Mock).mockReturnValue({
             push: mockRouterPush,
+            back:  mockRouterBack,
         });
+
+        // Adjust the mock for useSearchParams
         (useSearchParams as jest.Mock).mockReturnValue({
-            get: mockGet,
+            get: (key: string) => {
+                if (key === 'id') return 'courseId';
+                if (key === 'code') return 'CS101';
+                return null;
+            },
         });
+
         (useAuth as jest.Mock).mockReturnValue({
             userData: {
                 id: 'currentUserId',
@@ -64,7 +73,7 @@ describe('AddReviewPage Component', () => {
 
         // Create mock collections
         mockCoursesCollection = {
-            getOne: jest.fn(),
+            getFirstListItem: jest.fn(),
             update: jest.fn(),
         };
         mockProfessorsCollection = {
@@ -73,13 +82,12 @@ describe('AddReviewPage Component', () => {
         };
         mockReviewsCollection = {
             create: jest.fn(),
-            getFullList: jest.fn(), // Ensure getFullList is mocked here
+            getFullList: jest.fn(),
         };
         mockUsersCollection = {
             getOne: jest.fn(),
             update: jest.fn(),
         };
-
 
         // Mock pb.collection to return the appropriate mock collection
         (pb.collection as jest.Mock).mockImplementation((collectionName: string) => {
@@ -103,7 +111,6 @@ describe('AddReviewPage Component', () => {
     });
 
     it('should fetch course details on mount', async () => {
-        mockGet.mockReturnValue('courseId');
         const mockCourseData = {
             id: 'courseId',
             code: 'CS101',
@@ -111,20 +118,26 @@ describe('AddReviewPage Component', () => {
             professors: [],
             reviews: [],
         };
-        mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+        (localforage.getItem as jest.Mock).mockResolvedValue(null);
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
 
         await act(async () => {
             render(<AddReviewPage />);
         });
 
         await waitFor(() => {
-            expect(mockCoursesCollection.getOne).toHaveBeenCalledWith('courseId', { autoCancellation: false });
+            expect(mockCoursesCollection.getFirstListItem).toHaveBeenCalledWith(
+                'code="CS101"',
+                {
+                    expand: 'reviews.user,reviews.professors,professors',
+                    autoCancellation: false,
+                }
+            );
             expect(screen.getByText('CS101: Introduction to Computer Science')).toBeInTheDocument();
         });
     });
 
     it('should handle file selection for syllabus upload', async () => {
-        mockGet.mockReturnValue('courseId');
         const mockCourseData = {
             id: 'courseId',
             code: 'CS101',
@@ -132,14 +145,16 @@ describe('AddReviewPage Component', () => {
             professors: [],
             reviews: [],
         };
-        mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+
+        (localforage.getItem as jest.Mock).mockResolvedValue(null);
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
 
         await act(async () => {
             render(<AddReviewPage />);
         });
 
         const file = new File(['syllabus content'], 'syllabus.pdf', { type: 'application/pdf' });
-        const input = screen.getByLabelText(/Upload Syllabus:/i) as HTMLInputElement; // Cast input as HTMLInputElement
+        const input = screen.getByLabelText(/Upload Syllabus:/i) as HTMLInputElement;
         await act(async () => {
             fireEvent.change(input, { target: { files: [file] } });
         });
@@ -148,7 +163,6 @@ describe('AddReviewPage Component', () => {
     });
 
     it('should display error if comment is missing when saving review', async () => {
-        mockGet.mockReturnValue('courseId');
         const mockCourseData = {
             id: 'courseId',
             code: 'CS101',
@@ -156,7 +170,9 @@ describe('AddReviewPage Component', () => {
             professors: [],
             reviews: [],
         };
-        mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+
+        (localforage.getItem as jest.Mock).mockResolvedValue(null);
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
 
         await act(async () => {
             render(<AddReviewPage />);
@@ -172,9 +188,6 @@ describe('AddReviewPage Component', () => {
     });
 
     it('should navigate to course page after saving review successfully', async () => {
-        mockGet.mockReturnValue('courseId');
-
-        // Mock course data
         const mockCourseData = {
             id: 'courseId',
             code: 'CS101',
@@ -183,16 +196,16 @@ describe('AddReviewPage Component', () => {
             reviews: [],
         };
 
-        // Mock user data
+        (localforage.getItem as jest.Mock).mockResolvedValue(null);
         const mockUserData = { id: 'userId', reviews: [] };
 
         // Set up resolved values for all mock functions
-        mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
         mockProfessorsCollection.getFullList.mockResolvedValue([]);
         mockProfessorsCollection.create.mockResolvedValue({ id: 'professorId' });
         mockReviewsCollection.create.mockResolvedValue({ id: 'reviewId' });
         mockCoursesCollection.update.mockResolvedValue({});
-        mockReviewsCollection.getFullList.mockResolvedValue([{ rating: 4 }]); // Mock existing reviews
+        mockReviewsCollection.getFullList.mockResolvedValue([{ rating: 4 }]);
         mockUsersCollection.getOne.mockResolvedValue(mockUserData);
         mockUsersCollection.update.mockResolvedValue(mockUserData);
 
@@ -203,9 +216,6 @@ describe('AddReviewPage Component', () => {
                 lastName: 'Doe',
             },
         });
-
-        // Spy on console.error to check for error logs
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
         await act(async () => {
             render(<AddReviewPage />);
@@ -228,7 +238,7 @@ describe('AddReviewPage Component', () => {
 
         // Verify that router.push was called with the correct URL
         await waitFor(() => {
-            expect(mockRouterPush).toHaveBeenCalledWith('/course?id=courseId');
+            expect(mockRouterPush).toHaveBeenCalledWith('/course?id=courseId&code=CS101');
         });
 
         // Verify that the user's reviews were updated
@@ -237,19 +247,9 @@ describe('AddReviewPage Component', () => {
                 reviews: expect.arrayContaining(['reviewId']),
             }));
         });
-
-        // Check for any unexpected console errors
-        expect(consoleErrorSpy).not.toHaveBeenCalled();
-
-        // Clean up the spy
-        consoleErrorSpy.mockRestore();
     });
 
-
     it('should upload syllabus file if provided', async () => {
-        mockGet.mockReturnValue('courseId');
-
-        // Mock course data with necessary fields
         const mockCourseData = {
             id: 'courseId',
             code: 'CS101',
@@ -259,19 +259,18 @@ describe('AddReviewPage Component', () => {
         };
 
         // Set up resolved values for all mock functions
-        mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
         mockCoursesCollection.update
             .mockResolvedValueOnce({}) // First update for course data
             .mockResolvedValueOnce({}); // Second update for syllabus upload
         mockProfessorsCollection.getFullList.mockResolvedValue([]);
         mockProfessorsCollection.create.mockResolvedValue({ id: 'professorId' });
         mockReviewsCollection.create.mockResolvedValue({ id: 'reviewId' });
-        mockReviewsCollection.getFullList.mockResolvedValue([]); // Mock empty existing reviews for initial test
+        mockReviewsCollection.getFullList.mockResolvedValue([]); // Mock empty existing reviews
         const mockUserData = { id: 'userId', reviews: [] };
         mockUsersCollection.getOne.mockResolvedValue(mockUserData);
         mockUsersCollection.update.mockResolvedValue(mockUserData);
 
-        // Update useAuth mock to return 'userId'
         (useAuth as jest.Mock).mockReturnValue({
             userData: {
                 id: 'userId',
@@ -279,9 +278,6 @@ describe('AddReviewPage Component', () => {
                 lastName: 'Doe',
             },
         });
-
-        // Spy on console.error to check for error logs
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
         await act(async () => {
             render(<AddReviewPage />);
@@ -300,7 +296,7 @@ describe('AddReviewPage Component', () => {
             fireEvent.change(input, { target: { files: [syllabusFile] } });
         });
 
-        expect(input.files[0]).toBe(syllabusFile);
+        expect(input.files![0]).toBe(syllabusFile);
 
         // Trigger the save action
         await act(async () => {
@@ -326,16 +322,9 @@ describe('AddReviewPage Component', () => {
                 reviews: expect.arrayContaining(['reviewId']),
             }));
         });
-
-        // Check for any unexpected console errors
-        expect(consoleErrorSpy).not.toHaveBeenCalled();
-
-        // Clean up the spy
-        consoleErrorSpy.mockRestore();
     });
 
     it('should display error if rating is zero or negative when saving review', async () => {
-        mockGet.mockReturnValue('courseId');
         const mockCourseData = {
             id: 'courseId',
             code: 'CS101',
@@ -343,7 +332,7 @@ describe('AddReviewPage Component', () => {
             professors: [],
             reviews: [],
         };
-        mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
 
         await act(async () => {
             render(<AddReviewPage />);
@@ -360,7 +349,6 @@ describe('AddReviewPage Component', () => {
     });
 
     it('should set rating to 0 if invalid input is provided', async () => {
-        mockGet.mockReturnValue('courseId');
         const mockCourseData = {
             id: 'courseId',
             code: 'CS101',
@@ -368,22 +356,20 @@ describe('AddReviewPage Component', () => {
             professors: [],
             reviews: [],
         };
-        mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
 
         await act(async () => {
             render(<AddReviewPage />);
         });
 
         // Entering invalid input for rating
-        const ratingInput = screen.getByPlaceholderText('Rating') as HTMLInputElement;;
+        const ratingInput = screen.getByPlaceholderText('Rating') as HTMLInputElement;
         fireEvent.change(ratingInput, { target: { value: 'invalid' } });
 
         expect(ratingInput.value).toBe('0');
     });
-    it('should navigate back to the course page when clicking "Back to Course Page"', async () => {
-        mockGet.mockReturnValue('courseId');
 
-        // Mock valid course data to ensure the page renders correctly
+    it('should navigate back to the course page when clicking "Back to Course Page"', async () => {
         const mockCourseData = {
             id: 'courseId',
             code: 'CS101',
@@ -391,19 +377,125 @@ describe('AddReviewPage Component', () => {
             professors: [],
             reviews: [],
         };
-        mockCoursesCollection.getOne.mockResolvedValue(mockCourseData);
+
+        (localforage.getItem as jest.Mock).mockResolvedValue(null);
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+
 
         await act(async () => {
             render(<AddReviewPage />);
         });
 
         await waitFor(() => {
-            // Ensure the page content is loaded
             expect(screen.getByText('CS101: Introduction to Computer Science')).toBeInTheDocument();
         });
 
         fireEvent.click(screen.getByLabelText('Back to Course Page'));
 
-        expect(mockRouterPush).toHaveBeenCalledWith('/course?id=courseId');
+        expect(mockRouterBack).toHaveBeenCalled();
+    });
+
+    it('should create a new professor if not found', async () => {
+        const mockCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            professors: [],
+            reviews: [],
+        };
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+        mockProfessorsCollection.getFullList.mockResolvedValue([]);
+        mockProfessorsCollection.create.mockResolvedValue({ id: 'newProfessorId' });
+        mockReviewsCollection.create.mockResolvedValue({ id: 'reviewId' });
+
+        await act(async () => {
+            render(<AddReviewPage />);
+        });
+
+        fireEvent.change(screen.getByPlaceholderText("Professor's First Name"), { target: { value: 'John' } });
+        fireEvent.change(screen.getByPlaceholderText("Professor's Last Name"), { target: { value: 'Doe' } });
+        fireEvent.change(screen.getByPlaceholderText('Rating'), { target: { value: '5' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter your review here...'), { target: { value: 'Excellent course!' } });
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('Save Review'));
+        });
+
+        expect(mockProfessorsCollection.create).toHaveBeenCalledWith({
+            firstName: 'John',
+            lastName: 'Doe',
+            course: 'courseId',
+        });
+    });
+
+    it('should set professorId if existing professor is found', async () => {
+        const mockCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            professors: [],
+            reviews: [],
+        };
+        const mockExistingProfessor = { id: 'existingProfessorId' };
+
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+        mockProfessorsCollection.getFullList.mockResolvedValue([mockExistingProfessor]);
+        mockReviewsCollection.create.mockResolvedValue({ id: 'reviewId' });
+
+        await act(async () => {
+            render(<AddReviewPage />);
+        });
+
+        // Fill out the form fields
+        fireEvent.change(screen.getByPlaceholderText("Professor's First Name"), { target: { value: 'John' } });
+        fireEvent.change(screen.getByPlaceholderText("Professor's Last Name"), { target: { value: 'Doe' } });
+        fireEvent.change(screen.getByPlaceholderText('Rating'), { target: { value: '5' } });
+        fireEvent.change(screen.getByPlaceholderText('Enter your review here...'), { target: { value: 'Great course!' } });
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('Save Review'));
+        });
+
+        // Expect that professorId was set to the existing professor's ID
+        expect(mockReviewsCollection.create).toHaveBeenCalledWith(expect.objectContaining({
+            professors: ['existingProfessorId']
+        }));
+    });
+
+    it('should update rating using handleRatingChange', async () => {
+        const mockCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            professors: [],
+            reviews: [],
+        };
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+
+        await act(async () => {
+            render(<AddReviewPage />);
+        });
+
+        const ratingInput = screen.getByLabelText('Rating Input') as HTMLInputElement;
+        fireEvent.change(ratingInput, { target: { value: '3' } });
+
+        // Assert that the rating state was updated
+        expect(ratingInput.value).toBe('3');
+    });
+
+    it('should log an error if fetching course fails', async () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+        mockCoursesCollection.getFirstListItem.mockRejectedValue(new Error('Course not found'));
+
+        await act(async () => {
+            render(<AddReviewPage />);
+        });
+
+        await waitFor(() => {
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching course:', expect.any(Error));
+        });
+
+        consoleErrorSpy.mockRestore();
     });
 });

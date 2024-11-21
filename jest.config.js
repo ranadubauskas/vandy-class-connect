@@ -7,7 +7,7 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
-    setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+    setupFilesAfterEnv: ['<rootDir>/jest.setup.js', "<rootDir>/setupTests.ts"],
     testEnvironment: 'jsdom',
     transformIgnorePatterns: [
         'node_modules/(?!pocketbase).+\\.(js|jsx|mjs|cjs|ts|tsx)$',

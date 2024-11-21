@@ -1,3 +1,5 @@
+// __tests__/home/homePage.blackBox.test.tsx
+import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
@@ -35,8 +37,11 @@ jest.mock('../../src/app/lib/pocketbaseClient', () => {
 const getOneMock = jest.fn();
 const updateMock = jest.fn();
 
-jest.mock('../../src/app/server');
-
+// Properly mock 'getAllCourses' from 'server' module
+jest.mock('../../src/app/server', () => ({
+    __esModule: true,
+    getAllCourses: jest.fn(),
+}));
 
 import { getAllCourses } from '../../src/app/server';
 
@@ -67,7 +72,6 @@ getAllCoursesMock.mockResolvedValue([
     } as RecordModel,
 ]);
 
-
 describe("Home page", () => {
     const mockPush = jest.fn();
 
@@ -89,6 +93,29 @@ describe("Home page", () => {
     beforeEach(() => {
         jest.clearAllMocks();
 
+        // Clear localStorage before each test
+        Object.defineProperty(window, 'localStorage', {
+            value: (() => {
+                let store = {};
+                return {
+                    getItem(key) {
+                        return store[key] || null;
+                    },
+                    setItem(key, value) {
+                        store[key] = String(value);
+                    },
+                    removeItem(key) {
+                        delete store[key];
+                    },
+                    clear() {
+                        store = {};
+                    },
+                };
+            })(),
+            writable: true,
+        });
+        localStorage.clear();
+
         // Mock useRouter
         (useRouter as jest.Mock).mockReturnValue({
             push: mockPush,
@@ -102,7 +129,7 @@ describe("Home page", () => {
         });
 
         // Mock getAllCourses
-        getAllCoursesMock.mockResolvedValue([
+        (getAllCourses as jest.Mock).mockResolvedValue([
             {
                 id: "1",
                 name: "Program Design and Data Structures",
@@ -127,13 +154,184 @@ describe("Home page", () => {
             } as RecordModel,
         ]);
 
-
         getOneMock.mockResolvedValue({
             savedCourses: ['1'],
         });
 
         updateMock.mockResolvedValue({});
+    });
 
+    it("should render the Home component and display user name", async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+        await waitFor(() => expect(getUserCookies).toHaveBeenCalled());
+        expect(screen.getByText("Welcome, John Smith!", { exact: false })).toBeInTheDocument();
+    });
+
+    it("should display loading state initially", () => {
+        render(
+            <AuthContext.Provider value={mockAuthContextValue}>
+                <Home />
+            </AuthContext.Provider>
+        );
+        expect(screen.getByText("Loading...")).toBeInTheDocument();
+    });
+
+    it("should display courses after loading", async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        // Check if courses are displayed
+        expect(screen.getByText("CS 2201")).toBeInTheDocument();
+        expect(screen.getByText("MATH 2410")).toBeInTheDocument();
+    });
+
+    it("should filter courses based on search query", async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        await act(async () => {
+            fireEvent.change(screen.getByPlaceholderText("Search for a course"), {
+                target: { value: "Linear" },
+            });
+        });
+        await waitFor(() => {
+            expect(screen.queryByText("CS 2201")).not.toBeInTheDocument();
+            expect(screen.getByText("MATH 2410")).toBeInTheDocument();
+        });
+    });
+
+    it("should open and close the filter modal", async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        // Open filter modal
+        fireEvent.click(screen.getByRole("button", { name: /open filter/i }));
+        expect(screen.getByText("Select Filters")).toBeInTheDocument();
+
+        // Close filter modal
+        fireEvent.click(screen.getByRole("button", { name: /close filter/i }));
+        expect(screen.queryByText("Select Filters")).not.toBeInTheDocument();
+    });
+
+    it("should navigate to course page when 'View Course' is clicked", async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        // Clicking on 'View Course' button for the first course
+        await act(async () => {
+            fireEvent.click(screen.getAllByText("View Course")[0]);
+        });
+        expect(mockPush).toHaveBeenCalledWith("/course?code=CS 2201&id=1");
+    });
+
+    it('should add a course to savedCourses when the course is not already saved', async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        // Verify that course '2' is not saved initially
+        const saveButton2 = screen.getByTestId('save-button-2');
+        userEvent.hover(saveButton2);
+        expect(await screen.findByText('Save Course')).toBeInTheDocument();
+        userEvent.unhover(saveButton2);
+
+        // Click the save button for course '2' to save it
+        fireEvent.click(saveButton2);
+
+        // Wait for state to update and check if updateMock was called correctly
+        await waitFor(() => {
+            userEvent.hover(saveButton2);
+            expect(screen.getByText('Unsave Course')).toBeInTheDocument();
+            expect(updateMock).toHaveBeenCalledWith("123", { savedCourses: ['1', '2'] });
+        });
+    });
+
+    it('should apply rating filter and update course list', async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        // Set rating filter to 4.5
+        fireEvent.change(screen.getByLabelText('Filter by Rating:'), { target: { value: '4' } });
+
+        // Verify only courses with rating >= 4.0 are displayed
+        await waitFor(() => {
+            expect(screen.getByText('CS 2201')).toBeInTheDocument();
+            expect(screen.getByText('MATH 2410')).toBeInTheDocument();
+        });
+
+        // Set rating filter to 4.5
+        fireEvent.change(screen.getByLabelText('Filter by Rating:'), { target: { value: '4.5' } });
+
+        // Verify only courses with rating >= 4.5 are displayed
+        await waitFor(() => {
+            expect(screen.getByText('CS 2201')).toBeInTheDocument();
+            expect(screen.queryByText('MATH 2410')).toBeInTheDocument();
+        });
+    });
+
+    it("should filter courses by selected subject", async () => {
+        await act(async () => {
+            render(
+                <AuthContext.Provider value={mockAuthContextValue}>
+                    <Home />
+                </AuthContext.Provider>
+            );
+        });
+
+        await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
+
+        // Select "CS" as subject filter
+        fireEvent.change(screen.getByLabelText('Filter by Subject:'), { target: { value: 'CS' } });
+
+        // Verify that only CS courses are displayed
+        await waitFor(() => {
+            expect(screen.getByText('CS 2201')).toBeInTheDocument();
+            expect(screen.queryByText('MATH 2410')).not.toBeInTheDocument();
+        });
     });
 
     it('should filter courses based on search query when search button is clicked', async () => {
@@ -458,7 +656,7 @@ describe("Home page", () => {
         getAllCoursesMock.mockResolvedValue([
             {
                 id: "1",
-                name: "Program Design and Data Structures",
+                name: "Program Design and Data Structtures",
                 code: "CS 2201",
                 subject: "CS",
                 averageRating: 4.5,

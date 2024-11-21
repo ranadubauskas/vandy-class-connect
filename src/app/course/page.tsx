@@ -1,5 +1,6 @@
 'use client';
 import { Tooltip } from "@mui/material";
+import localforage from 'localforage';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -10,7 +11,6 @@ import RatingBox from '../components/ratingBox';
 import StarRating from '../components/StarRating';
 import { useAuth } from "../lib/contexts";
 import pb from "../lib/pocketbaseClient";
-import localforage from 'localforage';
 
 pb.autoCancellation(false);
 
@@ -44,6 +44,7 @@ function CourseDetailPageComponent() {
 
       try {
         foundCourse = await localforage.getItem(`course_${code}`);
+        console.log('foundCOurse', foundCourse);
         if (foundCourse && now - foundCourse.cachedAt < cacheExpiry) {
           initializeState(foundCourse);
           // Use the cached course data
@@ -51,12 +52,15 @@ function CourseDetailPageComponent() {
           setLoading(false);
           return;
         } 
+        console.log("code:", code);
+        console.log("did not return");
         const fetchedCourse = await pb.collection('courses').getFirstListItem(
           `code = "${code}"`, // Use a filter to match the course code
           {
             expand: 'reviews.user,reviews.professors,professors', // Expand relationships as needed
           }
         );
+        console.log('fetched: ', fetchedCourse);
         if (fetchedCourse.syllabus) {
           fetchedCourse.syllabus = pb.files.getUrl(fetchedCourse, fetchedCourse.syllabus);
         }

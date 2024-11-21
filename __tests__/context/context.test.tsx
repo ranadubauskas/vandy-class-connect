@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom'
 import { render, screen, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import { act } from 'react-dom/test-utils';
@@ -149,5 +150,19 @@ describe('AuthContext', () => {
         expect(screen.getByText('useAuth must be used within an AuthProvider')).toBeInTheDocument();
 
         errorSpy.mockRestore();
+    });
+    it('should log an error if setUserDataFromCookies encounters an error', async () => {
+        const errorMessage = 'Error fetching user cookies';
+        (getUserCookies as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+        render(
+            <AuthProvider>
+                <TestComponent />
+            </AuthProvider>
+        );
+
+        await waitFor(() => {
+            expect(consoleErrorSpy).toHaveBeenCalledWith("Error setting user data:", expect.any(Error));
+        });
     });
 });

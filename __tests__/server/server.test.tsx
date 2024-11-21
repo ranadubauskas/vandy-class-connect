@@ -21,7 +21,7 @@ jest.mock('../../src/app/lib/pocketbaseClient', () => {
 
 
 // Use 'require' instead of 'import' to control module loading order
-import {
+const {
     deleteReview,
     editReview,
     editUser,
@@ -33,8 +33,8 @@ import {
     getUserByID,
     getUserReviews,
     register,
-    signIn
-} from '../../src/app/server';
+    signIn,
+  } = require('../../src/app/server');
 
 describe('Server Functions', () => {
     let mockCookies;
