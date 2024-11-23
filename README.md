@@ -14,7 +14,7 @@
 1. npm run test
 2. Coverage: npm run test:coverage
 #### Demo:
-![](White Box Testing.gif)
+![White Box Testing Demo](white-box-testing.gif)
 
 ### Black Box Testing:
 #### Framework:
