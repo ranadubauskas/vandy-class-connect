@@ -13,6 +13,9 @@
 #### Commands:
 1. npm run test
 2. Coverage: npm run test:coverage
+#### Demo:
+![](White Box Testing.gif)
+
 ### Black Box Testing:
 #### Framework:
 - [Cypress](https://www.cypress.io/app)
