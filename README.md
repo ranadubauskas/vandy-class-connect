@@ -21,6 +21,8 @@ https://github.com/user-attachments/assets/ed4db12e-c8ca-4c89-8321-ada239a2eed2
 - [Cypress](https://www.cypress.io/app)
 #### Commands:
 1. npx cypress open
+#### Demo:
+https://vimeo.com/1032893465/3742594b86?ts=0&share=copy
 
 
 ## About
