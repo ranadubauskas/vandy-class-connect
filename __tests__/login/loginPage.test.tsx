@@ -1,8 +1,10 @@
+import '@testing-library/jest-dom/extend-expect';
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useRouter } from 'next/navigation';
 import { AuthProvider } from "../../src/app/lib/contexts";
 import Login from "../../src/app/login/page";
 import { getUserByID, getUserReviews, signIn } from '../../src/app/server';
+const { describe, test, expect } = require('@jest/globals');
 
 jest.mock('../../src/app/server', () => ({
     signIn: jest.fn(),

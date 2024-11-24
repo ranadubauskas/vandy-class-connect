@@ -1,10 +1,11 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom/extend-expect';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import localforage from 'localforage';
 import { useRouter, useSearchParams } from 'next/navigation';
 import CourseDetailPage from '../../src/app/course/page';
 import { useAuth } from '../../src/app/lib/contexts';
 import pb from '../../src/app/lib/pocketbaseClient';
+const { describe, test, expect } = require('@jest/globals');
 
 beforeAll(() => {
     Object.defineProperty(navigator, 'clipboard', {
@@ -36,7 +37,9 @@ jest.mock('../../src/app/lib/pocketbaseClient', () => {
     const pb = {
         collection: jest.fn(),
         files: {
-            getUrl: jest.fn(),
+            getUrl: jest.fn() as jest.MockedFunction<
+                (record: { [key: string]: any }, filename: string, queryParams?: any) => string
+            >,
         },
         autoCancellation: jest.fn(),
     };
@@ -95,7 +98,7 @@ describe('CourseDetailPage Component', () => {
             create: jest.fn(),
         };
 
-        pb.collection.mockImplementation((collectionName: string) => {
+        (pb.collection as jest.Mock).mockImplementation((collectionName: string) => {
             if (collectionName === 'courses') {
                 return mockCoursesCollection;
             }
@@ -112,7 +115,7 @@ describe('CourseDetailPage Component', () => {
             };
         });
 
-        pb.files.getUrl.mockImplementation((record, filename) => {
+        (pb.files.getUrl as jest.Mock).mockImplementation((record, filename) => {
             if (filename === 'review-syllabus.pdf') {
                 return 'http://example.com/review-syllabus.pdf';
             }
@@ -134,7 +137,9 @@ describe('CourseDetailPage Component', () => {
         };
 
         mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
-        pb.files.getUrl.mockReturnValue('http://example.com/syllabus.pdf');
+        (pb.files.getUrl as jest.MockedFunction<
+            (record: { [key: string]: any }, filename: string, queryParams?: any) => string
+        >).mockReturnValue('http://example.com/syllabus.pdf');
         (localforage.getItem as jest.Mock).mockResolvedValue(null);
 
         await act(async () => {
@@ -217,9 +222,11 @@ describe('CourseDetailPage Component', () => {
             tutors: [],
         };
 
-        pb.files.getUrl.mockImplementation((record, filename) => {
+        (pb.files.getUrl as jest.MockedFunction<
+            (record: { [key: string]: any }, filename: string, queryParams?: any) => string
+        >).mockImplementation((record, filename) => {
             if (filename === 'review-syllabus.pdf') {
-                return mockReviewSyllabusUrl;
+                return 'http://example.com/review-syllabus.pdf';
             }
             return '';
         });
@@ -414,25 +421,25 @@ describe('CourseDetailPage Component', () => {
             expand: { reviews: [], professors: [] },
             tutors: [],
         };
-    
+
         mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
         (localforage.getItem as jest.Mock).mockResolvedValue(null);
-    
+
         const mockBack = jest.fn();
         (useRouter as jest.Mock).mockReturnValue({ back: mockBack });
-    
+
         await act(async () => {
             render(<CourseDetailPage />);
         });
-    
+
         // Wait for the "Back" button to appear
         await waitFor(() => {
             expect(screen.getByText(/Back/i)).toBeInTheDocument();
         });
-    
+
         // Click the "Back" button
         fireEvent.click(screen.getByText(/Back/i));
-    
+
         // Verify navigation
         expect(mockBack).toHaveBeenCalled();
     });
@@ -749,7 +756,11 @@ describe('CourseDetailPage Component', () => {
         };
 
         mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
-        pb.files.getUrl.mockReturnValue('http://example.com/syllabus.pdf');
+
+        // Cast pb.files.getUrl as a Jest mocked function
+        (pb.files.getUrl as jest.MockedFunction<
+            (record: { [key: string]: any }, filename: string, queryParams?: any) => string
+        >).mockReturnValue('http://example.com/syllabus.pdf');
 
         await act(async () => {
             render(<CourseDetailPage />);
@@ -762,6 +773,7 @@ describe('CourseDetailPage Component', () => {
         fireEvent.click(screen.getByText('Download Syllabus'));
         expect(window.open).toHaveBeenCalledWith('http://example.com/syllabus.pdf', '_blank');
     });
+
 
     it('should filter reviews based on selected professor', async () => {
         mockGet.mockReturnValue('courseId');
@@ -1005,5 +1017,305 @@ describe('CourseDetailPage Component', () => {
         await waitFor(() => {
             expect(screen.queryByText('Review has been reported and will be reviewed further.')).not.toBeInTheDocument();
         });
+    });
+
+    it('should use cached course data when available', async () => {
+        const mockCachedCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            cachedAt: Date.now(),
+            expand: { reviews: [], professors: [] },
+            tutors: [],
+        };
+
+        (localforage.getItem as jest.Mock).mockResolvedValue(mockCachedCourseData);
+
+        await act(async () => {
+            render(<CourseDetailPage />);
+        });
+
+        // Verify that course data is set from cache
+        expect(localforage.getItem).toHaveBeenCalledWith('course_CS101');
+        await waitFor(() => {
+            expect(screen.getByText('CS101: Introduction to Computer Science')).toBeInTheDocument();
+        });
+
+        // Ensure that the loading state is set to false
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+
+        // Verify that fetch from the server is not called
+        expect(mockCoursesCollection.getFirstListItem).not.toHaveBeenCalled();
+    });
+
+    it('should handle error when fetching course data', async () => {
+        const fetchError = new Error('Fetch failed');
+        mockCoursesCollection.getFirstListItem.mockRejectedValue(fetchError);
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        await act(async () => {
+            render(<CourseDetailPage />);
+        });
+
+        // Wait for the error handling to occur
+        await waitFor(() => {
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching course:', fetchError);
+        });
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle error when fetching tutor details', async () => {
+        const tutorFetchError = new Error('Tutor fetch failed');
+        mockCoursesCollection.getFirstListItem.mockResolvedValue({
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            tutors: ['user1'],
+            expand: { reviews: [], professors: [] },
+        });
+        mockUsersCollection.getOne.mockRejectedValue(tutorFetchError);
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        await act(async () => {
+            render(<CourseDetailPage />);
+        });
+
+        // Wait for the error handling to occur
+        await waitFor(() => {
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching tutor details:', tutorFetchError);
+        });
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('should display a message when reporting a review while not logged in', async () => {
+        // Set userData to null to simulate not being logged in
+        (useAuth as jest.Mock).mockReturnValue({ userData: null });
+
+        const mockCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            expand: {
+                reviews: [
+                    {
+                        id: 'review1',
+                        rating: 5,
+                        comment: 'Great course!',
+                        expand: {
+                            user: { id: 'user1', firstName: 'Alice', lastName: 'Doe' },
+                        },
+                    },
+                ],
+                professors: [],
+            },
+            tutors: [],
+        };
+
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+
+        await act(async () => {
+            render(<CourseDetailPage />);
+        });
+
+        // Wait for the review to appear
+        await waitFor(() => {
+            expect(screen.getByText('Great course!')).toBeInTheDocument();
+        });
+
+        // Click the "Report Review" button
+        fireEvent.click(screen.getByLabelText('Report Review'));
+
+        // Check that the popup message is displayed
+        await waitFor(() => {
+            expect(screen.getByText('You must be logged in to report a review.')).toBeInTheDocument();
+        });
+
+        // Ensure that the function returns early and does not attempt to create a report
+        expect(mockReviewReportsCollection.create).not.toHaveBeenCalled();
+    });
+
+    it('should display a message when reporting a review while not logged in', async () => {
+        // Set userData to null to simulate not being logged in
+        (useAuth as jest.Mock).mockReturnValue({ userData: null });
+
+        const mockCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            expand: {
+                reviews: [
+                    {
+                        id: 'review1',
+                        rating: 5,
+                        comment: 'Great course!',
+                        expand: {
+                            user: { id: 'user1', firstName: 'Alice', lastName: 'Doe' },
+                        },
+                    },
+                ],
+                professors: [],
+            },
+            tutors: [],
+        };
+
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+
+        await act(async () => {
+            render(<CourseDetailPage />);
+        });
+
+        // Wait for the review to appear
+        await waitFor(() => {
+            expect(screen.getByText('Great course!')).toBeInTheDocument();
+        });
+
+        // Click the "Report Review" button
+        fireEvent.click(screen.getByLabelText('Report Review'));
+
+        // Check that the popup message is displayed
+        await waitFor(() => {
+            expect(screen.getByText('You must be logged in to report a review.')).toBeInTheDocument();
+        });
+
+        // Ensure that the function returns early and does not attempt to create a report
+        expect(mockReviewReportsCollection.create).not.toHaveBeenCalled();
+    });
+
+    it('should display a message when adding tutor while not logged in', async () => {
+        // Set userData to null to simulate not being logged in
+        (useAuth as jest.Mock).mockReturnValue({ userData: null });
+
+        const mockCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            tutors: [],
+            expand: { reviews: [], professors: [] },
+        };
+
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+
+        await act(async () => {
+            render(<CourseDetailPage />);
+        });
+
+        // Click the "Tutor this Course" button
+        fireEvent.click(screen.getByText('Tutor this Course'));
+
+        // Check that the popup message is displayed
+        await waitFor(() => {
+            expect(screen.getByText('You must be logged in to tutor this course.')).toBeInTheDocument();
+        });
+
+        // Ensure that the function returns early and does not attempt to update the course
+        expect(mockCoursesCollection.update).not.toHaveBeenCalled();
+        expect(mockUsersCollection.update).not.toHaveBeenCalled();
+    });
+
+    it('should assign correct grid classes when there is 1 review', async () => {
+        // Mock data with 1 review
+        const mockCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            expand: {
+                reviews: [
+                    {
+                        id: 'review1',
+                        rating: 5,
+                        comment: 'Great course!',
+                        expand: { professors: [], user: {} },
+                    },
+                ],
+                professors: [],
+            },
+            tutors: [],
+        };
+
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+
+        await act(async () => {
+            render(<CourseDetailPage />);
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText('Great course!')).toBeInTheDocument();
+        });
+
+        // Check that the grid has the correct class
+        const gridContainer = screen.getByText('Great course!').closest('.grid');
+        expect(gridContainer).toHaveClass('grid grid-cols-1 gap-6');
+    });
+
+    it('should filter reviews based on selected rating', async () => {
+        const mockCourseData = {
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            expand: {
+                reviews: [
+                    {
+                        id: 'review1',
+                        rating: 5,
+                        comment: 'Excellent course!',
+                        expand: { professors: [], user: {} },
+                    },
+                    {
+                        id: 'review2',
+                        rating: 3,
+                        comment: 'Good course.',
+                        expand: { professors: [], user: {} },
+                    },
+                    {
+                        id: 'review3',
+                        rating: 2,
+                        comment: 'Average course.',
+                        expand: { professors: [], user: {} },
+                    },
+                ],
+                professors: [],
+            },
+            tutors: [],
+        };
+
+        mockCoursesCollection.getFirstListItem.mockResolvedValue(mockCourseData);
+
+        await act(async () => {
+            render(<CourseDetailPage />);
+        });
+
+        // Wait for the reviews to appear
+        await waitFor(() => {
+            expect(screen.getByText('Excellent course!')).toBeInTheDocument();
+            expect(screen.getByText('Good course.')).toBeInTheDocument();
+            expect(screen.getByText('Average course.')).toBeInTheDocument();
+        });
+
+        // Change the rating filter to 4+
+        fireEvent.change(screen.getByLabelText('Filter by Rating:'), { target: { value: '4' } });
+
+        // Verify that only reviews with rating >= 4 are displayed
+        await waitFor(() => {
+            expect(screen.getByText('Excellent course!')).toBeInTheDocument();
+            expect(screen.queryByText('Good course.')).not.toBeInTheDocument();
+            expect(screen.queryByText('Average course.')).not.toBeInTheDocument();
+        });
+
+        // Ensure the select element has the correct className (covers line 294)
+        const ratingFilterSelect = screen.getByLabelText('Filter by Rating:');
+        expect(ratingFilterSelect).toHaveClass(
+            'p-2',
+            'rounded',
+            'border',
+            'bg-gray-200',
+            'px-3',
+            'py-2',
+            'rounded-full',
+            'shadow-md',
+            'hover:bg-gray-300',
+            'transition'
+        );
     });
 });

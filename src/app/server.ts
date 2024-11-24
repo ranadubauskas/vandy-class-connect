@@ -23,7 +23,7 @@ export async function getUserReviews(userId: string): Promise<Review[]> {
             filter: `user = "${userId}"`,
             expand: 'user,course,professors',
         });
-        return reviews;
+        return reviews || [];
     } catch (error) {
         console.error('Error fetching user reviews:', error);
         throw error;
@@ -192,7 +192,7 @@ export async function editReview(reviewId, data, courseId) {
 
 
         const totalRating = existingReviews.reduce((sum, review) => sum + (review.rating || 0), 0)
-        const avgRating = totalRating / (existingReviews.length);
+        const avgRating = totalRating / (existingReviews.length || 1);
 
         await pb.collection('courses').update(courseId, {
             averageRating: avgRating,
@@ -215,7 +215,7 @@ export async function deleteReview(reviewId, courseId) {
         });
 
         const totalRating = existingReviews.reduce((sum, review) => sum + (review.rating || 0), 0)
-        const avgRating = totalRating / (existingReviews.length);
+        const avgRating = totalRating / (existingReviews.length || 1);
 
         await pb.collection('courses').update(courseId, {
             averageRating: avgRating,
@@ -284,12 +284,10 @@ export async function getCourseByID(courseID: string) {
 
 export async function getUserByID(userId) {
     try {
-      const user = await pb.collection('users').getOne<User>(userId);
-      return user;
+        const user = await pb.collection('users').getOne<User>(userId);
+        return user;
     } catch (error) {
-      console.error('Error fetching user by ID:', error);
-      throw error;
+        console.error('Error fetching user by ID:', error);
+        return null;
     }
-  }
-
-
+}

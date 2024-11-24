@@ -84,6 +84,7 @@ export default function Admin() {
                 <div className="flex space-x-2">
                   <Tooltip title="Approve Review">
                     <button
+                      aria-label="Approve Review"
                       onClick={() => approveReview(report.id)}
                       className="text-green-500 hover:text-green-700 transition duration-300"
                     >
@@ -92,6 +93,7 @@ export default function Admin() {
                   </Tooltip>
                   <Tooltip title="Delete Review">
                     <button
+                      aria-label="Delete Review"
                       onClick={() => deleteReview(report.expand.review.id)}
                       className="text-red-500 hover:text-red-700 transition duration-300"
                     >
@@ -126,12 +128,12 @@ export default function Admin() {
                 <strong>Reporter Names:</strong>{" "}
                 {report.expand?.reporter && report.expand.reporter.length > 0
                   ? report.expand.reporter.map((rep) => (
-                      <Link key={rep.id} href={`/profile/${rep.id}`}>
-                        <span className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
-                          {`${rep.firstName} ${rep.lastName}`}
-                        </span>
-                      </Link>
-                    ))
+                    <Link key={rep.id} href={`/profile/${rep.id}`}>
+                      <span className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
+                        {`${rep.firstName} ${rep.lastName}`}
+                      </span>
+                    </Link>
+                  ))
                     .reduce((prev, curr) => [prev, ", ", curr])
                   : "Unknown"}
               </p>
@@ -183,12 +185,12 @@ export default function Admin() {
                   <td className="py-2 px-4 border-b text-center">
                     {report.expand?.reporter && report.expand.reporter.length > 0
                       ? report.expand.reporter.map((rep) => (
-                          <Link key={rep.id} href={`/profile/${rep.id}`}>
-                            <span className="hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
-                              {`${rep.firstName} ${rep.lastName}`}
-                            </span>
-                          </Link>
-                        ))
+                        <Link key={rep.id} href={`/profile/${rep.id}`}>
+                          <span className="hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
+                            {`${rep.firstName} ${rep.lastName}`}
+                          </span>
+                        </Link>
+                      ))
                         .reduce((prev, curr) => [prev, ", ", curr])
                       : "Unknown"}
                   </td>
@@ -199,6 +201,7 @@ export default function Admin() {
                     <div className="flex justify-center items-center space-x-2">
                       <Tooltip title="Approve Review">
                         <button
+                          aria-label="Approve Review"
                           onClick={() => approveReview(report.id)}
                           className="text-green-500 hover:text-green-700 transition duration-300"
                         >
@@ -207,6 +210,7 @@ export default function Admin() {
                       </Tooltip>
                       <Tooltip title="Delete Review">
                         <button
+                          aria-label="Delte Review"
                           onClick={() => deleteReview(report.expand.review.id)}
                           className="text-red-500 hover:text-red-700 transition duration-300"
                         >

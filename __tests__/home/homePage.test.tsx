@@ -1,5 +1,6 @@
-// __tests__/home/homePage.blackBox.test.tsx
+
 import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
@@ -7,6 +8,7 @@ import { RecordModel } from 'pocketbase';
 import Home from "../../src/app/home/page";
 import { AuthContext } from "../../src/app/lib/contexts";
 import { getUserCookies } from '../../src/app/lib/functions';
+const { describe, test, expect } = require('@jest/globals');
 
 // Mock dependencies
 jest.mock('next/navigation', () => ({

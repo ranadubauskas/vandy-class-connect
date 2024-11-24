@@ -1,10 +1,10 @@
 'use client';
 
 import Link from "next/link";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import StarRating from "../../components/StarRating";
 import { AuthContext } from "../../lib/contexts";
-import { deleteReview, editReview, getUserByID } from "../../server";
+import { deleteReview, editReview } from "../../server";
 
 export default function RatingCard({ rating, onDelete, onEdit }) {
     const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
@@ -78,6 +78,7 @@ export default function RatingCard({ rating, onDelete, onEdit }) {
                     <>
                         {!isEditing && (
                             <button
+                                data-testid = "edit-button"
                                 onClick={() => setEditing(true)}
                                 className="text-gray-500 hover:text-gray-700"
                             >
@@ -85,6 +86,7 @@ export default function RatingCard({ rating, onDelete, onEdit }) {
                             </button>
                         )}
                         <button
+                            data-testid = "delete-button"
                             onClick={handleDelete}
                             className="text-red-500 hover:text-red-700"
                         >
@@ -168,6 +170,7 @@ export default function RatingCard({ rating, onDelete, onEdit }) {
                     />
                 ) : (
                     <p
+                        data-testid="review-comment"
                         className="text-gray-700 text-center break-words whitespace-normal overflow-y-auto max-h-24"
                         style={{ lineHeight: '1.5' }}
                     >

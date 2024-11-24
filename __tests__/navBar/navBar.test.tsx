@@ -1,7 +1,9 @@
+import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
 import NavBar from '../../src/app/components/NavBar'; // Adjust the path as necessary
 import { AuthContext } from '../../src/app/lib/contexts';
+const { describe, test, expect } = require('@jest/globals');
 
 // Mock usePathname from Next.js
 jest.mock('next/navigation', () => ({

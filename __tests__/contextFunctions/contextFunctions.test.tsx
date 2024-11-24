@@ -1,6 +1,8 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import { cookies } from 'next/headers';
 import { getUserCookies, logout } from '../../src/app/lib/functions';
+const { describe, test, expect } = require('@jest/globals');
 
 jest.mock('next/headers', () => ({
     cookies: jest.fn(),

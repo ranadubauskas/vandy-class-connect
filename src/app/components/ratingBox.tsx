@@ -5,7 +5,7 @@ interface RatingBoxProps {
   size?: 'small' | 'large';
 }
 
-const RatingBox: React.FC<RatingBoxProps> = ({ rating, size='large'}) => {
+const RatingBox: React.FC<RatingBoxProps> = ({ rating, size = 'large' }) => {
   // Parse rating as a number and set a fallback display value
   const parsedRating = typeof rating === "number" ? rating : parseFloat(rating) || 0;
   const displayRating = parsedRating === 0.0 ? "N/A" : parsedRating.toFixed(1);
@@ -23,7 +23,9 @@ const RatingBox: React.FC<RatingBoxProps> = ({ rating, size='large'}) => {
           : "bg-green-300"; // Green for [4, 5]
 
   return (
-    <div className={`rating-box text-lg p-2 rounded-lg font-bold shadow-lg ${ratingColorClass} ${sizeClass}`}>
+    <div className={`rating-box text-lg p-2 rounded-lg font-bold shadow-lg ${ratingColorClass} ${sizeClass}`}
+      aria-label={`Rating: ${displayRating}`}
+    >
       {displayRating}
     </div>
   );

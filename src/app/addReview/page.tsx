@@ -41,7 +41,10 @@ function AddReviewComponent() {
     };
 
     useEffect(() => {
-        if (!courseId) return;
+        if (!courseId) {
+            setLoading(false);
+            return;
+        }
 
         const fetchCourseFromCache = async () => {
             try {
@@ -76,34 +79,6 @@ function AddReviewComponent() {
                 console.error('Error fetching course:', error);
             }
         };
-
-
-        // Check local storage first
-        // const cachedCourse = localStorage.getItem(`course_${courseId}`);
-        // if (cachedCourse) {
-        //     setCourse(JSON.parse(cachedCourse));
-        //     setLoading(false);
-        // } else {
-        //     const fetchCourse = async () => {
-        //         try {
-        //             const fetchedCourse = await pb.collection('courses').getFirstListItem(
-        //                 `code="${code}"`,
-        //                 {
-        //                     expand: 'reviews.user,reviews.professors,professors',
-        //                     autoCancellation: false,
-        //                 }
-        //             );
-        //             setCourse(fetchedCourse);
-        //             // Cache the course data
-        //             localStorage.setItem(`course_${courseId}`, JSON.stringify(fetchedCourse));
-        //         } catch (error) {
-        //             console.error('Error fetching course:', error);
-        //         } finally {
-        //             setLoading(false);
-        //         }
-        //     };
-        //     fetchCourse();
-        // }
         fetchCourseFromCache();
 
     }, [courseId, code]);

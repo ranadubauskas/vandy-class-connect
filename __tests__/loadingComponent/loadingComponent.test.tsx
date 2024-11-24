@@ -1,5 +1,7 @@
+import '@testing-library/jest-dom/extend-expect';
 import { render, screen } from '@testing-library/react';
-import Loading from '../../src/app/components/Loading'; // Adjust the path as necessary
+import Loading from '../../src/app/components/Loading';
+const { describe, test, expect } = require('@jest/globals');
 
 describe('Loading Component', () => {
     it('should render the loading text', () => {

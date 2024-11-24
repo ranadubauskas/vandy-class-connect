@@ -37,15 +37,16 @@ export default function savedCourses() {
           setUserCookies(cookies);
           setSavedCourses(cookies.savedCourses || []);
           console.log(cookies.savedCourses);
-
+          setLoading(false); 
         } else {
           console.log("No saved courses found");
           setErrorMessage(null);
+          setLoading(false); 
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
         setErrorMessage("Error fetching saved courses");
-
+        setLoading(false); 
       }
     };
 

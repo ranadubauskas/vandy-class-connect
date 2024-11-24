@@ -3,9 +3,9 @@ import localforage from 'localforage';
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../../lib/contexts';
+import { Review } from '../../lib/interfaces';
 import { getUserReviews } from '../../server';
 import RatingCard from './ratingCard';
-import {User, Course, Professor, Review} from '../../lib/interfaces';
 
 
 interface CachedReviews {

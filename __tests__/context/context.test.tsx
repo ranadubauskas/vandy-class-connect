@@ -1,9 +1,11 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import { render, screen, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import { act } from 'react-dom/test-utils';
 import { AuthProvider, useAuth } from '../../src/app/lib/contexts';
 import { getUserCookies, logout } from '../../src/app/lib/functions';
+const { describe, test, expect } = require('@jest/globals');
 
 jest.mock('next/navigation', () => ({
     useRouter: jest.fn(),

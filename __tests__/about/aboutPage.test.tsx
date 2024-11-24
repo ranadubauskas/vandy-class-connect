@@ -1,7 +1,8 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import About from '../../src/app/about/page';
+const { describe, test, expect } = require('@jest/globals');
 
 
 // Mocking next/navigation's useRouter

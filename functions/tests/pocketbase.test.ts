@@ -106,50 +106,49 @@ test('InMemoryStorageAdapter saves and clears tokens', async () => {
 
 test('InMemoryStorageAdapter load returns token and model when both are set', async () => {
     const storageAdapter = new InMemoryStorageAdapter();
-  
+
     const token = 'testtoken';
     const model = { id: 'testuser' };
     await storageAdapter.save(token, model);
-  
-    const result = await storageAdapter.load();
-  
-    expect(result).toEqual({
-      token: token,
-      model: model,
-    });
-  });
 
-  test('InMemoryStorageAdapter load returns null when both token and model are null', async () => {
+    const result = await storageAdapter.load();
+
+    expect(result).toEqual({
+        token: token,
+        model: model,
+    });
+});
+
+test('InMemoryStorageAdapter load returns null when both token and model are null', async () => {
     const storageAdapter = new InMemoryStorageAdapter();
-  
+
     // Do not set authToken and authModel
     const result = await storageAdapter.load();
-  
-    expect(result).toBeNull();
-  });
 
-  test('InMemoryStorageAdapter load returns null when only authToken is set', async () => {
+    expect(result).toBeNull();
+});
+
+test('InMemoryStorageAdapter load returns null when only authToken is set', async () => {
     const storageAdapter = new InMemoryStorageAdapter();
-  
+
     storageAdapter.authToken = 'testtoken';
     storageAdapter.authModel = null;
-  
+
     const result = await storageAdapter.load();
-  
+
     expect(result).toBeNull();
-  });
-  
-  test('InMemoryStorageAdapter load returns null when only authModel is set', async () => {
+});
+
+test('InMemoryStorageAdapter load returns null when only authModel is set', async () => {
     const storageAdapter = new InMemoryStorageAdapter();
-  
+
     storageAdapter.authToken = null;
     storageAdapter.authModel = { id: 'testuser' };
-  
+
     const result = await storageAdapter.load();
-  
+
     expect(result).toBeNull();
-  });
-  
+});
 
 // Restore settings after tests
 afterAll(() => {

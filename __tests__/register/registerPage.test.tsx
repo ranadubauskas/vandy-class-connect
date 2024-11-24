@@ -1,8 +1,10 @@
+import '@testing-library/jest-dom/extend-expect';
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthProvider } from "../../src/app/lib/contexts";
 import Register from "../../src/app/register/page";
 import { register } from '../../src/app/server';
+const { describe, test, expect } = require('@jest/globals');
 
 // Mock functions
 jest.mock('next/navigation', () => ({
