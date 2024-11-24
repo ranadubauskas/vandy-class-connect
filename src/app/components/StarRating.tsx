@@ -34,6 +34,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
     return (
       <span
         key={star}
+        className={`star ${fillPercentage > 0 ? 'filled' : ''}`} 
         onMouseMove={(e) => handleMouseEnter(e, star)} // Handle hover with half-star detection
         onClick={() => handleClick(star, fillPercentage < 1)} // Set rating with half-star precision
         onMouseLeave={() => !readOnly && setHoveredRating(null)} // Reset hover on mouse leave

@@ -1,3 +1,5 @@
+// import { describe, it } from "node:test";
+
 describe('Login Page', () => {
   const baseUrl = Cypress.env('baseUrl');
   const loginUrl = `${baseUrl}/login`;
@@ -29,6 +31,8 @@ describe('Login Page', () => {
       cy.get('input[placeholder="Vanderbilt Email"]').type(validUser.email);
       cy.get('input[placeholder="Password"]').type(validUser.password);
       cy.get('button[type="submit"]').click();
+
+      cy.wait(2000);
 
       // Verify redirection to home page
       cy.url().should('include', '/home');

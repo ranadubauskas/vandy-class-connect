@@ -71,14 +71,15 @@ export default function RatingCard({ rating, onDelete, onEdit }) {
     };
 
     return (
-        <div className="relative bg-white rounded-lg shadow-md p-4 my-4 mx-auto max-w-sm sm:max-w-md w-full">
+        <div className="relative bg-white rounded-lg shadow-md p-4 my-4 mx-auto max-w-sm sm:max-w-md w-full"
+            data-testid="rating-card">
             {/* Actions */}
             <div className="absolute top-2 right-2 flex flex-col items-end space-y-2">
                 {userVal?.userData?.id === user?.id && (
                     <>
                         {!isEditing && (
                             <button
-                                data-testid = "edit-button"
+                                data-testid="edit-button"
                                 onClick={() => setEditing(true)}
                                 className="text-gray-500 hover:text-gray-700"
                             >
@@ -86,7 +87,7 @@ export default function RatingCard({ rating, onDelete, onEdit }) {
                             </button>
                         )}
                         <button
-                            data-testid = "delete-button"
+                            data-testid="delete-button"
                             onClick={handleDelete}
                             className="text-red-500 hover:text-red-700"
                         >

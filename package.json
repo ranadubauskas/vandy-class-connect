@@ -36,10 +36,11 @@
   "devDependencies": {
     "@babel/preset-env": "^7.25.8",
     "@babel/preset-react": "^7.25.7",
+    "@jest/globals": "^29.7.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
-    "@jest/globals": "^29.7.0",
+    "@types/cypress": "^0.1.6",
     "@types/localforage": "^0.0.33",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20",

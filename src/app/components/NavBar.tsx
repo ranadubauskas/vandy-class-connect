@@ -1,10 +1,23 @@
 "use client";
 import Link from "next/link";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../lib/contexts";
+import { useRouter } from "next/navigation";
+
 
 export default function NavBar() {
   const { userData, logoutUser } = useContext(AuthContext);
+  const router = useRouter();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleDropdownToggle = () => {
+    setIsDropdownOpen((prev) => !prev);
+  };
+
+  const handleViewMyReviews = () => {
+    router.push(`/ratings/${userData.id}`);
+    setIsDropdownOpen(false);
+  };
 
   return (
     <header className="flex flex-col sm:flex-row items-center justify-between mb-3 p-4 space-y-4 sm:space-y-0">

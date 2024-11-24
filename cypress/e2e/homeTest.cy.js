@@ -4,7 +4,7 @@ describe('Home Page', () => {
   const homeUrl = `${baseUrl}/home`;
 
   const validUser = {
-    email: Cypress.env('email'), // Use Cypress.env to access environment variables
+    email: Cypress.env('email'),
     password: Cypress.env('password'),
   };
 
@@ -112,7 +112,7 @@ describe('Home Page', () => {
       });
   
     // Verify navigation to the course page
-    cy.url().should('include', '/course?id='); // Check the URL includes course ID
+    cy.url().should('include', '/course?code='); // Check the URL includes course ID
     cy.get('.course-details', { timeout: 10000 }).should('exist'); // Check course details are visible
   });
   

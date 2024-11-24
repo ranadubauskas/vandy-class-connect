@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/extend-expect';
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { usePathname, useRouter } from 'next/navigation';
-import { AuthProvider } from "../../src/app/lib/contexts";
+import { AuthContext } from "../../src/app/lib/contexts";
 import Register from "../../src/app/register/page";
 import { register } from '../../src/app/server';
 const { describe, test, expect } = require('@jest/globals');
@@ -20,8 +20,19 @@ jest.mock('../../src/app/lib/functions', () => ({
     getUserCookies: jest.fn().mockResolvedValue(null),
 }));
 
-const renderWithAuthProvider = (ui, options = {}) => {
-    return render(<AuthProvider>{ui}</AuthProvider>, options);
+const renderWithAuthProvider = (ui: React.ReactElement) => {
+    return render(
+        <AuthContext.Provider
+            value={{
+                userData: null,
+                getUser: jest.fn(),
+                logoutUser: jest.fn(),
+                loginUser: jest.fn(),
+            }}
+        >
+            {ui}
+        </AuthContext.Provider>
+    );
 };
 
 describe("Register page", () => {
@@ -65,12 +76,12 @@ describe("Register page", () => {
         });
 
         // Check if the form inputs are rendered
-        expect(screen.getByPlaceholderText("First Name")).toBeInTheDocument();
-        expect(screen.getByPlaceholderText("Last Name")).toBeInTheDocument();
-        expect(screen.getByPlaceholderText("Vanderbilt Email")).toBeInTheDocument();
-        expect(screen.getByPlaceholderText("Username")).toBeInTheDocument();
-        expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
-        expect(screen.getByPlaceholderText("Confirm Password")).toBeInTheDocument();
+        expect(screen.getByPlaceholderText("First Name*")).toBeInTheDocument();
+        expect(screen.getByPlaceholderText("Last Name*")).toBeInTheDocument();
+        expect(screen.getByPlaceholderText("Vanderbilt Email*")).toBeInTheDocument();
+        expect(screen.getByPlaceholderText("Username*")).toBeInTheDocument();
+        expect(screen.getByPlaceholderText("Password*")).toBeInTheDocument();
+        expect(screen.getByPlaceholderText("Confirm Password*")).toBeInTheDocument();
         expect(screen.getByRole('combobox')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /register/i })).toBeInTheDocument();
     });
@@ -80,12 +91,12 @@ describe("Register page", () => {
             renderWithAuthProvider(<Register />);
         });
 
-        fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "John" } });
-        fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "Doe" } });
-        fireEvent.change(screen.getByPlaceholderText("Vanderbilt Email"), { target: { value: "wrong@example.com" } });
-        fireEvent.change(screen.getByPlaceholderText("Username"), { target: { value: "johnDoe" } });
-        fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "wrongpassword" } });
-        fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "wrongpassword" } });
+        fireEvent.change(screen.getByPlaceholderText("First Name*"), { target: { value: "John" } });
+        fireEvent.change(screen.getByPlaceholderText("Last Name*"), { target: { value: "Doe" } });
+        fireEvent.change(screen.getByPlaceholderText("Vanderbilt Email*"), { target: { value: "wrong@example.com" } });
+        fireEvent.change(screen.getByPlaceholderText("Username*"), { target: { value: "johnDoe" } });
+        fireEvent.change(screen.getByPlaceholderText("Password*"), { target: { value: "wrongpassword" } });
+        fireEvent.change(screen.getByPlaceholderText("Confirm Password*"), { target: { value: "wrongpassword" } });
         // Select graduation year
         fireEvent.change(screen.getByRole('combobox'), { target: { value: '2025' } });
         // Submit form
@@ -99,12 +110,12 @@ describe("Register page", () => {
             renderWithAuthProvider(<Register />);
         });
 
-        fireEvent.change(screen.getByPlaceholderText("First Name"), { target: { value: "John" } });
-        fireEvent.change(screen.getByPlaceholderText("Last Name"), { target: { value: "Doe" } });
-        fireEvent.change(screen.getByPlaceholderText("Vanderbilt Email"), { target: { value: "test@vanderbilt.edu" } });
-        fireEvent.change(screen.getByPlaceholderText("Username"), { target: { value: "johnDoe" } });
-        fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "Testpassword123!" } });
-        fireEvent.change(screen.getByPlaceholderText("Confirm Password"), { target: { value: "Testpassword123!" } });
+        fireEvent.change(screen.getByPlaceholderText("First Name*"), { target: { value: "John" } });
+        fireEvent.change(screen.getByPlaceholderText("Last Name*"), { target: { value: "Doe" } });
+        fireEvent.change(screen.getByPlaceholderText("Vanderbilt Email*"), { target: { value: "test@vanderbilt.edu" } });
+        fireEvent.change(screen.getByPlaceholderText("Username*"), { target: { value: "johnDoe" } });
+        fireEvent.change(screen.getByPlaceholderText("Password*"), { target: { value: "Testpassword123!" } });
+        fireEvent.change(screen.getByPlaceholderText("Confirm Password*"), { target: { value: "Testpassword123!" } });
         fireEvent.change(screen.getByRole('combobox'), { target: { value: '2025' } });
         // Submit form
         fireEvent.click(screen.getByRole('button', { name: /register/i }));

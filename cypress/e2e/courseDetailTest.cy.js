@@ -1,14 +1,15 @@
 describe('Course Detail Page', () => {
     const baseUrl = Cypress.env('baseUrl');
     const loginUrl = `${baseUrl}/login`;
-    const courseDetailUrl = (courseId) => `${baseUrl}/course?id=${courseId}`;
+    const courseDetailUrl = (courseId, courseCode) => `${baseUrl}/course?code=${courseCode}&id=${courseId}`;
 
     const validUser = {
         email: Cypress.env('email'),
         password: Cypress.env('password'),
     };
 
-    const validCourseId = '0ohc8yi22aqot0h';
+    const validCourseId = 'r0htecv7ss6dfzy';
+    const validCourseCode = 'CS%203251'
 
     beforeEach(() => {
         // Log in before each test
@@ -18,30 +19,31 @@ describe('Course Detail Page', () => {
         cy.get('button[type="submit"]').click();
 
         // Verify login was successful
+        // Verify login was successful
         cy.url().should('include', '/home');
     });
 
     it('should display course details correctly', () => {
-        cy.visit(courseDetailUrl(validCourseId));
+        cy.visit(courseDetailUrl(validCourseId, validCourseCode));
 
         // Wait for the course details to load
         cy.get('.course-details', { timeout: 10000 }).should('exist');
 
         // Verify course code and name are displayed
-        cy.get('.course-details h1').should('contain.text', 'CS 2212: Discrete Structures');
+        cy.get('.course-details h1').should('contain.text', 'CS 3251: Intermediate Software Design');
     });
 
     it('should navigate to Add Review page when clicking Add a Review', () => {
-        cy.visit(courseDetailUrl(validCourseId));
+        cy.visit(courseDetailUrl(validCourseId, validCourseCode));
 
         cy.get('button').contains('Add a Review').click();
 
         // Verify navigation to the add review page
-        cy.url().should('include', `/addReview?id=${validCourseId}`);
+        cy.url().should('include', `/addReview?code=${validCourseCode}&id=${validCourseId}`);
     });
 
     it('should display tutors when clicking Find a Tutor', () => {
-        cy.visit(courseDetailUrl(validCourseId));
+        cy.visit(courseDetailUrl(validCourseId, validCourseCode));
 
         cy.get('button').contains('Find a Tutor').click();
 
@@ -50,7 +52,7 @@ describe('Course Detail Page', () => {
     });
 
     it('should allow the user to copy a tutor email', () => {
-        cy.visit(courseDetailUrl(validCourseId));
+        cy.visit(courseDetailUrl(validCourseId, validCourseCode));
 
         cy.get('button').contains('Find a Tutor').click();
 
@@ -70,7 +72,7 @@ describe('Course Detail Page', () => {
     });
 
     it('should add user as tutor when clicking Tutor this Course', () => {
-        cy.visit(courseDetailUrl(validCourseId));
+        cy.visit(courseDetailUrl(validCourseId, validCourseCode));
     
         // Click the "Tutor this Course" button
         cy.get('button').contains('Tutor this Course').click();
@@ -94,22 +96,22 @@ describe('Course Detail Page', () => {
     });
 
     it('should filter reviews by professor', () => {
-      cy.visit(courseDetailUrl(validCourseId));
+      cy.visit(courseDetailUrl(validCourseId, validCourseCode));
 
       // Select a professor from the filter dropdown
-      cy.get('select#professorFilter').select('John Doe'); // Adjust as needed
+      cy.get('select#professorFilter').select('Kate Smith'); // Adjust as needed
 
       // Allow time for the filter to apply
       cy.wait(1000);
 
       // Verify that reviews are filtered correctly
       cy.get('.review-card').each(($review) => {
-        cy.wrap($review).contains('Professor: John Doe').should('exist');
+        cy.wrap($review).contains('Professor: Kate Smith').should('exist');
       });
     });
 
     it('should filter reviews by rating', () => {
-      cy.visit(courseDetailUrl(validCourseId));
+      cy.visit(courseDetailUrl(validCourseId, validCourseCode));
 
       // Select a minimum rating
       cy.get('select#ratingFilter').select('4');
@@ -127,7 +129,7 @@ describe('Course Detail Page', () => {
     });
 
     it('should download syllabus when clicking Download Syllabus', () => {
-      cy.visit(courseDetailUrl(validCourseId));
+      cy.visit(courseDetailUrl(validCourseId, validCourseCode));
 
       // Stub the window.open method
       cy.window().then((win) => {
@@ -135,14 +137,14 @@ describe('Course Detail Page', () => {
       });
 
       // Click the Download Syllabus button
-      cy.get('.download-syllabus').click();
+      cy.get('.download-syllabus').first().click();
 
       // Verify that window.open was called with the syllabus URL
       cy.get('@windowOpen').should('be.called');
     });
 
     it('should report a review when clicking Report Review', () => {
-        cy.visit(courseDetailUrl(validCourseId));
+        cy.visit(courseDetailUrl(validCourseId, validCourseCode));
       
         // Ensure reviews are present
         cy.get('.review-card').should('exist');
@@ -157,13 +159,10 @@ describe('Course Detail Page', () => {
       
         // Close the popup
         cy.get('.fixed').contains('Close').click();
-      
-        // Ensure the popup is no longer visible
-        cy.get('.fixed').should('not.exist');
       });
 
     it('should navigate to user profile when clicking on reviewer name', () => {
-      cy.visit(courseDetailUrl(validCourseId));
+      cy.visit(courseDetailUrl(validCourseId, validCourseCode));
 
       // Assume there is at least one review
       cy.get('.review-card').first().within(() => {

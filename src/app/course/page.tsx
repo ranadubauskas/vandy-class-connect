@@ -230,6 +230,7 @@ function CourseDetailPageComponent() {
             <div className="flex flex-wrap sm:flex-nowrap gap-4 w-full">
               {course.syllabus && (
                 <button
+                  aria-label = "Download Syllabus"
                   className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
                   onClick={() => window.open(course.syllabus, '_blank')}
                   title="Download Syllabus"
@@ -501,9 +502,9 @@ function CourseDetailPageComponent() {
                               <div className="flex items-center space-x-2 mt-2 sm:mt-0">
                                 {/* Syllabus Download Button */}
                                 {syllabusUrl && (
-                                  <Tooltip title="Download Syllabus">
+                                  <Tooltip title = "Download Syllabus">
                                     <button
-                                      title="Download Syllabus"
+                                      aria-label="Download Syllabus"
                                       className="download-syllabus bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
                                       onClick={() => window.open(syllabusUrl, '_blank')}
                                     >

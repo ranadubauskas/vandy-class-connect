@@ -153,10 +153,11 @@ describe('CourseDetailPage Component', () => {
         expect(pb.files.getUrl).toHaveBeenCalledWith(mockCourseData, 'syllabus.pdf');
 
         // Verify the "Download Syllabus" button is rendered
-        expect(screen.getByText('Download Syllabus')).toBeInTheDocument();
+        const downloadButton = await screen.findByLabelText('Download Syllabus');
+        expect(downloadButton).toBeInTheDocument();
 
         // Click the "Download Syllabus" button
-        fireEvent.click(screen.getByText('Download Syllabus'));
+        fireEvent.click(downloadButton);
 
         expect(window.open).toHaveBeenCalledWith('http://example.com/syllabus.pdf', '_blank');
     });
@@ -245,11 +246,11 @@ describe('CourseDetailPage Component', () => {
         });
 
         // Verify the "Download Syllabus" button is rendered for the review
-        const downloadButtons = screen.getAllByTitle('Download Syllabus');
-        expect(downloadButtons.length).toBeGreaterThan(0);
+        const downloadButton = screen.getByLabelText('Download Syllabus');
+        expect(downloadButton).toBeInTheDocument();
 
         // Click the "Download Syllabus" button
-        fireEvent.click(downloadButtons[0]);
+        fireEvent.click(downloadButton);
 
         expect(window.open).toHaveBeenCalledWith(mockReviewSyllabusUrl, '_blank');
 

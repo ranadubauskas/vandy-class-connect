@@ -4,7 +4,6 @@ describe('Saved Courses Page', () => {
     const savedCoursesUrl = `${baseUrl}/savedCourses`;
     const logoutUrl = `${baseUrl}/logout`;
   
-    // Replace these with your actual test user credentials
     const validUser = {
       email: Cypress.env('email'),
       password: Cypress.env('password'),

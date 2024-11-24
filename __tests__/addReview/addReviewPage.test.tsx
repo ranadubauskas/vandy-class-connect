@@ -239,7 +239,7 @@ describe('AddReviewPage Component', () => {
 
         // Verify that router.push was called with the correct URL
         await waitFor(() => {
-            expect(mockRouterPush).toHaveBeenCalledWith('/course?id=courseId&code=CS101');
+            expect(mockRouterPush).toHaveBeenCalledWith('/course?code=CS101&id=courseId');
         });
 
         // Verify that the user's reviews were updated

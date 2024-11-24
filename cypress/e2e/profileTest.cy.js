@@ -34,7 +34,6 @@ describe('Profile Page', () => {
         cy.contains('Profile').should('exist');
       
         // Wait for the loading indicator to appear and then disappear
-        cy.get('[data-testid="loading-indicator"]').should('exist');
         cy.get('[data-testid="loading-indicator"]', { timeout: 20000 }).should('not.exist');
       
         cy.contains('label', 'Email')

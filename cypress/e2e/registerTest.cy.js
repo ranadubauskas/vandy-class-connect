@@ -4,11 +4,11 @@ describe('Register Page', () => {
   const validUser = {
     firstName: 'Test',
     lastName: 'User',
-    email: 'testuser@vanderbilt.edu',
-    username: 'testuser',
+    email: 'testuser4@vanderbilt.edu',
+    username: 'testuser4',
     password: 'password123',
     passwordConfirm: 'password123',
-    graduationYear: new Date().getFullYear() + 1, // Next year
+    graduationYear: 2025,
   };
 
   it('should load the registration page', () => {
@@ -25,12 +25,12 @@ describe('Register Page', () => {
 
   it('should show an error for invalid email domain', () => {
     cy.visit(`${baseUrl}/register`);
-    cy.get('input[placeholder="First Name"]').type(validUser.firstName);
-    cy.get('input[placeholder="Last Name"]').type(validUser.lastName);
-    cy.get('input[placeholder="Vanderbilt Email"]').type('invaliduser@gmail.com');
-    cy.get('input[placeholder="Username"]').type(validUser.username);
-    cy.get('input[placeholder="Password"]').type(validUser.password);
-    cy.get('input[placeholder="Confirm Password"]').type(validUser.passwordConfirm);
+    cy.get('input[placeholder="First Name*"]').type(validUser.firstName);
+    cy.get('input[placeholder="Last Name*"]').type(validUser.lastName);
+    cy.get('input[placeholder="Vanderbilt Email*"]').type('invaliduser@gmail.com');
+    cy.get('input[placeholder="Username*"]').type(validUser.username);
+    cy.get('input[placeholder="Password*"]').type(validUser.password);
+    cy.get('input[placeholder="Confirm Password*"]').type(validUser.passwordConfirm);
     cy.get('select').select(validUser.graduationYear.toString());
     cy.get('button[type="submit"]').click();
     cy.get('p').should('contain', 'Only Vanderbilt email addresses are allowed.');
@@ -38,12 +38,12 @@ describe('Register Page', () => {
 
   it('should show an error for mismatched passwords', () => {
     cy.visit(`${baseUrl}/register`);
-    cy.get('input[placeholder="First Name"]').type(validUser.firstName);
-    cy.get('input[placeholder="Last Name"]').type(validUser.lastName);
-    cy.get('input[placeholder="Vanderbilt Email"]').type(validUser.email);
-    cy.get('input[placeholder="Username"]').type(validUser.username);
-    cy.get('input[placeholder="Password"]').type(validUser.password);
-    cy.get('input[placeholder="Confirm Password"]').type('wrongpassword');
+    cy.get('input[placeholder="First Name*"]').type(validUser.firstName);
+    cy.get('input[placeholder="Last Name*"]').type(validUser.lastName);
+    cy.get('input[placeholder="Vanderbilt Email*"]').type(validUser.email);
+    cy.get('input[placeholder="Username*"]').type(validUser.username);
+    cy.get('input[placeholder="Password*"]').type(validUser.password);
+    cy.get('input[placeholder="Confirm Password*"]').type('wrongpassword');
     cy.get('select').select(validUser.graduationYear.toString());
     cy.get('button[type="submit"]').click();
     cy.get('p').should('contain', 'Passwords do not match.');
@@ -51,14 +51,16 @@ describe('Register Page', () => {
 
   it('should successfully register a new user', () => {
     cy.visit(`${baseUrl}/register`);
-    cy.get('input[placeholder="First Name"]').type(validUser.firstName);
-    cy.get('input[placeholder="Last Name"]').type(validUser.lastName);
-    cy.get('input[placeholder="Vanderbilt Email"]').type(validUser.email);
-    cy.get('input[placeholder="Username"]').type(validUser.username);
-    cy.get('input[placeholder="Password"]').type(validUser.password);
-    cy.get('input[placeholder="Confirm Password"]').type(validUser.passwordConfirm);
+    cy.get('input[placeholder="First Name*"]').type(validUser.firstName);
+    cy.get('input[placeholder="Last Name*"]').type(validUser.lastName);
+    cy.get('input[placeholder="Vanderbilt Email*"]').type(validUser.email);
+    cy.get('input[placeholder="Username*"]').type(validUser.username);
+    cy.get('input[placeholder="Password*"]').type(validUser.password);
+    cy.get('input[placeholder="Confirm Password*"]').type(validUser.passwordConfirm);
     cy.get('select').select(validUser.graduationYear.toString());
     cy.get('button[type="submit"]').click();
+
+    cy.wait(2000);
 
     // Verify successful navigation to the home page
     cy.url().should('include', '/home');

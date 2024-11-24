@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom/extend-expect';
-const { describe, test, expect } = require('@jest/globals');
 import {
     deleteReview,
     editReview,
@@ -14,6 +13,7 @@ import {
     register,
     signIn,
 } from '../../src/app/server';
+const { describe, test, expect } = require('@jest/globals');
 
 jest.mock('../../src/app/lib/pocketbaseClient', () => {
     const mockPb = {
@@ -168,7 +168,6 @@ describe('Server Functions', () => {
                 lastName: 'Doe',
                 email: 'john.doe@vanderbilt.edu',
                 graduationYear: '2023',
-                profilePic: '/images/user.png',
                 reviews: undefined,
             };
 
@@ -186,7 +185,6 @@ describe('Server Functions', () => {
                 firstName: 'John',
                 lastName: 'Doe',
                 graduationYear: '2023',
-                profilePic: '/images/user.png',
             });
 
             expect(mockCookies.set).toHaveBeenCalledWith('id', 'user123');
@@ -195,7 +193,6 @@ describe('Server Functions', () => {
             expect(mockCookies.set).toHaveBeenCalledWith('lastName', 'Doe');
             expect(mockCookies.set).toHaveBeenCalledWith('email', 'john.doe@vanderbilt.edu');
             expect(mockCookies.set).toHaveBeenCalledWith('graduationYear', '2023');
-            expect(mockCookies.set).toHaveBeenCalledWith('profilePic', '/images/user.png');
             expect(mockCookies.set).toHaveBeenCalledWith('reviews', undefined);
 
             expect(result).toEqual({
@@ -205,7 +202,6 @@ describe('Server Functions', () => {
                 lastName: 'Doe',
                 email: 'john.doe@vanderbilt.edu',
                 graduationYear: '2023',
-                profilePic: '/images/user.png',
             });
         });
 

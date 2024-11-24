@@ -1,7 +1,7 @@
 
 'use server'
 import { cookies } from 'next/headers';
-import { User, Review } from './lib/interfaces';
+import { Review, User } from './lib/interfaces';
 import pb from './lib/pocketbaseClient';
 
 
@@ -109,7 +109,6 @@ export async function register(formData: FormData) {
 
         const defaultProfilePicUrl = '/images/user.png';
 
-
         const newUser = await pb.collection('users').create({
             username,
             email,
@@ -119,8 +118,8 @@ export async function register(formData: FormData) {
             firstName: firstName,
             lastName: lastName,
             graduationYear: graduationYear,
-            profilePic: defaultProfilePicUrl
         });
+        console.log('newUser Created', newUser);
 
         const userData = {
             id: newUser.id,

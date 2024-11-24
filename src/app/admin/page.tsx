@@ -21,7 +21,10 @@ export default function Admin() {
         const response = await pb.collection('reviewReports').getList(1, 50, {
           expand: 'review,reporter,reviewCreator',
         });
-        setReports(response.items);
+        const validReports = response.items.filter(
+          (report) => report.expand?.review?.id
+        );
+        setReports(validReports);
       } catch (error) {
         console.error("Failed to fetch review reports:", error);
       }
@@ -85,6 +88,8 @@ export default function Admin() {
                   <Tooltip title="Approve Review">
                     <button
                       aria-label="Approve Review"
+                      data-testid="approve-button"
+                      data-report-id={report.id}
                       onClick={() => approveReview(report.id)}
                       className="text-green-500 hover:text-green-700 transition duration-300"
                     >
@@ -94,6 +99,8 @@ export default function Admin() {
                   <Tooltip title="Delete Review">
                     <button
                       aria-label="Delete Review"
+                      data-testid="delete-button"
+                      data-review-id={report.expand.review.id}
                       onClick={() => deleteReview(report.expand.review.id)}
                       className="text-red-500 hover:text-red-700 transition duration-300"
                     >
@@ -202,6 +209,8 @@ export default function Admin() {
                       <Tooltip title="Approve Review">
                         <button
                           aria-label="Approve Review"
+                          data-report-id={report.id}
+                          data-testid="approve-button"
                           onClick={() => approveReview(report.id)}
                           className="text-green-500 hover:text-green-700 transition duration-300"
                         >
@@ -210,7 +219,9 @@ export default function Admin() {
                       </Tooltip>
                       <Tooltip title="Delete Review">
                         <button
-                          aria-label="Delte Review"
+                          aria-label="Delete Review"
+                          data-testid="delete-button"
+                          data-review-id={report.expand.review.id}
                           onClick={() => deleteReview(report.expand.review.id)}
                           className="text-red-500 hover:text-red-700 transition duration-300"
                         >

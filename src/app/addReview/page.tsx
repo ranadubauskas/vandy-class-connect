@@ -216,7 +216,7 @@ function AddReviewComponent() {
                 // Update the cache
                 await localforage.setItem(`course_${code}`, updatedCourse);
             }
-            router.push(`/course?id=${courseId}&code=${code}`);
+            router.push(`/course?code=${code}&id=${courseId}`);
         } catch (error) {
             console.error('Error saving review:', error);
             setError('Error saving review.');

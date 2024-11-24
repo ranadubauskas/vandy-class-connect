@@ -1,10 +1,10 @@
 'use client';
 
+import localforage from 'localforage';
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
 import { editUser, getUserByID } from '../../server';
-import localforage from 'localforage';
 import './style.css';
 
 
@@ -52,6 +52,8 @@ export default function Profile() {
                 // Fetch user from server
                 const fetchedUser = await getUserByID(userId as string);
 
+                console.log('fetched: ', fetchedUser);
+
                 // Cache the fetched user data
                 await localforage.setItem(`user_${userId}`, fetchedUser);
                 initializeUserData(fetchedUser);
@@ -89,7 +91,6 @@ export default function Profile() {
 
     const handleViewRatings = () => {
         if (typeof window !== 'undefined') {
-
             router.push(`/ratings/${otherUser.id}`);
         }
     };

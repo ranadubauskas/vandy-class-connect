@@ -36,8 +36,10 @@ export default function Register() {
             formData.append('graduationYear', graduationYear);
             const user = await register(formData);
             console.log('User registered:', user);
-            loginUser(user);
-            router.push('/home');
+            loginUser(user); 
+            if (router && router.push) {
+                router.push('/home');
+            }
         } catch (err) {
             console.log(err);
             setError(err.message);
@@ -51,42 +53,42 @@ export default function Register() {
                 <form onSubmit={handleRegister} className="space-y-4">
                     <input
                         type="text"
-                        placeholder="First Name"
+                        placeholder="First Name*"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="text"
-                        placeholder="Last Name"
+                        placeholder="Last Name*"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="email"
-                        placeholder="Vanderbilt Email"
+                        placeholder="Vanderbilt Email*"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="text"
-                        placeholder="Username"
+                        placeholder="Username*"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="password"
-                        placeholder="Password"
+                        placeholder="Password*"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="password"
-                        placeholder="Confirm Password"
+                        placeholder="Confirm Password*"
                         value={passwordConfirm}
                         onChange={(e) => setPasswordConfirm(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -96,7 +98,7 @@ export default function Register() {
                         onChange={(e) => setGraduationYear(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-400"
                     >
-                        <option value="" disabled className="text-gray-500">Select Graduation Year</option>
+                        <option value="" disabled className="text-gray-500">Select Graduation Year*</option>
                         {years.map(year => (
                             <option key={year} value={year}>
                                 {year}
