@@ -14,8 +14,10 @@
 1. npm run test
 2. Coverage: npm run test:coverage
 #### Demo:
+
+![Coverage](public/images/Testing Coverage.png)
+
 https://github.com/user-attachments/assets/ed4db12e-c8ca-4c89-8321-ada239a2eed2
-- ![screenshot](Testing Coverage.png)
 - [Video Link](https://vimeo.com/1032895311/3d18455398?share=copy)
 
 ### Black Box Testing:
