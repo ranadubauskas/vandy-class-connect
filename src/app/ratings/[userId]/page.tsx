@@ -81,6 +81,15 @@ export default function Ratings() {
     };
 
     return (
+        <div>
+             <div className="mb-8">
+          <button
+            className="text-white text-xl hover:bg-gray-400 transition duration-300 px-2 py-1 rounded"
+            onClick={() => router.back()}
+          >
+            ← Back
+          </button>
+        </div>
         <div className="min-h-screen p-10 reviews-container">
             {loading ? (
                 <div className="text-white text-center text-2xl">Loading...</div>
@@ -102,6 +111,7 @@ export default function Ratings() {
                     )}
                 </div>
             )}
+        </div>
         </div>
     );
 }

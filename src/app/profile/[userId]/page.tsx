@@ -271,14 +271,14 @@ export default function Profile() {
                             />
                         </div>
                         <div>
-                            <label htmlFor="graduationYear" className="block text-gray-700">Grade</label>
+                            <label htmlFor="graduationYear" className="block text-gray-700">Graduation Year</label>
                             <select
                                 id="graduationYear"
                                 value={graduationYear}
                                 onChange={(e) => setGraduationYear(e.target.value)}
                                 className="border border-gray-300 rounded p-2 w-full mt-1"
                             >
-                                <option value="" disabled hidden>Select Grade</option>
+                                <option value="" disabled hidden>Select Year</option>
                                 {years.map(year => (
                                     <option key={year} value={year}>
                                         {year}

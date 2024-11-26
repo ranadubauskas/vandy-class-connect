@@ -109,39 +109,77 @@ export async function register(formData: FormData) {
 
         const defaultProfilePicUrl = '/images/user.png';
 
-        const newUser = await pb.collection('users').create({
-            username,
-            email,
-            emailVisibility: true,
-            password,
-            passwordConfirm,
-            firstName: firstName,
-            lastName: lastName,
-            graduationYear: graduationYear,
-        });
-        console.log('newUser Created', newUser);
+        // const newUser = await pb.collection('users').create({
+        //     username,
+        //     email,
+        //     emailVisibility: true,
+        //     password,
+        //     passwordConfirm,
+        //     firstName: firstName,
+        //     lastName: lastName,
+        //     graduationYear: graduationYear,
+        // });
+        // console.log('newUser Created', newUser);
 
-        const userData = {
-            id: newUser.id,
-            username: newUser.username,
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
-            email: newUser.email,
-            graduationYear: newUser.graduationYear,
-            profilePic: newUser.profilePic,
-        };
-        const allCookies = await cookies();
+        // const userData = {
+        //     id: newUser.id,
+        //     username: newUser.username,
+        //     firstName: newUser.firstName,
+        //     lastName: newUser.lastName,
+        //     email: newUser.email,
+        //     graduationYear: newUser.graduationYear,
+        //     profilePic: newUser.profilePic,
+        // };
+        // const allCookies = await cookies();
 
-        allCookies.set("id", newUser.id);
-        allCookies.set("username", newUser.username);
-        allCookies.set("firstName", newUser.firstName);
-        allCookies.set("lastName", newUser.lastName);
-        allCookies.set("email", newUser.email);
-        allCookies.set("graduationYear", newUser.graduationYear);
-        allCookies.set("profilePic", defaultProfilePicUrl);
-        allCookies.set("reviews", newUser.reviews);
+        // allCookies.set("id", newUser.id);
+        // allCookies.set("username", newUser.username);
+        // allCookies.set("firstName", newUser.firstName);
+        // allCookies.set("lastName", newUser.lastName);
+        // allCookies.set("email", newUser.email);
+        // allCookies.set("graduationYear", newUser.graduationYear);
+        // allCookies.set("profilePic", defaultProfilePicUrl);
+        // allCookies.set("reviews", newUser.reviews);
 
-        return userData;
+        // return userData;
+        try {
+            const newUser = await pb.collection('users').create({
+                username,
+                email,
+                emailVisibility: true,
+                password,
+                passwordConfirm,
+                firstName,
+                lastName,
+                graduationYear,
+            });
+
+            // Prepare user data and set cookies
+            const userData = {
+                id: newUser.id,
+                username: newUser.username,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                email: newUser.email,
+                graduationYear: newUser.graduationYear,
+                profilePic: newUser.profilePic,
+            };
+
+            const allCookies = await cookies();
+            allCookies.set("id", newUser.id);
+            allCookies.set("username", newUser.username);
+            allCookies.set("firstName", newUser.firstName);
+            allCookies.set("lastName", newUser.lastName);
+            allCookies.set("email", newUser.email);
+            allCookies.set("graduationYear", newUser.graduationYear);
+            allCookies.set("profilePic", defaultProfilePicUrl);
+            allCookies.set("reviews", newUser.reviews);
+
+            return userData;
+        } catch (err) {
+            console.error("Error creating user:", err);
+            throw new Error("Username or email already exists");
+        }
     } catch (err) {
         console.error("Error creating user:", err);
         throw err;

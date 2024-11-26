@@ -7,21 +7,18 @@ import { FaTimes } from 'react-icons/fa';
 import { FiX } from "react-icons/fi";
 import RatingBox from '../components/ratingBox';
 import { getUserCookies } from '../lib/functions';
-import pb from "../lib/pocketbaseClient";
-import { useAuth } from '../lib/contexts';
 import { Course } from '../lib/interfaces';
-
+import pb from "../lib/pocketbaseClient";
 
 interface CachedCoursesData {
   savedCourses: Course[];
   cachedAt: number;
 }
 
-export default function savedCourses() {
+export default function SavedCourses() {
   const [userCookies, setUserCookies] = useState(null);
   const [savedCourses, setSavedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
   const [courseToRemove, setCourseToRemove] = useState<string | null>(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -35,18 +32,16 @@ export default function savedCourses() {
         const cookies = await getUserCookies();
         if (cookies) {
           setUserCookies(cookies);
-          setSavedCourses(cookies.savedCourses || []);
-          console.log(cookies.savedCourses);
-          setLoading(false); 
+          //setSavedCourses(cookies.savedCourses || []);
         } else {
           console.log("No saved courses found");
+          setLoading(false);
           setErrorMessage(null);
-          setLoading(false); 
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
         setErrorMessage("Error fetching saved courses");
-        setLoading(false); 
+        setLoading(false);
       }
     };
 
@@ -55,7 +50,6 @@ export default function savedCourses() {
 
   useEffect(() => {
     const fetchSavedCourses = async () => {
-
       if (!userCookies) return;
       const cacheKey = `saved_courses_${userCookies.id}`;
       const cacheExpiry = 5 * 60 * 1000;
@@ -101,6 +95,7 @@ export default function savedCourses() {
     };
     fetchSavedCourses();
   }, [userCookies]);
+  
 
 
   const handleRemoveCourse = async () => {
@@ -110,19 +105,21 @@ export default function savedCourses() {
       const updatedSavedCourses = savedCourses.filter(
         (course) => course.id !== courseToRemove
       );
-      await pb
-        .collection('users')
-        .update(userCookies.id, {
-          savedCourses: updatedSavedCourses.map((c) => c.id),
-        });
-      setSavedCourses(updatedSavedCourses);
-      // Update cache
+  
+      // Update user record in database
+      await pb.collection('users').update(userCookies.id, {
+        savedCourses: updatedSavedCourses.map((c) => c.id),
+      });
+  
+      // Update cache in localforage
       const cacheKey = `saved_courses_${userCookies.id}`;
       const now = Date.now();
       await localforage.setItem(cacheKey, {
         savedCourses: updatedSavedCourses,
         cachedAt: now,
       });
+  
+      setSavedCourses(updatedSavedCourses);
       setCourseToRemove(null);
       setConfirmationOpen(false);
     } catch (error) {
@@ -131,10 +128,7 @@ export default function savedCourses() {
       setIsRemoving(false);
     }
   };
-
-  const toggleEditMode = () => {
-    setEditMode(!editMode);
-  }
+  
 
   const promptRemoveCourse = (courseId) => {
     setCourseToRemove(courseId);
@@ -146,18 +140,11 @@ export default function savedCourses() {
       {/* Header */}
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">My Courses</h1>
-        <button
-          onClick={toggleEditMode}
-          className="ml-auto bg-gray-200 text-black px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300"
-        >
-          {editMode ? "Save Changes" : "Edit"}
-        </button>
         {/* Error Message */}
         {errorMessage && (
           <div className="text-red-500 text-center mt-4">{errorMessage}</div>
         )}
       </div>
-
 
       {/* Saved courses List */}
       <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -172,18 +159,18 @@ export default function savedCourses() {
               return (
                 <div
                   key={course.id}
+                  data-testid="course-item"
                   className="flex items-center justify-between bg-white text-black p-4 sm:p-6 rounded-lg shadow-lg"
                 >
-
-                  {/*Course Information*/}
+                  {/* Course Information */}
                   <div className="flex items-center space-x-4">
-                    <RatingBox rating={rating} size="large" />
+                    <RatingBox rating={rating} size="small" className="p-1 bg-gray-200 rounded text-center w-10 h-10" />
                     <div className="text-lg sm:text-2xl">
                       <span className="font-bold">{course.code}</span>: {course.name}
                     </div>
                   </div>
 
-                  {/*Buttons*/}
+                  {/* Buttons */}
                   <div className="flex items-center space-x-4">
                     <button
                       className="bg-gray-200 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-300 transition duration-300"
@@ -191,29 +178,30 @@ export default function savedCourses() {
                     >
                       View Course
                     </button>
-                    {editMode && (
-                      <Tooltip title="Unsave Course">
-                        <button
-                          onClick={() => promptRemoveCourse(course.id)}
-                          className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
-                          data-testid="unsave-button"
-                        >
-                          <FiX size={24} />
-                        </button>
-                      </Tooltip>
-                    )}
+                    <Tooltip title="Unsave Course">
+                      <button
+                        onClick={() => promptRemoveCourse(course.id)}
+                        className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
+                        data-testid="unsave-button"
+                      >
+                        <FiX size={24} />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="text-gray-600 text-center text-lg mt-8">
+          <div
+            className="text-gray-600 text-center text-lg mt-8"
+            aria-label="No saved courses"
+          >
             You have no saved courses yet.
           </div>
         )}
       </div>
-      {/*Confirmation Dialog*/}
+      {/* Confirmation Dialog */}
       <Dialog
         open={confirmationOpen}
         onClose={() => setConfirmationOpen(false)}
@@ -250,12 +238,22 @@ export default function savedCourses() {
           </div>
         </DialogContent>
         <DialogActions style={{ justifyContent: 'center', paddingBottom: '16px' }}>
-          <button onClick={handleRemoveCourse} color="secondary">
+          <button
+            onClick={handleRemoveCourse}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300"
+            disabled={isRemoving}
+          >
             Remove
+          </button>
+          <button
+            onClick={() => setConfirmationOpen(false)}
+            className="bg-gray-300 text-black px-4 py-2 rounded-lg hover:bg-gray-400 transition duration-300"
+            disabled={isRemoving}
+          >
+            Cancel
           </button>
         </DialogActions>
       </Dialog>
-
     </div>
   );
 }

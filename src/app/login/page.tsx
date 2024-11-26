@@ -1,10 +1,9 @@
 'use client';
+import localforage from 'localforage';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '../lib/contexts';
-import { signIn, getUserByID, getUserReviews} from '../server';
-import Loading from "../components/Loading";
-import localforage from 'localforage';
+import { getUserByID, getUserReviews, signIn } from '../server';
 
 
 export default function Login() {
@@ -15,8 +14,15 @@ export default function Login() {
     const { loginUser } = useAuth();
 
     const handleLogin = async (e) => {
+        console.log("IN LOGIN");
         e.preventDefault();
         setError('');
+        console.log('password: ', password);
+        // Validation for missing fields
+        if (password == "") {
+            setError('Missing password. Please try again.');
+            return;
+        }
         try {
             const user = await signIn(email, password);
             loginUser(user);
@@ -25,8 +31,8 @@ export default function Login() {
             await localforage.setItem(`user_${userId}`, userInfo);
             const userReviews = await getUserReviews(userId);
             const cachedReviews = {
-              reviews: userReviews,
-              cachedAt: Date.now(),
+                reviews: userReviews,
+                cachedAt: Date.now(),
             };
             await localforage.setItem(`user_reviews_${userId}`, cachedReviews);
             router.push('/home');
@@ -62,7 +68,13 @@ export default function Login() {
                         Login
                     </button>
                 </form>
-                {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
+                {
+                    error && (
+                        <p className="mt-4 text-red-500 text-center font-bold bg-white p-1 rounded">
+                            {error}
+                        </p>
+                    )
+                }
                 <p className="mt-4 text-center text-white">
                     Don’t have an account?{' '}
                     <a href="/register" className="text-white-500 underline hover:text-blue-500">

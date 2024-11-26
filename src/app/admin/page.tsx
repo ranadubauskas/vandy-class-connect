@@ -21,9 +21,9 @@ export default function Admin() {
         const response = await pb.collection('reviewReports').getList(1, 50, {
           expand: 'review,reporter,reviewCreator',
         });
-        const validReports = response.items.filter(
-          (report) => report.expand?.review?.id
-        );
+        const validReports = response.items
+          .filter((report) => report.expand?.review?.id)
+          .sort((a, b) => (b.expand?.reporter?.length || 0) - (a.expand?.reporter?.length || 0));
         setReports(validReports);
       } catch (error) {
         console.error("Failed to fetch review reports:", error);

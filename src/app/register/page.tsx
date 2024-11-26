@@ -36,7 +36,7 @@ export default function Register() {
             formData.append('graduationYear', graduationYear);
             const user = await register(formData);
             console.log('User registered:', user);
-            loginUser(user); 
+            loginUser(user);
             if (router && router.push) {
                 router.push('/home');
             }
@@ -112,7 +112,13 @@ export default function Register() {
                         Register
                     </button>
                 </form>
-                {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
+                {
+                    error && (
+                        <p className="mt-4 text-red-500 text-center font-bold bg-white p-1 rounded">
+                            {error}
+                        </p>
+                    )
+                }
                 <p className="mt-4 text-center text-white">
                     <span>
                         Already have an account? <a href="/login" className="text-white-500 underline hover:text-blue-500">Login </a>
