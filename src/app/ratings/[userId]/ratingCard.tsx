@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useContext, useState } from "react";
-import RatingBox from '../../components/RatingBox'; // Import the RatingBox component
+import RatingBox from '../../components/ratingBox';
 import StarRating from "../../components/StarRating";
 import { AuthContext } from "../../lib/contexts";
 import pb from "../../lib/pocketbaseClient";
