@@ -17,7 +17,8 @@ describe('Add Review Page', () => {
       cy.get('input[placeholder="Vanderbilt Email"]').type(validUser.email);
       cy.get('input[placeholder="Password"]').type(validUser.password);
       cy.get('button[type="submit"]').click();
-  
+
+      cy.wait(1000);
       // Verify login was successful
       cy.url().should('include', '/home');
     });

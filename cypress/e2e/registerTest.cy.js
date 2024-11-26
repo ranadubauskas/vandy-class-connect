@@ -4,8 +4,8 @@ describe('Register Page', () => {
   const validUser = {
     firstName: 'Test',
     lastName: 'User',
-    email: 'testuser4@vanderbilt.edu',
-    username: 'testuser4',
+    email: 'testuser6@vanderbilt.edu',
+    username: 'testuser6',
     password: 'password123',
     passwordConfirm: 'password123',
     graduationYear: 2025,

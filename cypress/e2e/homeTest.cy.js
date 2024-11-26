@@ -36,10 +36,19 @@ describe('Home Page', () => {
   it('should filter courses by subject', () => {
     const subjectFilter = 'MATH'; // Use a valid subject from your dataset
 
-    // Wait for the select element to be enabled
-    cy.get('select#subjectFilter').should('not.be.disabled');
+    // Click on the subject filter button to open the dropdown
+    cy.get('button[aria-label="Open subject filter"]').click();
 
-    cy.get('select#subjectFilter').select(subjectFilter);
+    // Wait for the dropdown to be visible
+    cy.get('div[role="listbox"]').should('be.visible');
+
+    // Select the 'MATH' subject
+    cy.get('div[role="listbox"]').within(() => {
+      cy.contains('label', subjectFilter).find('input[type="checkbox"]').check({ force: true });
+    });
+
+    // Close the dropdown by clicking outside
+    cy.get('body').click(0, 0); // Click at the top-left corner to close the dropdown
 
     // Allow time for the filter to apply and the UI to update
     cy.wait(1000);
@@ -81,10 +90,20 @@ describe('Home Page', () => {
 
     cy.get('input[placeholder="Search for a course"]').type(searchQuery);
 
-    // Wait for the select element to be enabled
-    cy.get('select#subjectFilter').should('not.be.disabled');
+    // Open the subject filter dropdown
+    cy.get('button[aria-label="Open subject filter"]').click();
 
-    cy.get('select#subjectFilter').select(subjectFilter);
+    // Wait for the dropdown to be visible
+    cy.get('div[role="listbox"]').should('be.visible');
+
+    // Select the subject
+    cy.get('div[role="listbox"]').within(() => {
+      cy.contains('label', subjectFilter).find('input[type="checkbox"]').check({ force: true });
+    });
+
+    // Close the dropdown
+    cy.get('body').click(0, 0); // Click outside to close the dropdown
+
     cy.get('button').contains('Search').click();
 
     // Wait for the results to load
@@ -110,10 +129,9 @@ describe('Home Page', () => {
           .and('be.visible') // Ensure the button is visible
           .click(); // Click the button
       });
-  
+
     // Verify navigation to the course page
-    cy.url().should('include', '/course?code='); // Check the URL includes course ID
+    cy.url().should('include', '/course?code='); // Check the URL includes course code
     cy.get('.course-details', { timeout: 10000 }).should('exist'); // Check course details are visible
   });
-  
 });
