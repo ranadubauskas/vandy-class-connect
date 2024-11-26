@@ -10,8 +10,13 @@ import RatingBox from "../components/ratingBox";
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
-
 import './styles.css';
+
+interface CachedData {
+  savedCourses: { id: string }[]; // Array of course objects with at least an id
+  cachedAt: number;
+}
+
 
 export default function Home() {
   const [userCookies, setUserCookies] = useState(null);
@@ -158,10 +163,10 @@ export default function Home() {
       const now = Date.now();
   
       // Fetch current cached data if available
-      let cachedData = await localforage.getItem(cacheKey);
-      if (!cachedData) {
-        cachedData = { savedCourses: [], cachedAt: now };
-      }
+      const cachedData = (await localforage.getItem<CachedData>(cacheKey)) || {
+        savedCourses: [],
+        cachedAt: now,
+      };
   
       let updatedCachedCourses;
       if (isSaved) {
@@ -170,7 +175,7 @@ export default function Home() {
       } else {
         // Fetch course details to add to cache
         const newCourse = await pb.collection('courses').getOne(courseId, { autoCancellation: false });
-        updatedCachedCourses = [...cachedData.savedCourses, newCourse];
+        updatedCachedCourses = [...cachedData.savedCourses, { id: newCourse.id }];
       }
   
       await localforage.setItem(cacheKey, {

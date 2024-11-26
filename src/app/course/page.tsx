@@ -14,6 +14,11 @@ import pb from "../lib/pocketbaseClient";
 
 pb.autoCancellation(false);
 
+interface CachedData {
+  savedCourses: { id: string }[];
+  cachedAt: number;
+}
+
 function CourseDetailPageComponent() {
 
   const router = useRouter();
@@ -119,13 +124,13 @@ function CourseDetailPageComponent() {
       setPopupMessage('You must be logged in to save this course.');
       return;
     }
-  
+
     try {
       // Fetch the user's current saved courses from PocketBase
       const userRecord = await pb.collection('users').getOne(currentUserId, { autoCancellation: false });
-  
+
       let updatedSavedCourses;
-  
+
       if (isSaved) {
         // Remove the course from savedCourses
         updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
@@ -133,22 +138,22 @@ function CourseDetailPageComponent() {
         // Add the course to savedCourses
         updatedSavedCourses = [...(userRecord.savedCourses || []), courseId];
       }
-  
+
       // Update the user's saved courses in PocketBase
       await pb.collection('users').update(currentUserId, {
         savedCourses: updatedSavedCourses,
       });
-  
+
       // Update the saved courses in localforage
       const cacheKey = `saved_courses_${currentUserId}`;
       const now = Date.now();
-  
+
       // Fetch current cached data if available
-      let cachedData = await localforage.getItem(cacheKey);
+      let cachedData: CachedData | null = await localforage.getItem(cacheKey);
       if (!cachedData) {
         cachedData = { savedCourses: [], cachedAt: now };
       }
-  
+
       let updatedCachedCourses;
       if (isSaved) {
         // Remove course from cache
@@ -156,44 +161,44 @@ function CourseDetailPageComponent() {
       } else {
         // Fetch course details to add to cache
         const newCourse = await pb.collection('courses').getOne(courseId, { autoCancellation: false });
-        updatedCachedCourses = [...cachedData.savedCourses, newCourse];
+        updatedCachedCourses = [...cachedData.savedCourses, { id: newCourse.id }];
       }
-  
+
       // Update the cache in localforage
       await localforage.setItem(cacheKey, {
         savedCourses: updatedCachedCourses,
         cachedAt: now,
       });
-  
+
       // Update the isSaved state
       setIsSaved(!isSaved);
-  
+
     } catch (error) {
       console.error('Error toggling save state:', error);
     }
   };
-  
+
 
   useEffect(() => {
     const checkIfSaved = async () => {
       if (!currentUserId || !course?.id) return;
-  
+
       try {
         // Fetch the user's saved courses from PocketBase
         const userRecord = await pb.collection('users').getOne(currentUserId, { autoCancellation: false });
         const savedCourses = userRecord.savedCourses || [];
-  
+
         // Update isSaved state
         setIsSaved(savedCourses.includes(course.id));
-  
+
       } catch (error) {
         console.error('Error checking if course is saved:', error);
       }
     };
-  
+
     checkIfSaved();
   }, [currentUserId, course]);
-  
+
   const reportReview = async (reviewId, userId) => {
     if (!currentUserId) {
       setPopupMessage('You must be logged in to report a review.');
