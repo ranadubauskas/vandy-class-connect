@@ -9,7 +9,7 @@ describe('Loading Component', () => {
         const loadingText = screen.getByText(/loading.../i);
         expect(loadingText).toBeInTheDocument();
     });
-    
+
     it('should have the correct styles applied', () => {
         render(<Loading />);
         const loadingContainer = screen.getByText(/loading.../i).parentElement;

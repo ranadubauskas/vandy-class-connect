@@ -573,7 +573,6 @@ describe('Server Functions', () => {
             const fetchedCourse = {
                 id: courseID,
                 name: 'Course Name',
-                // 'expand' is undefined
             };
 
             mockPb.collection().getOne.mockResolvedValue(fetchedCourse);
@@ -584,7 +583,7 @@ describe('Server Functions', () => {
             expect(mockPb.collection().getOne).toHaveBeenCalledWith(courseID, {
                 expand: 'reviews',
             });
-            expect(result).toEqual({ course: fetchedCourse, reviews: [] }); // Should return empty reviews array
+            expect(result).toEqual({ course: fetchedCourse, reviews: [] });
         });
     });
 

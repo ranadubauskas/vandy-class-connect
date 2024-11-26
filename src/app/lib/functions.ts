@@ -2,6 +2,12 @@
 "use server";
 import { cookies } from "next/headers";
 
+/**
+ * Retrieves user cookies and parses them into a single object.
+ *
+ * @return {Promise<object|null>} A promise that resolves to the user's cookie data, or null if no required cookies are found.
+ * @throws Will throw an error if fetching or parsing cookies fails.
+ */
 export async function getUserCookies() {
     try {
         const cookieStore = await cookies();  // cookies() is already asynchronous and used to get the cookie store
@@ -20,7 +26,6 @@ export async function getUserCookies() {
             acc[cookie.name] = cookie.value;
             return acc;
         }, {});
-
         try {
             singleObject.savedCourses = singleObject.savedCourses ? JSON.parse(singleObject.savedCourses) : [];
         } catch {
@@ -37,6 +42,11 @@ export async function getUserCookies() {
     }
 }
 
+/**
+ * Logs the user out by deleting all authentication-related cookies.
+ *
+ * @return {Promise<void>} A promise that resolves when all cookies are cleared.
+ */
 export async function logout() {
     const allCookies = await cookies();
     //Get all cookies and loop through, deleting each one

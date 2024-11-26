@@ -138,38 +138,38 @@ describe('Profile Component', () => {
     it('should navigate to saved courses when "View My Courses" button is clicked', async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
         renderWithAuthProvider(<Profile />);
-      
-        await waitFor(() => screen.getByText('View My Courses'));
-      
-        fireEvent.click(screen.getByText('View My Courses'));
-      
-        expect(mockPush).toHaveBeenCalledWith('/savedCourses/');
-      });
 
-      it("should successfully update the user's profile", async () => {
+        await waitFor(() => screen.getByText('View My Courses'));
+
+        fireEvent.click(screen.getByText('View My Courses'));
+
+        expect(mockPush).toHaveBeenCalledWith('/savedCourses/');
+    });
+
+    it("should successfully update the user's profile", async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
         renderWithAuthProvider(<Profile />);
-      
+
         await waitFor(() => screen.getByText('Edit Profile'));
         fireEvent.click(screen.getByText('Edit Profile'));
-      
+
         // Change first name, last name, and graduation year
         fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Johnny' } });
         fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe Jr.' } });
         fireEvent.change(screen.getByLabelText('Graduation Year'), { target: { value: '2026' } });
-      
+
         // Mock file selection
         const file = new File(['dummy content'], 'profile.png', { type: 'image/png' });
         const input = screen.getByLabelText('Choose File');
         const createObjectURLMock = jest.fn().mockReturnValue('blob:profile-pic-url');
         global.URL.createObjectURL = createObjectURLMock;
         fireEvent.change(input, { target: { files: [file] } });
-      
+
         // Click Save Profile
         await act(async () => {
-          fireEvent.click(screen.getByText('Save Profile'));
+            fireEvent.click(screen.getByText('Save Profile'));
         });
-      
+
         // Check that editUser was called with correct parameters
         expect(editUser).toHaveBeenCalled();
         const [userIdCalled, formDataCalled] = (editUser as jest.Mock).mock.calls[0];
@@ -178,114 +178,114 @@ describe('Profile Component', () => {
         expect(formDataCalled.get('lastName')).toBe('Doe Jr.');
         expect(formDataCalled.get('graduationYear')).toBe('2026');
         expect(formDataCalled.get('profilePic')).toBe(file);
-      
+
         // Ensure state is updated
         await waitFor(() => {
-          expect(screen.getByText('Johnny')).toBeInTheDocument();
-          expect(screen.getByText('Doe Jr.')).toBeInTheDocument();
-          expect(screen.getByText('2026')).toBeInTheDocument();
+            expect(screen.getByText('Johnny')).toBeInTheDocument();
+            expect(screen.getByText('Doe Jr.')).toBeInTheDocument();
+            expect(screen.getByText('2026')).toBeInTheDocument();
         });
-      
+
         // Ensure getUser is called to refresh context
         expect(mockGetUser).toHaveBeenCalled();
-      });
+    });
 
-      it('should update profile picture preview when a file is selected', async () => {
+    it('should update profile picture preview when a file is selected', async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
         renderWithAuthProvider(<Profile />);
-      
+
         await waitFor(() => screen.getByText('Edit Profile'));
         fireEvent.click(screen.getByText('Edit Profile'));
-      
+
         const file = new File(['dummy content'], 'profile.png', { type: 'image/png' });
         const input = screen.getByLabelText('Choose File');
         const createObjectURLMock = jest.fn().mockReturnValue('blob:profile-pic-url');
         global.URL.createObjectURL = createObjectURLMock;
-      
+
         fireEvent.change(input, { target: { files: [file] } });
-      
+
         // Check that the profile picture preview is updated
         const profilePics = screen.getAllByAltText('Profile Picture');
         const profilePicPreview = profilePics[0] as HTMLImageElement;
         expect(profilePicPreview.src).toBe('blob:profile-pic-url');
-      });
-      
-      it('should navigate to user reviews when "View My Reviews" button is clicked', async () => {
-        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
-        renderWithAuthProvider(<Profile />);
-      
-        await waitFor(() => screen.getByText('View My Reviews'));
-      
-        fireEvent.click(screen.getByText('View My Reviews'));
-      
-        expect(mockPush).toHaveBeenCalledWith('/ratings/1');
-      });
+    });
 
-      it('should update state when input fields are changed', async () => {
+    it('should navigate to user reviews when "View My Reviews" button is clicked', async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
         renderWithAuthProvider(<Profile />);
-      
+
+        await waitFor(() => screen.getByText('View My Reviews'));
+
+        fireEvent.click(screen.getByText('View My Reviews'));
+
+        expect(mockPush).toHaveBeenCalledWith('/ratings/1');
+    });
+
+    it('should update state when input fields are changed', async () => {
+        (useParams as jest.Mock).mockReturnValue({ userId: '1' });
+        renderWithAuthProvider(<Profile />);
+
         await waitFor(() => screen.getByText('Edit Profile'));
         fireEvent.click(screen.getByText('Edit Profile'));
-      
+
         // Change input fields
         fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Johnny' } });
         fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe Jr.' } });
         fireEvent.change(screen.getByLabelText('Graduation Year'), { target: { value: '2026' } });
-      
+
         // Verify that state has updated
         expect(screen.getByLabelText('First Name')).toHaveValue('Johnny');
         expect(screen.getByLabelText('Last Name')).toHaveValue('Doe Jr.');
         expect(screen.getByLabelText('Graduation Year')).toHaveValue('2026');
-      });
+    });
 
-      it('should display error when user is not authenticated in handleSave', async () => {
+    it('should display error when user is not authenticated in handleSave', async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
-      
+
         // Render with no userData to simulate unauthenticated user
         renderWithAuthProvider(<Profile />, null);
-      
+
         await waitFor(() => screen.getByText('Loading...'));
-      
+
         // Attempt to click Edit Profile (should not be present)
         expect(screen.queryByText('Edit Profile')).not.toBeInTheDocument();
-      });
+    });
 
-      it('should reset profile picture preview when no file is selected', async () => {
+    it('should reset profile picture preview when no file is selected', async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '1' });
         renderWithAuthProvider(<Profile />);
-      
+
         await waitFor(() => screen.getByText('Edit Profile'));
         fireEvent.click(screen.getByText('Edit Profile'));
-      
+
         // Initially select a file
         const file = new File(['dummy content'], 'profile.png', { type: 'image/png' });
         const input = screen.getByLabelText('Choose File');
         const createObjectURLMock = jest.fn().mockReturnValue('blob:profile-pic-url');
         global.URL.createObjectURL = createObjectURLMock;
         fireEvent.change(input, { target: { files: [file] } });
-      
+
         // Then reset the file input
         fireEvent.change(input, { target: { files: null } });
-      
+
         // Check that profilePicPreviewURL is reset to default
         const profilePics = screen.getAllByAltText('Profile Picture');
         const profilePicPreview = profilePics[0] as HTMLImageElement;
         expect(profilePicPreview.src).toContain('/images/user.png');
-      });
+    });
 
-      it("should fetch and display another user's profile data", async () => {
+    it("should fetch and display another user's profile data", async () => {
         (useParams as jest.Mock).mockReturnValue({ userId: '2' });
         renderWithAuthProvider(<Profile />);
-      
+
         await waitFor(() => {
-          expect(screen.getByText('Jane')).toBeInTheDocument();
-          expect(screen.getByText('Smith')).toBeInTheDocument();
-          expect(screen.getByText('jane.smith@example.com')).toBeInTheDocument();
-          expect(screen.getByText('2024')).toBeInTheDocument();
+            expect(screen.getByText('Jane')).toBeInTheDocument();
+            expect(screen.getByText('Smith')).toBeInTheDocument();
+            expect(screen.getByText('jane.smith@example.com')).toBeInTheDocument();
+            expect(screen.getByText('2024')).toBeInTheDocument();
         });
-      
+
         // Ensure that the Edit Profile button is not rendered
         expect(screen.queryByText('Edit Profile')).not.toBeInTheDocument();
-      });
+    });
 });

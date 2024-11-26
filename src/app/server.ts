@@ -16,7 +16,13 @@ type UserInfoType = {
     admin: boolean;
 };
 
-
+/**
+ * Fetches all reviews for a specific user.
+ *
+ * @param {string} userId - The ID of the user whose reviews are to be fetched.
+ * @return {Promise<Review[]>} A promise that resolves to an array of reviews.
+ * @throws Will throw an error if fetching reviews fails.
+ */
 export async function getUserReviews(userId: string): Promise<Review[]> {
     try {
         const reviews = await pb.collection('reviews').getFullList<Review>(200, {
@@ -30,6 +36,14 @@ export async function getUserReviews(userId: string): Promise<Review[]> {
     }
 }
 
+/**
+ * Signs in a user using their email and password.
+ *
+ * @param {string} email - The user's email address.
+ * @param {string} password - The user's password.
+ * @return {Promise<UserInfoType>} A promise that resolves to the authenticated user's information.
+ * @throws Will throw an error if authentication fails or if inputs are invalid.
+ */
 export async function signIn(email: string, password: string): Promise<UserInfoType> {
     if (!email || !password) {
         throw new Error('Invalid email or password');
@@ -73,6 +87,13 @@ export async function signIn(email: string, password: string): Promise<UserInfoT
     }
 }
 
+/**
+ * Registers a new user.
+ *
+ * @param {FormData} formData - The form data containing user registration details.
+ * @return {Promise<object>} A promise that resolves to the created user's data.
+ * @throws Will throw an error if inputs are invalid or if user creation fails.
+ */
 export async function register(formData: FormData) {
     try {
         const username = formData.get("username");
@@ -109,39 +130,6 @@ export async function register(formData: FormData) {
 
         const defaultProfilePicUrl = '/images/user.png';
 
-        // const newUser = await pb.collection('users').create({
-        //     username,
-        //     email,
-        //     emailVisibility: true,
-        //     password,
-        //     passwordConfirm,
-        //     firstName: firstName,
-        //     lastName: lastName,
-        //     graduationYear: graduationYear,
-        // });
-        // console.log('newUser Created', newUser);
-
-        // const userData = {
-        //     id: newUser.id,
-        //     username: newUser.username,
-        //     firstName: newUser.firstName,
-        //     lastName: newUser.lastName,
-        //     email: newUser.email,
-        //     graduationYear: newUser.graduationYear,
-        //     profilePic: newUser.profilePic,
-        // };
-        // const allCookies = await cookies();
-
-        // allCookies.set("id", newUser.id);
-        // allCookies.set("username", newUser.username);
-        // allCookies.set("firstName", newUser.firstName);
-        // allCookies.set("lastName", newUser.lastName);
-        // allCookies.set("email", newUser.email);
-        // allCookies.set("graduationYear", newUser.graduationYear);
-        // allCookies.set("profilePic", defaultProfilePicUrl);
-        // allCookies.set("reviews", newUser.reviews);
-
-        // return userData;
         try {
             const newUser = await pb.collection('users').create({
                 username,
@@ -187,6 +175,14 @@ export async function register(formData: FormData) {
 
 }
 
+/**
+ * Edits a user's information.
+ *
+ * @param {string} userId - The ID of the user to be edited.
+ * @param {object} data - The data to update for the user.
+ * @return {Promise<object>} A promise that resolves to the updated user data.
+ * @throws Will throw an error if the update operation fails.
+ */
 export async function editUser(userId, data) {
     try {
         const user = await pb.collection("users").update(userId, data);
@@ -207,7 +203,13 @@ export async function editUser(userId, data) {
     }
 }
 
-
+/**
+ * Fetches a review by its ID.
+ *
+ * @param {string} reviewId - The ID of the review to be fetched.
+ * @return {Promise<object>} A promise that resolves to the review data.
+ * @throws Will throw an error if fetching the review fails.
+ */
 export async function getReviewByID(reviewId) {
     try {
         const review = await pb.collection("reviews").getOne(reviewId);
@@ -218,7 +220,15 @@ export async function getReviewByID(reviewId) {
     }
 }
 
-
+/**
+ * Edits a review and updates the associated course's average rating.
+ *
+ * @param {string} reviewId - The ID of the review to be edited.
+ * @param {object} data - The data to update for the review.
+ * @param {string} courseId - The ID of the course associated with the review.
+ * @return {Promise<object>} A promise that resolves to the updated review data.
+ * @throws Will throw an error if the update operation fails.
+ */
 export async function editReview(reviewId, data, courseId) {
     try {
         const review = await pb.collection("reviews").update(reviewId, data);
@@ -242,7 +252,14 @@ export async function editReview(reviewId, data, courseId) {
     }
 }
 
-
+/**
+ * Deletes a review and updates the associated course's average rating.
+ *
+ * @param {string} reviewId - The ID of the review to be deleted.
+ * @param {string} courseId - The ID of the course associated with the review.
+ * @return {Promise<object>} A promise that resolves to the result of the delete operation.
+ * @throws Will throw an error if the delete operation fails.
+ */
 export async function deleteReview(reviewId, courseId) {
     try {
         const deletedReview = await pb.collection("reviews").delete(reviewId);
@@ -266,6 +283,12 @@ export async function deleteReview(reviewId, courseId) {
     }
 }
 
+/**
+ * Fetches all courses from the database.
+ *
+ * @return {Promise<object[]>} A promise that resolves to an array of all courses.
+ * @throws Will throw an error if fetching courses fails.
+ */
 export async function getAllCourses() {
     try {
         // If subject is provided, filter by subject, otherwise get all courses
@@ -279,7 +302,13 @@ export async function getAllCourses() {
     }
 }
 
-
+/**
+ * Fetches courses filtered by a specific subject.
+ *
+ * @param {string} [subject=''] - The subject to filter courses by (optional).
+ * @return {Promise<object[]>} A promise that resolves to an array of filtered courses.
+ * @throws Will throw an error if fetching courses fails.
+ */
 export async function getCoursesBySubject(subject = '') {
     try {
         // If subject is provided, filter by subject, otherwise get all courses
@@ -295,7 +324,13 @@ export async function getCoursesBySubject(subject = '') {
     }
 }
 
-
+/**
+ * Fetches a course and its associated reviews by course ID.
+ *
+ * @param {string} courseID - The ID of the course to be fetched.
+ * @return {Promise<object|null>} A promise that resolves to the course and its reviews, or null if not found.
+ * @throws Will throw an error if fetching the course or reviews fails.
+ */
 export async function getCourseAndReviews(courseID: string) {
     try {
         const fetchedCourse = await pb.collection('courses').getOne(courseID, {
@@ -309,6 +344,13 @@ export async function getCourseAndReviews(courseID: string) {
     }
 }
 
+/**
+ * Fetches a course by its ID.
+ *
+ * @param {string} courseID - The ID of the course to be fetched.
+ * @return {Promise<object|null>} A promise that resolves to the course data, or null if not found.
+ * @throws Will throw an error if fetching the course fails.
+ */
 export async function getCourseByID(courseID: string) {
     try {
         const fetchedCourse = await pb.collection('courses').getOne(courseID);
@@ -319,6 +361,13 @@ export async function getCourseByID(courseID: string) {
     }
 }
 
+/**
+ * Fetches a user by their ID.
+ *
+ * @param {string} userId - The ID of the user to be fetched.
+ * @return {Promise<object|null>} A promise that resolves to the user data, or null if not found.
+ * @throws Will throw an error if fetching the user fails.
+ */
 export async function getUserByID(userId) {
     try {
         const user = await pb.collection('users').getOne<User>(userId);

@@ -28,9 +28,9 @@ describe('Saved Courses Page', () => {
     cy.contains('My Courses').should('exist');
   
     // Verify that at least one saved course is displayed
-    cy.get('.bg-white .flex.items-center.justify-between').should('exist');
+    cy.get('[data-cy="saved-course-item"]').should('have.length.at.least', 1);
   
-    cy.get('.text-lg').should('contain', 'CS 2212');
+    cy.contains('CS 2212').should('be.visible');
   });
   
   it('should navigate to course detail page when clicking View Course', () => {
@@ -47,10 +47,10 @@ describe('Saved Courses Page', () => {
     cy.visit(savedCoursesUrl);
 
     // Ensure there is at least one course to remove
-    cy.get('.bg-white .flex.items-center.justify-between').should('exist');
+    cy.get('[data-cy="saved-course-item"]').should('exist');
 
     // Get the number of saved courses before removal
-    cy.get('.bg-white .flex.items-center.justify-between').then(($courses) => {
+    cy.get('[data-cy="saved-course-item"]').then(($courses) => {
       const courseCountBefore = $courses.length;
 
       // Click on the first unsave button

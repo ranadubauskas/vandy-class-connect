@@ -144,7 +144,7 @@ describe('Admin Component', () => {
             expect(withinReportCard.getByLabelText('Delete Review')).toBeInTheDocument();
         });
 
-        
+
         // Check specific content
         expect(screen.getByText('Great course!')).toBeInTheDocument();
         expect(screen.getByText('Needs improvement.')).toBeInTheDocument();

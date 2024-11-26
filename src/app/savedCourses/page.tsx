@@ -1,14 +1,22 @@
 'use client';
-import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip } from "@mui/material";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import localforage from 'localforage';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
-import { FiX } from "react-icons/fi";
+import { FiX } from 'react-icons/fi';
 import RatingBox from '../components/ratingBox';
 import { getUserCookies } from '../lib/functions';
 import { Course } from '../lib/interfaces';
-import pb from "../lib/pocketbaseClient";
+import pb from '../lib/pocketbaseClient';
 
 interface CachedCoursesData {
   savedCourses: Course[];
@@ -32,15 +40,14 @@ export default function SavedCourses() {
         const cookies = await getUserCookies();
         if (cookies) {
           setUserCookies(cookies);
-          //setSavedCourses(cookies.savedCourses || []);
         } else {
-          console.log("No saved courses found");
+          console.log('No saved courses found');
           setLoading(false);
           setErrorMessage(null);
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
-        setErrorMessage("Error fetching saved courses");
+        setErrorMessage('Error fetching saved courses');
         setLoading(false);
       }
     };
@@ -95,8 +102,6 @@ export default function SavedCourses() {
     };
     fetchSavedCourses();
   }, [userCookies]);
-  
-
 
   const handleRemoveCourse = async () => {
     if (!courseToRemove) return;
@@ -105,12 +110,12 @@ export default function SavedCourses() {
       const updatedSavedCourses = savedCourses.filter(
         (course) => course.id !== courseToRemove
       );
-  
+
       // Update user record in database
       await pb.collection('users').update(userCookies.id, {
         savedCourses: updatedSavedCourses.map((c) => c.id),
       });
-  
+
       // Update cache in localforage
       const cacheKey = `saved_courses_${userCookies.id}`;
       const now = Date.now();
@@ -118,7 +123,7 @@ export default function SavedCourses() {
         savedCourses: updatedSavedCourses,
         cachedAt: now,
       });
-  
+
       setSavedCourses(updatedSavedCourses);
       setCourseToRemove(null);
       setConfirmationOpen(false);
@@ -128,7 +133,6 @@ export default function SavedCourses() {
       setIsRemoving(false);
     }
   };
-  
 
   const promptRemoveCourse = (courseId) => {
     setCourseToRemove(courseId);
@@ -149,44 +153,45 @@ export default function SavedCourses() {
       {/* Saved courses List */}
       <div className="bg-white p-6 rounded-lg shadow-lg">
         {loading ? (
-          <div className="text-gray-600 text-center text-2xl mt-8">
-            Loading...
-          </div>
+          <div className="text-gray-600 text-center text-2xl mt-8">Loading...</div>
         ) : savedCourses.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {savedCourses.map((course) => {
-              const rating = course.averageRating ?? "N/A";
+              const rating = course.averageRating ?? 'N/A';
               return (
                 <div
                   key={course.id}
                   data-testid="course-item"
-                  className="flex items-center justify-between bg-white text-black p-4 sm:p-6 rounded-lg shadow-lg"
+                  data-cy="saved-course-item"
+                  className="bg-white text-black p-3 sm:p-4 rounded-lg shadow-md"
                 >
-                  {/* Course Information */}
-                  <div className="flex items-center space-x-4">
-                    <RatingBox rating={rating} size="small" className="p-1 bg-gray-200 rounded text-center w-10 h-10" />
-                    <div className="text-lg sm:text-2xl">
-                      <span className="font-bold">{course.code}</span>: {course.name}
+                  <div className="flex justify-between items-start">
+                    {/* Course Information */}
+                    <div className="flex items-start space-x-2 flex-1 min-w-0">
+                      <RatingBox rating={rating} size="small" />
+                      <div className="text-sm sm:text-base font-semibold">
+                        <span className="font-bold">{course.code}</span>: {course.name}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Buttons */}
-                  <div className="flex items-center space-x-4">
-                    <button
-                      className="bg-gray-200 px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-gray-300 transition duration-300"
-                      onClick={() => router.push(`/course?id=${course.id}`)}
-                    >
-                      View Course
-                    </button>
-                    <Tooltip title="Unsave Course">
+                    {/* Buttons */}
+                    <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => promptRemoveCourse(course.id)}
-                        className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
-                        data-testid="unsave-button"
+                        className="bg-gray-200 px-2 py-2 rounded-lg hover:bg-gray-300 transition duration-300 whitespace-nowrap text-xs sm:text-sm"
+                        onClick={() => router.push(`/course?id=${course.id}`)}
                       >
-                        <FiX size={24} />
+                        View Course
                       </button>
-                    </Tooltip>
+                      <Tooltip title="Unsave Course">
+                        <button
+                          onClick={() => promptRemoveCourse(course.id)}
+                          className="text-red-500 hover:text-red-700 transition duration-300 flex items-center"
+                          data-testid="unsave-button"
+                        >
+                          <FiX size={18} />
+                        </button>
+                      </Tooltip>
+                    </div>
                   </div>
                 </div>
               );
@@ -225,7 +230,14 @@ export default function SavedCourses() {
           </IconButton>
         </DialogTitle>
         <DialogContent style={{ minHeight: 80 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
             {isRemoving ? (
               <DialogContentText className="text-center text-xl font-semibold">
                 Removing Course...

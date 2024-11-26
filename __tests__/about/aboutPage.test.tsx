@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import About from '../../src/app/about/page';
 const { describe, test, expect } = require('@jest/globals');
 
-
 // Mocking next/navigation's useRouter
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
