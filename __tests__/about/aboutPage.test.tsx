@@ -50,16 +50,6 @@ describe('About Component', () => {
       expect(screen.getByText(question)).toBeInTheDocument();
     });
   });
-  it('should navigate back when "Back" button is clicked', () => {
-    render(<About />);
-
-    // Find and click the "Back" button
-    const backButton = screen.getByText('← Back');
-    fireEvent.click(backButton);
-
-    // Ensure router.back() was called
-    expect(mockRouterBack).toHaveBeenCalled();
-  });
 
   it('should render and toggle FAQ items correctly', () => {
     render(<About />);

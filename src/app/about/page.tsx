@@ -27,15 +27,6 @@ export default function About() {
   return (
     <div className="min-h-screen p-4 sm:p-6">
       <div className="max-w-3xl mx-auto mt-8 sm:mt-12">
-        <div className="mb-4 sm:mb-8">
-          <button
-            className="text-white text-lg sm:text-xl hover:bg-gray-400 transition duration-300"
-            onClick={() => router.back()}
-          >
-            ← Back
-          </button>
-        </div>
-
         {/* Heading */}
         <h1 className="text-3xl sm:text-4xl font-bold text-center text-white">About</h1>
 
