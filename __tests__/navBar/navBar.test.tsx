@@ -1,13 +1,13 @@
 import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import NavBar from '../../src/app/components/NavBar'; // Adjust the path as necessary
 import { AuthContext } from '../../src/app/lib/contexts';
-const { describe, test, expect } = require('@jest/globals');
 
-// Mock usePathname from Next.js
+// Mock usePathname and useRouter from Next.js
 jest.mock('next/navigation', () => ({
     usePathname: jest.fn(),
+    useRouter: jest.fn(),
 }));
 
 describe('NavBar Component', () => {
@@ -15,8 +15,19 @@ describe('NavBar Component', () => {
     const mockGetUser = jest.fn();
     const mockLoginUser = jest.fn();
 
+    const mockRouter = {
+        push: jest.fn(),
+        prefetch: jest.fn(),
+        replace: jest.fn(),
+        reload: jest.fn(),
+        back: jest.fn(),
+        forward: jest.fn(),
+        refresh: jest.fn(),
+    };
+
     beforeEach(() => {
         jest.clearAllMocks();
+        (useRouter as jest.Mock).mockReturnValue(mockRouter);
     });
 
     it('should render the logo and About link', () => {
@@ -145,6 +156,4 @@ describe('NavBar Component', () => {
         const homeLink = screen.getByText('Home');
         expect(homeLink).toHaveClass('text-white'); // Adjust as necessary to check for active styling
     });
-
-
 });

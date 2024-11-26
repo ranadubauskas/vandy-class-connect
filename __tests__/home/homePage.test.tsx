@@ -220,7 +220,7 @@ describe("Home page", () => {
         });
     });
 
-    it("should open and close the filter modal", async () => {
+    it("should open and close the subject filter dropdown", async () => {
         await act(async () => {
             render(
                 <AuthContext.Provider value={mockAuthContextValue}>
@@ -230,14 +230,19 @@ describe("Home page", () => {
         });
         await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
-        // Open filter modal
-        fireEvent.click(screen.getByRole("button", { name: /open filter/i }));
-        expect(screen.getByText("Select Filters")).toBeInTheDocument();
+        // Open the subject filter dropdown
+        fireEvent.click(screen.getByLabelText('Filter by Subject:'));
 
-        // Close filter modal
-        fireEvent.click(screen.getByRole("button", { name: /close filter/i }));
-        expect(screen.queryByText("Select Filters")).not.toBeInTheDocument();
+        // Verify that the dropdown is visible
+        expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+        // Close the subject filter dropdown
+        fireEvent.click(screen.getByLabelText('Filter by Subject:'));
+
+        // Verify that the dropdown is not visible
+        expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     });
+
 
     it("should navigate to course page when 'View Course' is clicked", async () => {
         await act(async () => {
@@ -326,8 +331,19 @@ describe("Home page", () => {
 
         await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
-        // Select "CS" as subject filter
-        fireEvent.change(screen.getByLabelText('Filter by Subject:'), { target: { value: 'CS' } });
+        // Open the subject filter dropdown
+        fireEvent.click(screen.getByLabelText('Filter by Subject:'));
+
+        // The dropdown content should now be visible
+        const dropdown = screen.getByRole('listbox');
+        expect(dropdown).toBeInTheDocument();
+
+        // Find and select the "CS" checkbox
+        const csCheckbox = within(dropdown).getByLabelText('CS');
+        fireEvent.click(csCheckbox);
+
+        // Close the dropdown
+        fireEvent.click(screen.getByLabelText('Filter by Subject:'));
 
         // Verify that only CS courses are displayed
         await waitFor(() => {
@@ -491,7 +507,7 @@ describe("Home page", () => {
             );
         });
 
-        await waitFor(() => expect(consoleLogSpy).toHaveBeenCalledWith("No save courses found"));
+        await waitFor(() => expect(consoleLogSpy).toHaveBeenCalledWith("No saved courses found"));
 
         consoleLogSpy.mockRestore();
     });
@@ -535,13 +551,15 @@ describe("Home page", () => {
         await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
         // Open the filter modal
-        fireEvent.click(screen.getByLabelText("Open filter"));
+        fireEvent.click(screen.getByLabelText("Open subject filter"));
+        // The dropdown content should now be visible
+        const dropdown = screen.getByRole('listbox');
+        expect(dropdown).toBeInTheDocument();
 
-        const filterModal = screen.getByText("Select Filters").closest("div");
-        expect(filterModal).not.toBeNull();
+        // Find the "CS" checkbox within the dropdown
+        const csCheckbox = within(dropdown).getByLabelText("CS");
 
-        // Ensure "CS" label is present and toggle it on
-        const csCheckbox = within(filterModal!).getByLabelText("CS");
+        // Toggle "CS" on
         fireEvent.click(csCheckbox);
         expect(csCheckbox).toBeChecked();
 
@@ -632,17 +650,16 @@ describe("Home page", () => {
 
         await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
-        // Open the filter modal
-        fireEvent.click(screen.getByLabelText("Open filter"));
-        const filterModal = screen.getByText("Select Filters").closest("div");
+        // Open the subject filter dropdown
+        fireEvent.click(screen.getByLabelText("Open subject filter"));
 
-        // Use within() to ensure we target the right "CS" checkbox inside the filter modal
-        const csCheckbox = within(filterModal).getByLabelText("CS");
+        // Select the "CS" subject
+        const dropdown = screen.getByRole('listbox');
+        const csCheckbox = within(dropdown).getByLabelText("CS");
         fireEvent.click(csCheckbox);
 
-        // Save the filter selection
-        const saveButton = within(filterModal).getByRole("button", { name: /save/i });
-        fireEvent.click(saveButton);
+        // Close the dropdown by clicking outside or toggling it
+        fireEvent.click(screen.getByLabelText("Open subject filter"));
 
         // Verify the filter is applied and displayed on the main page
         const csFilterTag = screen.getByText("CS", { selector: "span" });
@@ -691,18 +708,17 @@ describe("Home page", () => {
         // Ensure courses are loaded
         await waitFor(() => expect(getAllCourses).toHaveBeenCalled());
 
-        // Open the filter modal
-        fireEvent.click(screen.getByLabelText("Open filter"));
+        // Set the rating filter to 4
+        fireEvent.change(screen.getByLabelText('Filter by Rating:'), { target: { value: '4' } });
 
-        // Locate and select the rating filter in the modal
-        const filterModal = screen.getByText("Select Filters").closest("div");
-        expect(filterModal).not.toBeNull();
+        // Verify the filter tag is displayed
+        const ratingFilterTag = screen.getByText("Rating:", { selector: "span" });
+        expect(ratingFilterTag).toBeInTheDocument();
 
-        const ratingSelect = within(filterModal!).getByLabelText("Minimum Rating:");
-        fireEvent.change(ratingSelect, { target: { value: "4" } });
+        // Click the clear button for the rating filter
+        fireEvent.click(screen.getByLabelText(`Remove rating filter 4`));
 
-        // Apply the filter by clicking "Save" in the modal
-        const saveButton = within(filterModal!).getByRole("button", { name: /save/i });
-        fireEvent.click(saveButton);
+        // Verify the filter tag is no longer displayed
+        expect(screen.queryByText("Rating:", { selector: "span" })).not.toBeInTheDocument();
     });
 });

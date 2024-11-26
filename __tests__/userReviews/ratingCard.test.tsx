@@ -5,10 +5,52 @@ import RatingCard from '../../src/app/ratings/[userId]/ratingCard';
 import { deleteReview, editReview } from '../../src/app/server';
 const { describe, test, expect } = require('@jest/globals');
 
+var updateMock, deleteMock, getFullListMock, createMock;
+
+jest.mock('pocketbase', () => {
+  updateMock = jest.fn();
+  deleteMock = jest.fn();
+  getFullListMock = jest.fn();
+  createMock = jest.fn();
+
+  return jest.fn().mockImplementation(() => ({
+    autoCancellation: jest.fn(),
+    collection: jest.fn((collectionName) => {
+      if (collectionName === 'reviews') {
+        return {
+          update: updateMock,
+          delete: deleteMock,
+        };
+      } else if (collectionName === 'professors') {
+        return {
+          getFullList: getFullListMock,
+          create: createMock,
+        };
+      }
+    }),
+    files: {
+      getUrl: jest.fn(),
+    },
+  }));
+});
+
+
 jest.mock('../../src/app/server', () => ({
   editReview: jest.fn(),
   deleteReview: jest.fn(),
 }));
+
+
+// jest.mock('pocketbase', () => {
+//   return jest.fn().mockImplementation(() => ({
+//     autoCancellation: jest.fn(),
+//     collection: jest.fn(() => ({
+//       update: jest.fn(),
+//       delete: jest.fn(),
+//     })),
+//   }));
+// });
+
 
 describe('RatingCard Component', () => {
   const mockUserVal = {
@@ -187,15 +229,22 @@ describe('RatingCard Component', () => {
 
   it('successfully saves edited review and calls onEdit', async () => {
     const mockReview = mockReviews[0];
-  
-    (editReview as jest.Mock).mockResolvedValue({
+
+    // Mock return values
+    getFullListMock.mockResolvedValue([]);
+    createMock.mockResolvedValue({
+      id: 'newProfessorId',
+      firstName: 'Jane',
+      lastName: 'Doe',
+    });
+    updateMock.mockResolvedValue({
       ...mockReview,
       comment: 'Updated comment',
-      rating: 5, // Adjusted to match the unchanged rating
+      rating: 5,
     });
-  
+
     const onEditMock = jest.fn();
-  
+
     render(
       <AuthContext.Provider value={mockUserVal}>
         <RatingCard
@@ -205,28 +254,29 @@ describe('RatingCard Component', () => {
         />
       </AuthContext.Provider>
     );
-  
+
     // Click edit button
     fireEvent.click(screen.getByTestId('edit-button'));
-  
+
     // Change comment
     fireEvent.change(screen.getByPlaceholderText('Edit your comment'), {
       target: { value: 'Updated comment' },
     });
-  
+
     // Click save button
     fireEvent.click(screen.getByText('✅ Save'));
-  
+
     // Wait for onEdit to be called
     await waitFor(() => {
       expect(onEditMock).toHaveBeenCalledWith(
         expect.objectContaining({
           comment: 'Updated comment',
-          rating: 5, // Adjusted expected rating
+          rating: 5,
         })
       );
     });
   });
+
   
 
   it('successfully deletes review and calls onDelete', async () => {

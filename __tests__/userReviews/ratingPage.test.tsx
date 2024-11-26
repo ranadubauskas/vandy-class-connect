@@ -18,6 +18,23 @@ jest.mock('../../src/app/server', () => ({
   deleteReview: jest.fn(),
   editReview: jest.fn(),
 }));
+jest.mock('pocketbase', () => {
+  return jest.fn().mockImplementation(() => ({
+    autoCancellation: jest.fn(),
+    collection: jest.fn((collectionName) => ({
+      update: jest.fn(),
+      delete: jest.fn(),
+      getFullList: jest.fn(),
+      create: jest.fn(),
+      // Add any other methods you might use
+    })),
+    files: {
+      getUrl: jest.fn(),
+    },
+    // Add any other methods or properties your code uses
+  }));
+});
+
 
 describe('Ratings Component', () => {
   const mockUserId = 'user123';

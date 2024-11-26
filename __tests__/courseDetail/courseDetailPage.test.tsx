@@ -1030,7 +1030,15 @@ describe('CourseDetailPage Component', () => {
             tutors: [],
         };
 
-        (localforage.getItem as jest.Mock).mockResolvedValue(mockCachedCourseData);
+        (localforage.getItem as jest.Mock).mockImplementation(async (key) => {
+            if (key === 'course_CS101') {
+              return mockCachedCourseData;
+            }
+            if (key === 'savedCourses') {
+              return ['courseId']; // Return an array of saved course IDs
+            }
+            return null;
+          });
 
         await act(async () => {
             render(<CourseDetailPage />);

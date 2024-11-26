@@ -665,32 +665,32 @@ describe('AddReviewPage Component', () => {
 
     it('should update cache after saving review', async () => {
         // Add a console.error spy to catch any errors during the test
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
         const mockCourseData = {
-          id: 'courseId',
-          code: 'CS101',
-          name: 'Introduction to Computer Science',
-          professors: [],
-          reviews: [],
+            id: 'courseId',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            professors: [],
+            reviews: [],
         };
-      
+
         const mockUpdatedCourseData = {
-          ...mockCourseData,
-          reviews: ['reviewId'],
+            ...mockCourseData,
+            reviews: ['reviewId'],
         };
-      
+
         // Ensure localforage.getItem returns the initial course data
         (localforage.getItem as jest.Mock).mockResolvedValue(mockCourseData);
-      
+
         // Set up the getFirstListItem spy to monitor calls
         const getFirstListItemSpy = jest.spyOn(mockCoursesCollection, 'getFirstListItem');
-      
+
         // Mock the updated course data after adding the review
         mockCoursesCollection.getFirstListItem
-          .mockResolvedValueOnce(mockCourseData) // Initial fetch
-          .mockResolvedValueOnce(mockUpdatedCourseData); // After saving review
-      
+            .mockResolvedValueOnce(mockCourseData) // Initial fetch
+            .mockResolvedValueOnce(mockUpdatedCourseData); // After saving review
+
         // Update mocks to return necessary data for the component logic
         mockProfessorsCollection.getFullList.mockResolvedValue([]);
         mockProfessorsCollection.create.mockResolvedValue({ id: 'professorId' });
@@ -699,63 +699,46 @@ describe('AddReviewPage Component', () => {
         mockCoursesCollection.update.mockResolvedValue({});
         mockUsersCollection.getOne.mockResolvedValue({ id: 'userId', reviews: [] });
         mockUsersCollection.update.mockResolvedValue({});
-      
+
         // Mock useAuth to return user data
         (useAuth as jest.Mock).mockReturnValue({
-          userData: {
-            id: 'userId',
-            firstName: 'John',
-            lastName: 'Doe',
-          },
+            userData: {
+                id: 'userId',
+                firstName: 'John',
+                lastName: 'Doe',
+            },
         });
-      
+
         // Render the component
         await act(async () => {
-          render(<AddReviewPage />);
+            render(<AddReviewPage />);
         });
-      
+
         // Fill in form fields required for saving a review
         fireEvent.change(screen.getByPlaceholderText('Rating'), { target: { value: '4' } });
         fireEvent.change(screen.getByPlaceholderText('Enter your review here...'), { target: { value: 'Great course!' } });
         fireEvent.change(screen.getByPlaceholderText("Professor's First Name"), { target: { value: 'John' } });
         fireEvent.change(screen.getByPlaceholderText("Professor's Last Name"), { target: { value: 'Doe' } });
-      
+
         // Trigger the save action
         await act(async () => {
-          fireEvent.click(screen.getByText('Save Review'));
+            fireEvent.click(screen.getByText('Save Review'));
         });
-      
+
         // Wait for all asynchronous operations to complete
         await act(async () => {
-          // Wait for any pending promises
+            // Wait for any pending promises
         });
-      
+
         // Verify that getFirstListItem was called twice
         expect(getFirstListItemSpy).toHaveBeenCalledTimes(1);
-      
 
-      
+
+
         // Check for any errors during the test
         if (consoleErrorSpy.mock.calls.length > 0) {
-          console.log('Errors during test:', consoleErrorSpy.mock.calls);
+            console.log('Errors during test:', consoleErrorSpy.mock.calls);
         }
         consoleErrorSpy.mockRestore();
-      });
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    });
 });

@@ -156,7 +156,7 @@ describe('Profile Component', () => {
         // Change first name, last name, and graduation year
         fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Johnny' } });
         fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe Jr.' } });
-        fireEvent.change(screen.getByLabelText('Grade'), { target: { value: '2026' } });
+        fireEvent.change(screen.getByLabelText('Graduation Year'), { target: { value: '2026' } });
       
         // Mock file selection
         const file = new File(['dummy content'], 'profile.png', { type: 'image/png' });
@@ -231,12 +231,12 @@ describe('Profile Component', () => {
         // Change input fields
         fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Johnny' } });
         fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe Jr.' } });
-        fireEvent.change(screen.getByLabelText('Grade'), { target: { value: '2026' } });
+        fireEvent.change(screen.getByLabelText('Graduation Year'), { target: { value: '2026' } });
       
         // Verify that state has updated
         expect(screen.getByLabelText('First Name')).toHaveValue('Johnny');
         expect(screen.getByLabelText('Last Name')).toHaveValue('Doe Jr.');
-        expect(screen.getByLabelText('Grade')).toHaveValue('2026');
+        expect(screen.getByLabelText('Graduation Year')).toHaveValue('2026');
       });
 
       it('should display error when user is not authenticated in handleSave', async () => {

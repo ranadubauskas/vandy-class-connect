@@ -262,7 +262,7 @@ describe('Server Functions', () => {
             formData.append('lastName', 'Doe');
             formData.append('graduationYear', '2023');
 
-            const error = new Error('Create failed');
+            const error = new Error("Username or email already exists");
             mockPb.collection().create.mockRejectedValue(error);
 
             await expect(register(formData)).rejects.toThrow(error);
