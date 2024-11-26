@@ -35,13 +35,11 @@ export default function Register() {
             formData.append('lastName', lastName);
             formData.append('graduationYear', graduationYear);
             const user = await register(formData);
-            console.log('User registered:', user);
             loginUser(user);
             if (router && router.push) {
                 router.push('/home');
             }
         } catch (err) {
-            console.log(err);
             setError(err.message);
         }
     };

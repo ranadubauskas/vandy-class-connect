@@ -48,12 +48,8 @@ export default function Profile() {
                     setLoading(false);
                     return;
                 }
-
                 // Fetch user from server
                 const fetchedUser = await getUserByID(userId as string);
-
-                console.log('fetched: ', fetchedUser);
-
                 // Cache the fetched user data
                 await localforage.setItem(`user_${userId}`, fetchedUser);
                 initializeUserData(fetchedUser);

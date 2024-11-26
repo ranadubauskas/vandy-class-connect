@@ -50,7 +50,6 @@ function AddReviewComponent() {
             try {
                 const cachedCourse = await localforage.getItem(`course_${code}`);
                 if (cachedCourse) {
-                    console.log("CACHED!");
                     setCourse(cachedCourse);
                 } else {
                     await fetchCourseFromServer();

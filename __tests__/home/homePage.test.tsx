@@ -493,25 +493,6 @@ describe("Home page", () => {
         consoleErrorSpy.mockRestore();
     });
 
-    it("should log 'No save courses found' if there are no saved courses", async () => {
-        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
-
-        // Mock the response to have no saved courses
-        getOneMock.mockResolvedValueOnce({ savedCourses: null });
-
-        await act(async () => {
-            render(
-                <AuthContext.Provider value={mockAuthContextValue}>
-                    <Home />
-                </AuthContext.Provider>
-            );
-        });
-
-        await waitFor(() => expect(consoleLogSpy).toHaveBeenCalledWith("No saved courses found"));
-
-        consoleLogSpy.mockRestore();
-    });
-
     it("should toggle temp subject filters when a subject is selected", async () => {
         // Mock the course data to ensure "CS" is present in the subjects
         getAllCoursesMock.mockResolvedValue([

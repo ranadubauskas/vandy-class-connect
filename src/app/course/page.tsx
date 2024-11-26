@@ -50,7 +50,6 @@ function CourseDetailPageComponent() {
 
       try {
         foundCourse = await localforage.getItem(`course_${code}`);
-        console.log('foundCourse', foundCourse);
         if (foundCourse && now - foundCourse.cachedAt < cacheExpiry) {
           initializeState(foundCourse);
           // Use the cached course data
@@ -58,15 +57,12 @@ function CourseDetailPageComponent() {
           setLoading(false);
           return;
         }
-        console.log("code:", code);
-        console.log("did not return");
         const fetchedCourse = await pb.collection('courses').getFirstListItem(
           `code = "${code}"`, // Use a filter to match the course code
           {
             expand: 'reviews.user,reviews.professors,professors', // Expand relationships as needed
           }
         );
-        console.log('fetched: ', fetchedCourse);
         if (fetchedCourse.syllabus) {
           fetchedCourse.syllabus = pb.files.getUrl(fetchedCourse, fetchedCourse.syllabus);
         }

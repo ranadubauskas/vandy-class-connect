@@ -41,7 +41,6 @@ export default function SavedCourses() {
         if (cookies) {
           setUserCookies(cookies);
         } else {
-          console.log('No saved courses found');
           setLoading(false);
           setErrorMessage(null);
         }
@@ -89,7 +88,6 @@ export default function SavedCourses() {
             cachedAt: now,
           });
         } else {
-          console.log('No saved courses found');
           setSavedCourses([]);
           setErrorMessage(null);
         }

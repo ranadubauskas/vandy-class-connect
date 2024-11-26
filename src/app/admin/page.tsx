@@ -36,9 +36,7 @@ export default function Admin() {
     const fetchCookies = async () => {
       try {
         const cookies = await getUserCookies();
-        if (cookies) {
-          console.log('cookies', cookies);
-        } else {
+        if (!cookies) {
           console.log("No user cookies found");
         }
       } catch (error) {

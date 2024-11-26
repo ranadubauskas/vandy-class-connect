@@ -14,10 +14,8 @@ export default function Login() {
     const { loginUser } = useAuth();
 
     const handleLogin = async (e) => {
-        console.log("IN LOGIN");
         e.preventDefault();
         setError('');
-        console.log('password: ', password);
         // Validation for missing fields
         if (password == "") {
             setError('Missing password. Please try again.');

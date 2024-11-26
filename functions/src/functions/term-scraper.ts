@@ -101,8 +101,6 @@ export default {
           //  Important: A timeout is needed to prevent 429
           setTimeout(async () => {
             try {
-              console.log(`Saving term: ${term.title}`);
-
               await client.collection("terms").create(term);
 
               resolve();

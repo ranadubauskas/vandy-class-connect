@@ -38,8 +38,6 @@ export default function Home() {
         const cookies = await getUserCookies();
         if (cookies) {
           setUserCookies(cookies);
-        } else {
-          console.log("No user cookies found");
         }
       } catch (error) {
         console.error('Error fetching cookies:', error);
@@ -56,8 +54,6 @@ export default function Home() {
         const userRecord = await pb.collection('users').getOne(userCookies.id, { autoCancellation: false });
         if (userRecord && userRecord.savedCourses) {
           setSavedCourses(userRecord.savedCourses);
-        } else {
-          console.log("No saved courses found");
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
@@ -78,13 +74,10 @@ export default function Home() {
           const cacheValidity = 5 * 60 * 1000; // 5 minutes in milliseconds
 
           if (cacheAge < cacheValidity) {
-            console.log('Using cached courses:', cachedCourses);
             setCourses(cachedCourses);
             setCourseSubjects(Array.from(new Set(cachedCourses.map(course => course.subject))));
             setLoading(false);
             return;
-          } else {
-            console.log('Cache expired, fetching new data...');
           }
         }
 
@@ -98,8 +91,6 @@ export default function Home() {
           cachedAt: Date.now(),
         };
         localStorage.setItem('courses', JSON.stringify(cacheData));
-
-        console.log('Fetched and cached courses:', courses);
 
         const subjects = Array.from(new Set(courses.map(course => course.subject)));
         setCourseSubjects(subjects);
