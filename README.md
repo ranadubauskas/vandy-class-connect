@@ -36,3 +36,11 @@ Navigating course registration can be tough without enough information about con
 - [NextJS](https://nextjs.org/docs)
 - [Pocketbase DB](https://pocketbase.io/)
 - [Tailwind CSS](https://tailwindcss.com/)
+
+## Creators
+
+- Rana Dubauskas - rana.s.dubauskas@vanderbilt.edu
+- Anjali Kota - anjali.d.kota@vanderbilt.edu
+- Ryan McCauley - ryan.e.mccauley@vanderbilt.edu 
+- Steve Jung - steve.j.jung@vanderbilt.edu 
+
