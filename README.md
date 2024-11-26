@@ -1,7 +1,7 @@
 # Vandy Class Connect
+https://vandy-class-connect-ls4a.vercel.app
 
 ## Starting the App:
-
 1. npm install
 2. npm run dev
 3. Open: http://localhost:3000
