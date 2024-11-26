@@ -304,7 +304,7 @@ function CourseDetailPageComponent() {
         {/* Course Code and Name as Title */}
         <div className="flex flex-wrap items-start justify-between mb-6 course-details">
           {/* Title and Bookmark */}
-          <div className="flex items-start flex-shrink mr-4">
+          <div className="flex items-start flex-shrink mr-4 mb-2">
             <h1 className="text-white text-3xl md:text-4xl font-semibold mb-4 md:mb-0">
               {course.code}: {course.name}
             </h1>
@@ -404,7 +404,7 @@ function CourseDetailPageComponent() {
 
         {/* Popup Message */}
         {popupMessage && (
-          <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg">
+          <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg z-50">
             <p>{popupMessage}</p>
             <button
               className="mt-2 text-sm underline"
