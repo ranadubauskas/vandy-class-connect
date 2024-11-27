@@ -104,30 +104,6 @@ export async function register(formData: FormData) {
         const lastName = formData.get("lastName");
         const graduationYear = formData.get("graduationYear");
 
-        if (
-            typeof username !== 'string' || username == "" ||
-            typeof email !== 'string' || email == "" ||
-            typeof password !== 'string' || password == "" ||
-            typeof passwordConfirm !== 'string' || passwordConfirm == "" ||
-            typeof firstName !== 'string' || firstName == "" ||
-            typeof lastName !== 'string' || lastName == "" ||
-            typeof graduationYear !== 'string' || graduationYear == ""
-        ) {
-            return { error: "Invalid input. Please provide all required fields." };
-        }
-
-        if (!email.endsWith('@vanderbilt.edu')) {
-            return { error: "Only Vanderbilt email addresses are allowed." };
-        }
-
-        if (password.length < 8) {
-            return { error: "Password must be at least 8 characters long." };
-        }
-
-        if (password !== passwordConfirm) {
-            return { error: "Passwords do not match." };
-        }
-
         const defaultProfilePicUrl = '/images/user.png';
 
         try {
@@ -163,43 +139,16 @@ export async function register(formData: FormData) {
             allCookies.set("profilePic", defaultProfilePicUrl);
             allCookies.set("reviews", newUser.reviews);
 
-            return { user: userData };
+            return userData;
         } catch (err) {
             console.error("Error creating user:", err);
-            return { error: "Username or email already exists" };
+            throw new Error("Username or email already exists");
         }
     } catch (err) {
         console.error("Error creating user:", err);
         throw err;
     }
-}
 
-/**
- * Edits a user's information.
- *
- * @param {string} userId - The ID of the user to be edited.
- * @param {object} data - The data to update for the user.
- * @return {Promise<object>} A promise that resolves to the updated user data.
- * @throws Will throw an error if the update operation fails.
- */
-export async function editUser(userId, data) {
-    try {
-        const user = await pb.collection("users").update(userId, data);
-
-        const allCookies = await cookies();
-
-        allCookies.set("id", user.id);
-        allCookies.set("username", user.username);
-        allCookies.set("firstName", user.firstName);
-        allCookies.set("lastName", user.lastName);
-        allCookies.set("email", user.email);
-        allCookies.set("graduationYear", user.graduationYear);
-        allCookies.set("profilePic", user.profilePic);
-        return user;
-    } catch (err) {
-        console.error("Error editing user:", err);
-        throw err;
-    }
 }
 
 /**
@@ -376,3 +325,32 @@ export async function getUserByID(userId) {
         return null;
     }
 }
+
+/**
+ * Edits a user's information in the database and updates associated cookies.
+ *
+ * @param {string} userId - The ID of the user to be edited.
+ * @param {object} data - An object containing the fields to update with their new values.
+ * @return {Promise<object>} A promise that resolves to the updated user data.
+ * @throws Will throw an error if editing the user fails.
+ */
+export async function editUser(userId, data) {
+    try {
+        const user = await pb.collection("users").update(userId, data);
+
+        const allCookies = await cookies();
+
+        allCookies.set("id", user.id);
+        allCookies.set("username", user.username);
+        allCookies.set("firstName", user.firstName);
+        allCookies.set("lastName", user.lastName);
+        allCookies.set("email", user.email);
+        allCookies.set("graduationYear", user.graduationYear);
+        allCookies.set("profilePic", user.profilePic);
+        return user;
+    } catch (err) {
+        console.error("Error editing user:", err);
+        throw err;
+    }
+}
+

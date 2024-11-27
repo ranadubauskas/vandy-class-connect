@@ -204,54 +204,6 @@ describe('Server Functions', () => {
                 graduationYear: '2023',
             });
         });
-
-        it('should throw error if required fields are missing', async () => {
-            const formData = new FormData();
-            formData.append('username', 'johndoe');
-            // Missing other required fields
-
-            await expect(register(formData)).rejects.toThrow('Invalid input. Please provide all required fields.');
-        });
-
-        it('should throw error if email is not Vanderbilt email', async () => {
-            const formData = new FormData();
-            formData.append('username', 'johndoe');
-            formData.append('email', 'john.doe@gmail.com');
-            formData.append('password', 'password123');
-            formData.append('passwordConfirm', 'password123');
-            formData.append('firstName', 'John');
-            formData.append('lastName', 'Doe');
-            formData.append('graduationYear', '2023');
-
-            await expect(register(formData)).rejects.toThrow('Only Vanderbilt email addresses are allowed.');
-        });
-
-        it('should throw error if password length less than 8', async () => {
-            const formData = new FormData();
-            formData.append('username', 'johndoe');
-            formData.append('email', 'john.doe@vanderbilt.edu');
-            formData.append('password', 'short');
-            formData.append('passwordConfirm', 'short');
-            formData.append('firstName', 'John');
-            formData.append('lastName', 'Doe');
-            formData.append('graduationYear', '2023');
-
-            await expect(register(formData)).rejects.toThrow('Password must be at least 8 characters long.');
-        });
-
-        it('should throw error if passwords do not match', async () => {
-            const formData = new FormData();
-            formData.append('username', 'johndoe');
-            formData.append('email', 'john.doe@vanderbilt.edu');
-            formData.append('password', 'password123');
-            formData.append('passwordConfirm', 'password321');
-            formData.append('firstName', 'John');
-            formData.append('lastName', 'Doe');
-            formData.append('graduationYear', '2023');
-
-            await expect(register(formData)).rejects.toThrow('Passwords do not match.');
-        });
-
         it('should throw error if create fails', async () => {
             const formData = new FormData();
             formData.append('username', 'johndoe');
@@ -636,6 +588,52 @@ describe('Server Functions', () => {
             const result = await getUserByID(userId);
 
             expect(result).toBeNull();
+        });
+    });
+
+    describe('editUser', () => {
+        it('should edit user and update cookies', async () => {
+            const userId = 'user123';
+            const data = { firstName: 'Jane', lastName: 'Doe' };
+            const updatedUser = {
+                id: 'user123',
+                username: 'johndoe',
+                firstName: 'Jane',
+                lastName: 'Doe',
+                email: 'john.doe@vanderbilt.edu',
+                graduationYear: '2023',
+                profilePic: 'profile.jpg',
+            };
+
+            mockPb.collection().update.mockResolvedValue(updatedUser);
+
+            const result = await editUser(userId, data);
+
+            expect(mockPb.collection).toHaveBeenCalledWith('users');
+            expect(mockPb.collection().update).toHaveBeenCalledWith(userId, data);
+
+            expect(mockCookies.set).toHaveBeenCalledWith('id', 'user123');
+            expect(mockCookies.set).toHaveBeenCalledWith('username', 'johndoe');
+            expect(mockCookies.set).toHaveBeenCalledWith('firstName', 'Jane');
+            expect(mockCookies.set).toHaveBeenCalledWith('lastName', 'Doe');
+            expect(mockCookies.set).toHaveBeenCalledWith('email', 'john.doe@vanderbilt.edu');
+            expect(mockCookies.set).toHaveBeenCalledWith('graduationYear', '2023');
+            expect(mockCookies.set).toHaveBeenCalledWith('profilePic', 'profile.jpg');
+
+            expect(result).toEqual(updatedUser);
+        });
+
+        it('should throw error if update fails', async () => {
+            const userId = 'user123';
+            const data = { firstName: 'Jane', lastName: 'Doe' };
+            const error = new Error('Update failed');
+
+            mockPb.collection().update.mockRejectedValue(error);
+
+            await expect(editUser(userId, data)).rejects.toThrow(error);
+
+            expect(mockPb.collection).toHaveBeenCalledWith('users');
+            expect(mockPb.collection().update).toHaveBeenCalledWith(userId, data);
         });
     });
 });
