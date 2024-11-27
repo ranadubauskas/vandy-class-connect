@@ -113,19 +113,19 @@ export async function register(formData: FormData) {
             typeof lastName !== 'string' || lastName == "" ||
             typeof graduationYear !== 'string' || graduationYear == ""
         ) {
-            throw new Error("Invalid input. Please provide all required fields.");
+            return { error: "Invalid input. Please provide all required fields." };
         }
 
         if (!email.endsWith('@vanderbilt.edu')) {
-            throw new Error("Only Vanderbilt email addresses are allowed.");
+            return { error: "Only Vanderbilt email addresses are allowed." };
         }
 
         if (password.length < 8) {
-            throw new Error("Password must be at least 8 characters long.");
+            return { error: "Password must be at least 8 characters long." };
         }
 
         if (password !== passwordConfirm) {
-            throw new Error("Passwords do not match.");
+            return { error: "Passwords do not match." };
         }
 
         const defaultProfilePicUrl = '/images/user.png';
@@ -163,16 +163,15 @@ export async function register(formData: FormData) {
             allCookies.set("profilePic", defaultProfilePicUrl);
             allCookies.set("reviews", newUser.reviews);
 
-            return userData;
+            return { user: userData };
         } catch (err) {
             console.error("Error creating user:", err);
-            throw new Error("Username or email already exists");
+            return { error: "Username or email already exists" };
         }
     } catch (err) {
         console.error("Error creating user:", err);
         throw err;
     }
-
 }
 
 /**
