@@ -50,6 +50,8 @@ export async function signIn(email: string, password: string): Promise<UserInfoT
     }
     try {
         // Authenticate the user
+        console.log("hello");
+        console.log(email + " " + password)
         const userAuthData = await pb.collection('users').authWithPassword(email, password);
 
         //Set user cookies
@@ -79,6 +81,7 @@ export async function signIn(email: string, password: string): Promise<UserInfoT
             profilePic: userRecord.profilePic,
             admin: userRecord.admin
         };
+        console.log("helo");
 
         return userInfo;
     } catch (err) {
@@ -231,6 +234,27 @@ export async function deleteReview(reviewId, courseId) {
     }
 }
 
+export async function deleteTutor(userId, courseId) {
+    try {
+        const user = await pb.collection("users").getOne(userId);
+        const updatedCourses = user.courses_tutored.filter(id => id !== courseId);
+        await pb.collection('users').update(userId, {
+            courses_tutored: updatedCourses,
+        });
+
+        const course = await pb.collection("courses").getOne(courseId);
+        const updatedTutors = course.tutors.filter(id => id !== userId);
+
+        await pb.collection('courses').update(courseId, {
+            tutors: updatedTutors
+        });
+        console.log("Successful delete");
+    } catch (err) {
+        console.error("Error review:", err);
+        throw err;
+    }
+}
+
 /**
  * Fetches all courses from the database.
  *
@@ -318,7 +342,9 @@ export async function getCourseByID(courseID: string) {
  */
 export async function getUserByID(userId) {
     try {
-        const user = await pb.collection('users').getOne<User>(userId);
+        const user = await pb.collection('users').getOne<User>(userId, {
+            expand: 'courses_tutored',
+        });
         return user;
     } catch (error) {
         console.error('Error fetching user by ID:', error);

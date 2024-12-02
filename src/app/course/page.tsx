@@ -37,6 +37,7 @@ function CourseDetailPageComponent() {
   const [selectedProfessor, setSelectedProfessor] = useState("");
   const [copiedEmailMessage, setCopiedEmailMessage] = useState('');
   const [selectedRating, setSelectedRating] = useState(0);
+  const [hasSyllabus, setHasSyllabus] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   const currentUserId = userData?.id;
@@ -276,7 +277,10 @@ function CourseDetailPageComponent() {
       : true;
 
     const matchesRating = selectedRating > 0 ? review.rating >= selectedRating : true;
-    return matchesProfessor && matchesRating;
+
+
+  const matchesSyllabus = hasSyllabus ? !!review.syllabus : true;
+    return matchesProfessor && matchesRating && matchesSyllabus;
   });
 
   // Determine grid classes based on the number of reviews
@@ -399,6 +403,20 @@ function CourseDetailPageComponent() {
               <option value={4}>4+</option>
               <option value={5}>5 </option>
             </select>
+          </div>
+
+          <div className="flex items-center">
+            <label htmlFor="syllabusFilter" className="text-white text-lg">
+              Filter by Has Syllabus
+            </label>
+            <input
+              type="checkbox"
+              id="syllabusFilter"
+              checked={hasSyllabus}
+              onChange={(e) => setHasSyllabus(e.target.checked)}
+              className="ml-2 transform scale-150"
+            />
+            
           </div>
         </div>
 

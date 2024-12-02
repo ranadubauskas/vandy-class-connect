@@ -1,4 +1,5 @@
 export interface User {
+    expand: any;
     id: string;
     collectionId: string;
     collectionName: string;
