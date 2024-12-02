@@ -23,8 +23,9 @@ jobs:
 
       - name: Run Course Scraper
         env:
+          POCKETBASE_URL: ${{ secrets.POCKETBASE_URL }}
           POCKETBASE_EMAIL: ${{ secrets.POCKETBASE_EMAIL }}
           POCKETBASE_PASSWORD: ${{ secrets.POCKETBASE_PASSWORD }}
         run: |
-          bun functions/src/index.ts --function=courses --save --batchSize=100 --offset=0 --term=1040
+          bun scraper/src/index.ts --function=courses --save --batchSize=100 --offset=0 --term=1040
      

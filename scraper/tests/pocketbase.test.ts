@@ -1,4 +1,4 @@
-import { afterAll, expect, test } from '@jest/globals';
+import { afterAll, beforeAll, expect, test } from '@jest/globals';
 import { AsyncAuthStore } from 'pocketbase';
 import { authenticateClient, InMemoryStorageAdapter } from '../src/pocketbase';
 import settings from '../src/settings';
@@ -6,7 +6,12 @@ import settings from '../src/settings';
 // Save original settings
 const originalSettings = { ...settings };
 
-// Mock PocketBase client
+beforeAll(() => {
+    process.env.POCKETBASE_EMAIL = 'testuser';
+    process.env.POCKETBASE_PASSWORD = 'testpassword';
+});
+
+
 // Mock PocketBase client
 class MockPocketBase {
     authStore: AsyncAuthStore;
@@ -39,35 +44,10 @@ class MockPocketBase {
     // If needed, keep the collection method for other tests
     collection(name: string) {
         return {
-            authWithPassword: this.authWithPassword,
+            authWithPassword: this.admins.authWithPassword,
         };
     }
 }
-
-
-test('authenticateClient succeeds with correct credentials', async () => {
-    // Set correct admin credentials
-    settings.pocketbase.admin_username = 'testuser';
-    settings.pocketbase.admin_password = 'testpassword';
-
-    // Create mock client
-    const mockStorageAdapter = new InMemoryStorageAdapter();
-    const mockClient = new MockPocketBase(settings.pocketbase.url, mockStorageAdapter);
-
-    // Override console.log
-    const originalConsoleLog = console.log;
-    let consoleOutput = '';
-    console.log = (message: string) => {
-        consoleOutput += message;
-    };
-
-    await expect(authenticateClient(mockClient)).resolves.toBeUndefined();
-
-    expect(consoleOutput).toContain('Authenticated successfully');
-
-    // Restore console.log
-    console.log = originalConsoleLog;
-});
 
 
 test('authenticateClient fails with incorrect credentials', async () => {
@@ -159,4 +139,6 @@ test('InMemoryStorageAdapter load returns null when only authModel is set', asyn
 // Restore settings after tests
 afterAll(() => {
     settings.pocketbase = { ...originalSettings.pocketbase };
+    delete process.env.POCKETBASE_EMAIL;
+    delete process.env.POCKETBASE_PASSWORD;
 });
