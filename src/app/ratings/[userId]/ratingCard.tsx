@@ -156,22 +156,27 @@ export default function RatingCard({ rating, onDelete, onEdit }) {
                 ✏️ Edit
               </button>
             )}
-            <button
-              data-testid="delete-button"
-              onClick={handleDelete}
-              className="text-red-500 hover:text-red-700"
-            >
-              🗑️ Delete
-            </button>
+            
           </>
         )}
         {isEditing && (
-          <button
-            onClick={handleSave}
-            className="text-green-500 hover:text-green-700"
-          >
-            ✅ Save
-          </button>
+          <>
+            <button
+              onClick={handleSave}
+              className="text-green-500 hover:text-green-700"
+            >
+              ✅ Save
+            </button>
+            <button
+                data-testid="delete-button"
+                onClick={handleDelete}
+                className="text-red-500 hover:text-red-700"
+              >
+                🗑️ Delete
+              </button>
+          </>
+          
+          
         )}
       </div>
 
