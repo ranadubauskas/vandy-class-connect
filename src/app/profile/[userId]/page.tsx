@@ -15,6 +15,8 @@ const defaultProfilePic = '/images/user.png'; // Default picture path
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
 
+const CACHE_EXPIRATION_TIME = 5 * 60 * 1000;
+
 export default function Profile() {
     const router = useRouter();
     const params = useParams();
@@ -45,20 +47,36 @@ export default function Profile() {
 
     useEffect(() => {
         let intervalId;
-    
+
         const fetchUser = async () => {
             try {
-                // Fetch user from server
+                const cacheKey = `user_${userId}`;
+                const now = Date.now();
+
+                // **Check if Cached Data Exists and is Valid**
+                const cachedEntry = await localforage.getItem(cacheKey);
+
+                if (cachedEntry) {
+                    const { data: cachedUser, timestamp } = cachedEntry as { data: any; timestamp: number };
+
+                    // **If Cached Data is Not Expired, Use It**
+                    if (now - timestamp < CACHE_EXPIRATION_TIME) {
+                        initializeUserData(cachedUser);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
+                // **Fetch User from Server if No Valid Cache**
                 const fetchedUser = await getUserByID(userId as string);
-    
-                // Validate and set tutor details if available
-                const coursesTutored = fetchedUser?.expand?.courses_tutored || [];
-                setTutorDetails(coursesTutored);
-    
-                // Cache the fetched user data
-                await localforage.setItem(`user_${userId}`, fetchedUser);
-    
-                // Initialize user data
+
+                // **Cache the Fetched User Data with Timestamp**
+                const cacheEntry = {
+                    data: fetchedUser,
+                    timestamp: now,
+                };
+                await localforage.setItem(cacheKey, cacheEntry);
+
                 initializeUserData(fetchedUser);
             } catch (error) {
                 console.error('Error fetching user:', error);
@@ -67,35 +85,39 @@ export default function Profile() {
                 setLoading(false);
             }
         };
-    
+
         const initializeUserData = (user) => {
             const isProfileMine = userId === userData?.id;
             setIsMyProfile(isProfileMine);
-    
+
             setFirstName(user.firstName);
             setLastName(user.lastName);
             setEmail(user.email);
             setGraduationYear(user.graduationYear);
-    
+
             const profilePicId = isProfileMine ? userData?.id : user.id;
             const profilePicName = isProfileMine ? userData?.profilePic : user.profilePic;
-    
+
             if (profilePicName) {
                 setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
             } else {
                 setProfilePicPreviewURL(defaultProfilePic);
             }
             setOtherUser(user);
+
+            // **Set Tutor Details if Available**
+            const coursesTutored = user?.expand?.courses_tutored || [];
+            setTutorDetails(coursesTutored);
         };
-    
+
         if (userVal && userData && userId) {
             // Initial fetch
             fetchUser();
-    
+
             // Set up interval to fetch data every 5 minutes (300,000 milliseconds)
-            intervalId = setInterval(fetchUser, 300000);
+            intervalId = setInterval(fetchUser, CACHE_EXPIRATION_TIME);
         }
-    
+
         // Clean up the interval when the component unmounts or dependencies change
         return () => {
             if (intervalId) {
@@ -103,6 +125,7 @@ export default function Profile() {
             }
         };
     }, [userVal, userData, userId]);
+    
     
 
     const handleViewRatings = () => {
@@ -114,7 +137,6 @@ export default function Profile() {
     const handleResign = async (tutorId: string) => {
         setTutorDetails(tutorDetails.filter((tutor) => tutor.id !== tutorId))
         await deleteTutor(userId, tutorId);
-
     }
 
     const handleSave = async () => {
@@ -153,7 +175,13 @@ export default function Profile() {
                     await getUser();
                 }
                 setIsEditing(false);
-                await localforage.setItem(`user_${userData.id}`, updatedUser);
+
+                // **Update Cache with New Data and Timestamp**
+                const cacheEntry = {
+                    data: updatedUser,
+                    timestamp: Date.now(),
+                };
+                await localforage.setItem(`user_${userData.id}`, cacheEntry);
             } else {
                 console.error('Failed to update user');
                 setError('Failed to update profile. Please try again.');

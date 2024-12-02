@@ -245,21 +245,56 @@ function CourseDetailPageComponent() {
         tutors: [...(course.tutors || []), currentUserId]
       });
 
-      // Fetch user to update courses tutored field
-      const curUser = await pb.collection('users').getOne(currentUserId);
-
       // Update user to include course tutored
       await pb.collection('users').update(currentUserId, {
-        courses_tutored: [...(curUser.courses_tutored || []), course.id]
+        courses_tutored: [...(userData.courses_tutored || []), course.id]
       });
 
       setIsTutor(true);
-      setTutorDetails((prevTutors) => [...(prevTutors || []), curUser]);
       setPopupMessage('Successfully added as a tutor for this course.');
+
+      // **Fetch the updated course data**
+      const updatedCourse = await pb.collection('courses').getOne(course.id, {
+        expand: 'reviews.user,reviews.professors,professors',
+      });
+
+      // **Update the cachedAt timestamp and cache**
+      const now = Date.now();
+      updatedCourse.cachedAt = now;
+      await localforage.setItem(`course_${code}`, updatedCourse);
+
+      // **Initialize state with the updated course data**
+      initializeState(updatedCourse);
+
     } catch (error) {
       console.error('Error adding tutor:', error);
     }
-  }
+  };
+
+  const initializeState = async (courseData) => {
+    setCourse(courseData);
+    setReviews(courseData.expand?.reviews || []);
+    setProfessors(courseData.expand?.professors || []);
+
+    const totalRating = courseData.expand?.reviews.reduce(
+      (sum, review) => sum + (review.rating || 0),
+      0
+    );
+    const avgRating = courseData.expand?.reviews.length
+      ? totalRating / courseData.expand?.reviews.length
+      : courseData.averageRating || 0;
+    setAverageRating(avgRating);
+
+    const fetchedTutors = courseData.tutors || [];
+    const currentTutor = currentUserId ? fetchedTutors.includes(currentUserId) : false;
+    setIsTutor(currentTutor);
+
+    // Fetch tutor user details
+    const fetchedTutorDetails = await fetchTutorDetails(fetchedTutors);
+    setTutorDetails(fetchedTutorDetails);
+  };
+
+
 
   if (loading) {
     return <Loading />
@@ -279,7 +314,7 @@ function CourseDetailPageComponent() {
     const matchesRating = selectedRating > 0 ? review.rating >= selectedRating : true;
 
 
-  const matchesSyllabus = hasSyllabus ? !!review.syllabus : true;
+    const matchesSyllabus = hasSyllabus ? !!review.syllabus : true;
     return matchesProfessor && matchesRating && matchesSyllabus;
   });
 
@@ -289,12 +324,12 @@ function CourseDetailPageComponent() {
   if (filteredReviews.length === 2) {
     gridClasses = "grid grid-cols-1 md:grid-cols-2 gap-6";
   } else if (filteredReviews.length >= 3) {
-    gridClasses = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+    gridClasses = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 lg:gap-8";
   }
 
   return (
     <>
-      <div className="min-h-screen p-6 sm:p-8 lg:p-10 review-card">
+      <div className="min-h-screen p-6 sm:p-8 lg:p-10 review-card max-w-screen-xl mx-auto">
         {/* Back to Search Link */}
         <div className="mb-8">
           <button
@@ -407,7 +442,7 @@ function CourseDetailPageComponent() {
 
           <div className="flex items-center">
             <label htmlFor="syllabusFilter" className="text-white text-lg">
-            Show Reviews with Syllabus Only:
+              Show Reviews with Syllabus Only:
             </label>
             <input
               type="checkbox"
@@ -416,7 +451,7 @@ function CourseDetailPageComponent() {
               onChange={(e) => setHasSyllabus(e.target.checked)}
               className="ml-2 transform scale-150"
             />
-            
+
           </div>
         </div>
 
