@@ -1,0 +1,32 @@
+# .gitlab-ci.yml
+
+stages:
+  - run-course-scraper
+
+variables:
+  # Define environment variables if needed
+  # These can also be set in the GitLab UI as CI/CD variables
+
+run_course_scraper:
+  stage: run-course-scraper
+  script:
+    - echo "Setting up Bun..."
+    - export BUN_VERSION="latest"
+    - export BUN_DOWNLOAD_URL="https://bun.sh/download/$BUN_VERSION/darwin/arm64?avx2=false"
+    - curl -fsSL "$BUN_DOWNLOAD_URL" -o bun.zip
+    - unzip -q bun.zip -d bun
+    - export PATH="$PWD/bun/bin:$PATH"
+    - bun --version
+
+    - echo "Installing dependencies..."
+    - bun install
+
+    - echo "Running Course Scraper..."
+    - bun scraper/src/index.ts --function=courses --save --batchSize=100 --offset=0 --term=1040
+
+  only:
+    - schedules
+
+  tags:
+    - self-hosted
+

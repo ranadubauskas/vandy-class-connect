@@ -44,6 +44,8 @@ export default function Profile() {
 
 
     useEffect(() => {
+        let intervalId;
+    
         const fetchUser = async () => {
             try {
                 // Fetch user from server
@@ -62,7 +64,7 @@ export default function Profile() {
                 console.error('Error fetching user:', error);
                 setError('Failed to load profile data.');
             } finally {
-                setLoading(false); // Ensure loading is set to false regardless of success or failure
+                setLoading(false);
             }
         };
     
@@ -87,9 +89,21 @@ export default function Profile() {
         };
     
         if (userVal && userData && userId) {
+            // Initial fetch
             fetchUser();
+    
+            // Set up interval to fetch data every 5 minutes (300,000 milliseconds)
+            intervalId = setInterval(fetchUser, 300000);
         }
+    
+        // Clean up the interval when the component unmounts or dependencies change
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
     }, [userVal, userData, userId]);
+    
 
     const handleViewRatings = () => {
         if (typeof window !== 'undefined') {
