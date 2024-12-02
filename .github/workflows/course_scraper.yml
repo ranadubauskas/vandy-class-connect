@@ -27,11 +27,4 @@ jobs:
           POCKETBASE_PASSWORD: ${{ secrets.POCKETBASE_PASSWORD }}
         run: |
           bun src/index.ts --function=courses --save --batchSize=100 --offset=0 --term=1040
-          bun src/index.ts --function=courses --save --batchSize=100 --offset=100 --term=1040
-          bun src/index.ts --function=courses --save --batchSize=100 --offset=200 --term=1040
-          bun src/index.ts --function=courses --save --batchSize=100 --offset=300 --term=1040
-          bun src/index.ts --function=courses --save --batchSize=100 --offset=400 --term=1040
-          bun src/index.ts --function=courses --save --batchSize=100 --offset=500 --term=1040
-          bun src/index.ts --function=courses --save --batchSize=100 --offset=600 --term=1040
-          bun src/index.ts --function=courses --save --batchSize=100 --offset=700 --term=1040
-          bun src/index.ts --function=courses --save --batchSize=100 --offset=800 --term=1040
+     
