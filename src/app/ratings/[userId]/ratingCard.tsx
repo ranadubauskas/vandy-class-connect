@@ -43,32 +43,38 @@ export default function RatingCard({ rating, onDelete }) {
     return (
         <div className="relative bg-white rounded-lg shadow-md p-4 my-4 mx-auto max-w-sm sm:max-w-md w-full">
             {/* Actions */}
-            <div className="absolute top-2 right-2 flex flex-col items-end space-y-2">
+            <div className="absolute top-2 right-2 flex flex-col space-y-2">
                 {userVal?.userData?.id === user?.id && (
                     <>
                         {!isEditing && (
-                            <button
-                                onClick={() => setEditing(true)}
-                                className="text-gray-500 hover:text-gray-700"
-                            >
-                                ✏️ Edit
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => setEditing(true)}
+                                    className="text-gray-500 hover:text-gray-700 self-end"
+                                >
+                                    ✏️ Edit
+                                </button>
+                            </>
                         )}
-                        <button
-                            onClick={handleDelete}
-                            className="text-red-500 hover:text-red-700"
-                        >
-                            🗑️ Delete
-                        </button>
+                        
                     </>
                 )}
                 {isEditing && (
-                    <button
-                        onClick={handleSave}
-                        className="text-green-500 hover:text-green-700"
-                    >
-                        ✅ Save
-                    </button>
+                    <>
+                        <button
+                            onClick={handleSave}
+                            className="text-green-500 hover:text-green-700 self-end"
+                        >
+                            ✅ Save
+                        </button>
+
+                        <button
+                            onClick={handleDelete}
+                            className="text-red-500 hover:text-red-700 self-start"
+                            >
+                            🗑️ Delete
+                        </button> 
+                    </>
                 )}
             </div>
 

@@ -3,7 +3,8 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
-import { editUser, getUserByID } from '../../server';
+import { editUser, getUserByID, deleteTutor } from '../../server';
+import RatingBox from '@/app/components/ratingBox';
 import './style.css';
 
 
@@ -18,7 +19,6 @@ export default function Profile() {
     const params = useParams();
 
     const { userId } = params;
-
 
     const userVal = useContext(AuthContext);
 
@@ -37,12 +37,17 @@ export default function Profile() {
     const [otherUser, setOtherUser] = useState(null);
 
     const [isMyProfile, setIsMyProfile] = useState(false);
+    const [showTutors, setShowTutors] = useState(false);
+    const [tutorDetails, setTutorDetails] = useState([]);
+    const [resigning, setResigning] = useState('');
+
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
                 const fetchedUser = await getUserByID(userId as string);
-
+                await setTutorDetails(fetchedUser.expand.courses_tutored)
+                console.log(tutorDetails)
                 const isProfileMine = userId === userData?.id;
                 setIsMyProfile(isProfileMine);
 
@@ -81,10 +86,10 @@ export default function Profile() {
         }
     };
 
-    const handleViewCourses = () => {
-        if (typeof window !== 'undefined') {
-            router.push(`/savedCourses/`);
-        }
+    const handleResign = async (tutorId: string) => {
+        setTutorDetails(tutorDetails.filter((tutor) => tutor.id !== tutorId))
+        await deleteTutor(userId, tutorId);
+
     }
 
     const handleSave = async () => {
@@ -171,9 +176,9 @@ export default function Profile() {
                 <div className="flex mb-4 max-w-5xl w-full">
                     <div className="w-1/3 flex justify-start pl-2">
                         <button
-                            onClick={handleViewCourses}
+                            onClick={() => {setShowTutors(true)}}
                             className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
-                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Courses
+                            View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Tutored Courses
                         </button>
                     </div>
                     <div className="w-1/3 h-12 flex flex-col items-center justify-center">
@@ -191,7 +196,7 @@ export default function Profile() {
                 </div>
             </div>
 
-            <div className="bg-white shadow-lg rounded-lg p-6 max-w-5xl mx-auto justify-center items-center">
+            <div className="bg-white shadow-lg rounded-lg p-6 m-10 max-w-5xl mx-auto justify-center items-center">
                 <div className="text-3xl font-semibold mb-4 text-center">Profile</div>
 
                 {error && <p className="text-red-500 text-center">{error}</p>}
@@ -304,6 +309,67 @@ export default function Profile() {
                 )}
 
             </div>
+
+            {showTutors && (
+                <>
+                    {/* Backdrop Overlay */}
+                    <div
+                    className="fixed inset-0 bg-black opacity-50 z-40"
+                    onClick={() => setShowTutors(false)} // Clicking outside closes the modal
+                    />
+
+                    {/* Popup Modal */}
+                    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+                    <div className="relative bg-white w-full max-w-lg p-6 rounded-lg shadow-lg overflow-auto">
+                        <div className="flex justify-between">
+                        <h3 className="font-semibold text-lg">{isMyProfile ? "My" : firstName + "'s"} Tutored Courses</h3>
+                        <button
+                            aria-label="Close"
+                            onClick={() => setShowTutors(false)}
+                            className="text-gray-600 hover:text-gray-900 transition duration-300"
+                        >
+                            X
+                        </button>
+                        </div>
+                        <div className="p-4">
+                        {tutorDetails.length > 0 ? (
+                            tutorDetails.map((tutor, index) => (
+                            <div
+                                key={index}
+                                className="flex flex-col sm:flex-row items-center justify-between mb-4"
+                            >
+                
+                                <div className="flex items-center">
+                                    <RatingBox rating={tutor.averageRating} size="large"/>
+                                    <div className="flex-grow ml-2">
+                                    <span className="font-semibold">
+                                        {tutor.code}
+                                    </span>
+                                    </div>
+
+                                </div>
+                                <button
+                                onClick={() => {handleResign(tutor.id)}}
+                                className="mt-2 sm:mt-0 text-red-500 hover:text-blue-900 transition duration-300"
+                                >
+                                Resign
+                                </button>
+                            </div>
+                            ))
+                        ) : (
+                            <p>No tutors available for this course</p>
+                        )}
+                        {/* Display copied message */}
+                            {resigning && (
+                            <p className="text-green-500 mt-2 text-center">
+                            {resigning}
+                            </p>
+                        )}
+                        </div>
+                    </div>
+                    </div>
+                </>
+            )}
         </div>
     )
 }

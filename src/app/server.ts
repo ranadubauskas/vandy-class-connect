@@ -224,6 +224,27 @@ export async function deleteReview(reviewId, courseId) {
     }
 }
 
+export async function deleteTutor(userId, courseId) {
+    try {
+        const user = await pb.collection("users").getOne(userId);
+        const updatedCourses = user.courses_tutored.filter(id => id !== courseId);
+        await pb.collection('users').update(userId, {
+            courses_tutored: updatedCourses,
+        });
+
+        const course = await pb.collection("courses").getOne(courseId);
+        const updatedTutors = course.tutors.filter(id => id !== userId);
+
+        await pb.collection('courses').update(courseId, {
+            tutors: updatedTutors
+        });
+        console.log("Successful delete");
+    } catch (err) {
+        console.error("Error review:", err);
+        throw err;
+    }
+}
+
 export async function getAllCourses() {
     try {
         // If subject is provided, filter by subject, otherwise get all courses
@@ -279,12 +300,13 @@ export async function getCourseByID(courseID: string) {
 
 export async function getUserByID(userID: string) {
     try {
-        const fetchedUser = await pb.collection('users').getOne(userID);
+        const fetchedUser = await pb.collection('users').getOne(userID, {
+            expand: 'courses_tutored',
+        });
         return fetchedUser;
     } catch (error) {
         console.error('Error fetching review:', error);
         return null;
     }
 }
-
 
