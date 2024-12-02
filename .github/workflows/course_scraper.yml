@@ -1,0 +1,37 @@
+name: Run Course Scraper
+
+on:
+  schedule:
+    - cron: '0 2 15 8 *'   # August 15th at 2:00 AM UTC
+    - cron: '0 2 15 12 *'  # December 15th at 2:00 AM UTC
+
+jobs:
+  run-course-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 'latest'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run Course Scraper
+        env:
+          POCKETBASE_ADMIN_USERNAME: ${{ secrets.POCKETBASE_EMAIL }}
+          POCKETBASE_ADMIN_PASSWORD: ${{ secrets.POCKETBASE_PASSWORD }}
+        run: |
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=0 --term=1040
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=100 --term=1040
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=200 --term=1040
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=300 --term=1040
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=400 --term=1040
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=500 --term=1040
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=600 --term=1040
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=700 --term=1040
+          bun src/index.ts --function=courses --save --batchSize=100 --offset=800 --term=1040
+

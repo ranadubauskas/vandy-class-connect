@@ -7,6 +7,7 @@ import settings from '../src/settings';
 const originalSettings = { ...settings };
 
 // Mock PocketBase client
+// Mock PocketBase client
 class MockPocketBase {
     authStore: AsyncAuthStore;
 
@@ -18,21 +19,24 @@ class MockPocketBase {
         // Mock implementation
     }
 
-    // Define authWithPassword as an arrow function
-    authWithPassword = async (username: string, password: string) => {
-        if (username === 'testuser' && password === 'testpassword') {
-            // Simulate successful authentication
-            const token = 'testtoken';
-            const model = { id: 'testuser' };
-            // Simulate saving the token and model in the authStore
-            await this.authStore.save(token, model);
-            return { token, user: model };
-        } else {
-            // Simulate authentication failure
-            throw new Error('Invalid credentials');
-        }
+    // Admin authentication mock
+    admins = {
+        authWithPassword: async (username: string, password: string) => {
+            if (username === 'testuser' && password === 'testpassword') {
+                // Simulate successful authentication
+                const token = 'testtoken';
+                const model = { id: 'testuser' };
+                // Simulate saving the token and model in the authStore
+                await this.authStore.save(token, model);
+                return { token, admin: model };
+            } else {
+                // Simulate authentication failure
+                throw new Error('Invalid credentials');
+            }
+        },
     };
 
+    // If needed, keep the collection method for other tests
     collection(name: string) {
         return {
             authWithPassword: this.authWithPassword,
@@ -40,10 +44,11 @@ class MockPocketBase {
     }
 }
 
+
 test('authenticateClient succeeds with correct credentials', async () => {
-    // Set correct credentials
-    settings.pocketbase.username = 'testuser';
-    settings.pocketbase.password = 'testpassword';
+    // Set correct admin credentials
+    settings.pocketbase.admin_username = 'testuser';
+    settings.pocketbase.admin_password = 'testpassword';
 
     // Create mock client
     const mockStorageAdapter = new InMemoryStorageAdapter();
@@ -56,7 +61,7 @@ test('authenticateClient succeeds with correct credentials', async () => {
         consoleOutput += message;
     };
 
-    await expect(authenticateClient(mockClient)).resolves.toThrow();
+    await expect(authenticateClient(mockClient)).resolves.toBeUndefined();
 
     expect(consoleOutput).toContain('Authenticated successfully');
 
@@ -64,10 +69,11 @@ test('authenticateClient succeeds with correct credentials', async () => {
     console.log = originalConsoleLog;
 });
 
+
 test('authenticateClient fails with incorrect credentials', async () => {
-    // Set incorrect credentials
-    settings.pocketbase.username = 'wronguser';
-    settings.pocketbase.password = 'wrongpassword';
+    // Set incorrect admin credentials
+    settings.pocketbase.admin_username = 'wronguser';
+    settings.pocketbase.admin_password = 'wrongpassword';
 
     // Create mock client
     const mockStorageAdapter = new InMemoryStorageAdapter();
@@ -152,5 +158,5 @@ test('InMemoryStorageAdapter load returns null when only authModel is set', asyn
 
 // Restore settings after tests
 afterAll(() => {
-    settings.pocketbase = originalSettings.pocketbase;
+    settings.pocketbase = { ...originalSettings.pocketbase };
 });

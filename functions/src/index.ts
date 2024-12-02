@@ -1,7 +1,10 @@
+import dotenv from 'dotenv';
 import { parseArgs } from "util";
 import courseScraper from "./functions/course-scraper";
 import subjectScraper from "./functions/subject-scraper";
 import termScraper from "./functions/term-scraper";
+
+dotenv.config();
 
 //  Define the functions that can be run
 const functions = {

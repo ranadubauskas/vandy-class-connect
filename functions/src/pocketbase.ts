@@ -46,12 +46,23 @@ client.autoCancellation(false);
  * @param clientInstance Optional client instance for testing
  */
 export async function authenticateClient(clientInstance = client) {
-  const { username, password } = settings.pocketbase; // Access credentials at runtime
+  const admin_username = process.env.POCKETBASE_ADMIN_USERNAME;
+  const admin_password = process.env.POCKETBASE_ADMIN_PASSWORD;
+
+  if (!admin_username || !admin_password) {
+    console.error("PocketBase credentials are not set in environment variables.");
+    throw new Error("PocketBase credentials are missing.");
+  }
+  
   try {
-    await clientInstance.collection("users").authWithPassword(username, password);
+    await clientInstance.admins.authWithPassword(
+      admin_username,
+      admin_password
+    );
+    console.log("Authenticated successfully");
   } catch (error) {
     console.error("Authentication failed", error);
-    throw error; // Propagate the error if authentication fails
+    throw error;
   }
 }
 
