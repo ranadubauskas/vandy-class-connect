@@ -10,7 +10,7 @@ https://vandy-class-connect-ls4a.vercel.app
 1. cd scraper
 2. bun src/index.ts --function=courses 
 
-**Course scraper is scheduled to run 2x a year before the start of each semester**
+**Course scraper is [scheduled](https://gitlab.com/ranadubauskas1/vandy-class-connect/-/pipeline_schedules) to run 2x a year before the start of each semester**
 <img width="1070" alt="Screenshot 2024-12-02 at 5 26 34 PM" src="https://github.com/user-attachments/assets/835fee82-3850-49ef-af70-2f68e0b34a22">
 
 
