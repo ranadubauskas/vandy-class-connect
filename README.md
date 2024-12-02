@@ -6,6 +6,11 @@ https://vandy-class-connect-ls4a.vercel.app
 2. npm run dev
 3. Open: http://localhost:3000
 
+## Run Course Scraper:
+1. Navigate to 'Actions Tab'
+2. Click 'Run Course Scraper' workflow
+**Course scraper is scheduled to run 2x a year before the start of each semester**
+
 ## Testing the Application:
 ### White Box Testing:
 #### Framework:
