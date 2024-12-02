@@ -407,7 +407,7 @@ function CourseDetailPageComponent() {
 
           <div className="flex items-center">
             <label htmlFor="syllabusFilter" className="text-white text-lg">
-              Filter by Has Syllabus
+            Show Reviews with Syllabus Only:
             </label>
             <input
               type="checkbox"

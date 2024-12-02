@@ -17,6 +17,9 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: 'latest'
+          bun-use-avx2: 'false'         # Disable AVX2 optimization
+          bun-platform: 'darwin'        # Specify platform if necessary
+          bun-arch: 'arm64'             # Specify architecture if on Apple Silicon
 
       - name: Install dependencies
         run: bun install

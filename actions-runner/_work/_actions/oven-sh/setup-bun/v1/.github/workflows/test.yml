@@ -1,0 +1,125 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  setup-bun:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        bun-version:
+          - latest
+          - canary
+          - "1.1.0"
+          - "1.x"
+          - "1"
+          - "> 1.0.0"
+          - "< 2"
+          # Disable <sha> support for now. This is because Github Artifacts
+          # expire after 90 days, and we don't have another source of truth yet.
+          # - "822a00c4d508b54f650933a73ca5f4a3af9a7983" # 1.0.0 commit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: ./
+        id: setup_bun
+        with:
+          bun-version: ${{ matrix.bun-version }}
+
+      - name: Run Bun
+        id: run_bun
+        run: |
+          bun --version
+
+  setup-bun-from-package-json-version:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        packageManager:
+          - bun@1.1.0
+          - yarn@bun@1.1.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup package.json
+        shell: bash
+        run: |
+          echo "$(jq '. += {"packageManager": "${{ matrix.packageManager }}"}' package.json)" > package.json
+
+      - name: Setup Bun
+        uses: ./
+
+      - name: Run Bun
+        id: bun
+        shell: bash
+        run: |
+          bun --version
+          echo "version=$(bun --version)" >> $GITHUB_OUTPUT
+
+      - name: Check version
+        shell: bash
+        run: |
+          if [[ "${{ steps.bun.outputs.version }}" == "1.1.0" ]]; then
+            echo "Version is 1.1.0"
+          else
+            echo "Expected version to be 1.1.0, got ${{ steps.bun.outputs.version }}"
+            exit 1
+          fi
+  setup-bun-from-tool-versions:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        content:
+          - "bun 1.1.0"
+          - "bun1.1.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup package.json
+        shell: bash
+        run: |
+          echo "bun ${{ matrix.content }}" > .tool-versions
+
+      - name: Setup Bun
+        uses: ./
+
+      - name: Run Bun
+        id: bun
+        shell: bash
+        run: |
+          bun --version
+          echo "version=$(bun --version)" >> $GITHUB_OUTPUT
+
+      - name: Check version
+        shell: bash
+        run: |
+          if [[ "${{ steps.bun.outputs.version }}" == "1.1.0" ]]; then
+            echo "Version is 1.1.0"
+          else
+            echo "Expected version to be 1.1.0, got ${{ steps.bun.outputs.version }}"
+            exit 1
+          fi

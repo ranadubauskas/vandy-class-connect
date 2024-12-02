@@ -1,11 +1,11 @@
 'use client';
 
+import RatingBox from '@/app/components/ratingBox';
 import localforage from 'localforage';
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
-import { editUser, getUserByID, deleteTutor } from '../../server';
-import RatingBox from '@/app/components/ratingBox';
+import { deleteTutor, editUser, getUserByID } from '../../server';
 import './style.css';
 
 
@@ -46,19 +46,17 @@ export default function Profile() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                // const cachedUser = await localforage.getItem(`user_${userId}`);
-                // if (cachedUser) {
-                //     initializeUserData(cachedUser);
-                //     setLoading(false);
-                //     return;
-                // }
                 // Fetch user from server
                 const fetchedUser = await getUserByID(userId as string);
-                if(fetchedUser.expand.courses_tutored) {
-                    await setTutorDetails(fetchedUser.expand.courses_tutored)
-                }
-                console.log(tutorDetails)                // Cache the fetched user data
+    
+                // Validate and set tutor details if available
+                const coursesTutored = fetchedUser?.expand?.courses_tutored || [];
+                setTutorDetails(coursesTutored);
+    
+                // Cache the fetched user data
                 await localforage.setItem(`user_${userId}`, fetchedUser);
+    
+                // Initialize user data
                 initializeUserData(fetchedUser);
             } catch (error) {
                 console.error('Error fetching user:', error);
@@ -67,19 +65,19 @@ export default function Profile() {
                 setLoading(false); // Ensure loading is set to false regardless of success or failure
             }
         };
-
+    
         const initializeUserData = (user) => {
             const isProfileMine = userId === userData?.id;
             setIsMyProfile(isProfileMine);
-
+    
             setFirstName(user.firstName);
             setLastName(user.lastName);
             setEmail(user.email);
             setGraduationYear(user.graduationYear);
-
+    
             const profilePicId = isProfileMine ? userData?.id : user.id;
             const profilePicName = isProfileMine ? userData?.profilePic : user.profilePic;
-
+    
             if (profilePicName) {
                 setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
             } else {
@@ -87,6 +85,7 @@ export default function Profile() {
             }
             setOtherUser(user);
         };
+    
         if (userVal && userData && userId) {
             fetchUser();
         }
@@ -350,7 +349,7 @@ export default function Profile() {
                             >
                 
                                 <div className="flex items-center transform hover:scale-110 transition-transform duration-200" onClick={() => router.push(`/course?code=${tutor.code}&id=${tutor.id}`)}>
-                                    <RatingBox rating={tutor.averageRating} size="large"/>
+                                    <RatingBox rating={tutor.averageRating} size="small"/>
                                     <div className="flex-grow ml-2">
                                     <span className="font-semibold hover:text-blue-700 hover:underline">
                                         {tutor.code}

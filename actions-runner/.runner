@@ -1,0 +1,9 @@
+﻿{
+  "agentId": 2,
+  "agentName": "Ranas-MacBook-Pro-2",
+  "poolId": 1,
+  "poolName": "Default",
+  "serverUrl": "https://pipelinesghubeus14.actions.githubusercontent.com/7zQkhLqh5TtXGBkSFFfTYJezSeMs5ifnsrhtz2k4c5gVSt5NyN/",
+  "gitHubUrl": "https://github.com/ranadubauskas/vandy-class-connect",
+  "workFolder": "_work"
+}

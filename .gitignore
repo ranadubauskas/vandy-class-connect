@@ -36,3 +36,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+./actions-runner
+actions-runner/_work/vandy-class-connect/vandy-class-connect/
+

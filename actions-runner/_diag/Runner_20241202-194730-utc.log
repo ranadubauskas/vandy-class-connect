@@ -1,0 +1,168 @@
+[2024-12-02 19:47:30Z INFO HostContext] No proxy settings were found based on environmental variables (http_proxy/https_proxy/HTTP_PROXY/HTTPS_PROXY)
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO HostContext] Well known config file 'Credentials': '/Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO HostContext] Well known config file 'Runner': '/Users/ranadubauskas/vandy-class-connect/actions-runner/.runner'
+[2024-12-02 19:47:30Z INFO Listener] Runner is built for OSX (X64) - osx-x64.
+[2024-12-02 19:47:30Z INFO Listener] RuntimeInformation: Darwin 23.2.0 Darwin Kernel Version 23.2.0: Wed Nov 15 21:53:18 PST 2023; root:xnu-10002.61.3~2/RELEASE_ARM64_T6000.
+[2024-12-02 19:47:30Z INFO Listener] Version: 2.321.0
+[2024-12-02 19:47:30Z INFO Listener] Commit: e249007931b7c8e857797fa259c167f0bd4f997a
+[2024-12-02 19:47:30Z INFO Listener] Culture: en-US
+[2024-12-02 19:47:30Z INFO Listener] UI Culture: en-US
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO Listener] Validating directory permissions for: '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO CommandLineParser] Parse
+[2024-12-02 19:47:30Z INFO CommandLineParser] Parsing 1 args
+[2024-12-02 19:47:30Z INFO CommandLineParser] parsing argument
+[2024-12-02 19:47:30Z INFO CommandLineParser] HasArgs: False
+[2024-12-02 19:47:30Z INFO CommandLineParser] Adding Command: run
+[2024-12-02 19:47:30Z INFO Listener] Arguments parsed
+[2024-12-02 19:47:30Z INFO Runner] ExecuteCommand
+[2024-12-02 19:47:30Z INFO ConfigurationStore] currentAssemblyLocation: /Users/ranadubauskas/vandy-class-connect/actions-runner/bin/Runner.Listener.dll
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO ConfigurationStore] binPath: /Users/ranadubauskas/vandy-class-connect/actions-runner/bin
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO ConfigurationStore] RootFolder: /Users/ranadubauskas/vandy-class-connect/actions-runner
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO HostContext] Well known config file 'Runner': '/Users/ranadubauskas/vandy-class-connect/actions-runner/.runner'
+[2024-12-02 19:47:30Z INFO ConfigurationStore] ConfigFilePath: /Users/ranadubauskas/vandy-class-connect/actions-runner/.runner
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO HostContext] Well known config file 'Credentials': '/Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials'
+[2024-12-02 19:47:30Z INFO ConfigurationStore] CredFilePath: /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO HostContext] Well known config file 'MigratedCredentials': '/Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_migrated'
+[2024-12-02 19:47:30Z INFO ConfigurationStore] MigratedCredFilePath: /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_migrated
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO HostContext] Well known config file 'Service': '/Users/ranadubauskas/vandy-class-connect/actions-runner/.service'
+[2024-12-02 19:47:30Z INFO ConfigurationStore] ServiceConfigFilePath: /Users/ranadubauskas/vandy-class-connect/actions-runner/.service
+[2024-12-02 19:47:30Z INFO CommandSettings] Flag 'help': 'False'
+[2024-12-02 19:47:30Z INFO CommandSettings] Flag 'version': 'False'
+[2024-12-02 19:47:30Z INFO CommandSettings] Flag 'commit': 'False'
+[2024-12-02 19:47:30Z INFO CommandSettings] Flag 'check': 'False'
+[2024-12-02 19:47:30Z INFO CommandSettings] Command 'configure': 'False'
+[2024-12-02 19:47:30Z INFO CommandSettings] Command 'remove': 'False'
+[2024-12-02 19:47:30Z INFO CommandSettings] Command 'warmup': 'False'
+[2024-12-02 19:47:30Z INFO ConfigurationManager] LoadSettings
+[2024-12-02 19:47:30Z INFO ConfigurationStore] IsConfigured()
+[2024-12-02 19:47:30Z INFO ConfigurationStore] IsConfigured: True
+[2024-12-02 19:47:30Z INFO ConfigurationManager] Is configured: True
+[2024-12-02 19:47:30Z INFO ConfigurationStore] Read setting file: 319 chars
+[2024-12-02 19:47:30Z INFO ConfigurationManager] Settings Loaded
+[2024-12-02 19:47:30Z INFO ConfigurationStore] IsServiceConfigured()
+[2024-12-02 19:47:30Z INFO ConfigurationStore] IsServiceConfigured: False
+[2024-12-02 19:47:30Z INFO CommandSettings] Command 'run': 'True'
+[2024-12-02 19:47:30Z INFO ConfigurationStore] IsConfigured()
+[2024-12-02 19:47:30Z INFO ConfigurationStore] IsConfigured: True
+[2024-12-02 19:47:30Z INFO ConfigurationManager] Is configured: True
+[2024-12-02 19:47:30Z INFO Runner] Could not parse the argument value '' for StartupType. Defaulting to Manual
+[2024-12-02 19:47:30Z INFO Runner] Set runner startup type - Manual
+[2024-12-02 19:47:30Z INFO CommandSettings] Flag 'once': 'False'
+[2024-12-02 19:47:30Z INFO CommandSettings] Flag 'once': 'False'
+[2024-12-02 19:47:30Z INFO Runner] RunAsync
+[2024-12-02 19:47:30Z INFO ConfigurationManager] LoadSettings
+[2024-12-02 19:47:30Z INFO ConfigurationStore] IsConfigured()
+[2024-12-02 19:47:30Z INFO ConfigurationStore] IsConfigured: True
+[2024-12-02 19:47:30Z INFO ConfigurationManager] Is configured: True
+[2024-12-02 19:47:30Z INFO ConfigurationManager] Settings Loaded
+[2024-12-02 19:47:30Z INFO MessageListener] {
+  "AgentId": 2,
+  "AgentName": "Ranas-MacBook-Pro-2",
+  "PoolId": 1,
+  "PoolName": "Default",
+  "ServerUrl": "https://pipelinesghubeus14.actions.githubusercontent.com/7zQkhLqh5TtXGBkSFFfTYJezSeMs5ifnsrhtz2k4c5gVSt5NyN/",
+  "GitHubUrl": "https://github.com/ranadubauskas/vandy-class-connect",
+  "WorkFolder": "_work"
+}
+[2024-12-02 19:47:30Z INFO MessageListener] Loading Credentials
+[2024-12-02 19:47:30Z INFO ConfigurationStore] HasCredentials()
+[2024-12-02 19:47:30Z INFO ConfigurationStore] stored True
+[2024-12-02 19:47:30Z INFO CredentialManager] GetCredentialProvider
+[2024-12-02 19:47:30Z INFO CredentialManager] Creating type OAuth
+[2024-12-02 19:47:30Z INFO CredentialManager] Creating credential type: OAuth
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:47:30Z INFO HostContext] Well known directory 'Root': '/Users/ranadubauskas/vandy-class-connect/actions-runner'
+[2024-12-02 19:47:30Z INFO HostContext] Well known config file 'RSACredentials': '/Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_rsaparams'
+[2024-12-02 19:47:30Z INFO RSAFileKeyManager] Loading RSA key parameters from file /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_rsaparams
+[2024-12-02 19:47:30Z INFO MessageListener] Attempt to create session.
+[2024-12-02 19:47:30Z INFO MessageListener] Connecting to the Runner Server...
+[2024-12-02 19:47:30Z INFO RunnerServer] EstablishVssConnection
+[2024-12-02 19:47:30Z INFO RunnerServer] Establish connection with 100 seconds timeout.
+[2024-12-02 19:47:30Z INFO GitHubActionsService] Starting operation Location.GetConnectionData
+[2024-12-02 19:47:30Z INFO RunnerServer] EstablishVssConnection
+[2024-12-02 19:47:30Z INFO RunnerServer] Establish connection with 60 seconds timeout.
+[2024-12-02 19:47:30Z INFO GitHubActionsService] Starting operation Location.GetConnectionData
+[2024-12-02 19:47:30Z INFO RunnerServer] EstablishVssConnection
+[2024-12-02 19:47:30Z INFO RunnerServer] Establish connection with 60 seconds timeout.
+[2024-12-02 19:47:30Z INFO GitHubActionsService] Starting operation Location.GetConnectionData
+[2024-12-02 19:47:30Z INFO GitHubActionsService] Finished operation Location.GetConnectionData
+[2024-12-02 19:47:30Z INFO GitHubActionsService] Finished operation Location.GetConnectionData
+[2024-12-02 19:47:30Z INFO GitHubActionsService] Finished operation Location.GetConnectionData
+[2024-12-02 19:47:31Z INFO MessageListener] VssConnection created
+[2024-12-02 19:47:31Z INFO Terminal] WRITE LINE: 
+[2024-12-02 19:47:31Z INFO Terminal] WRITE LINE: 
+[2024-12-02 19:47:31Z INFO RSAFileKeyManager] Loading RSA key parameters from file /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_rsaparams
+[2024-12-02 19:47:31Z INFO RSAFileKeyManager] Loading RSA key parameters from file /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_rsaparams
+[2024-12-02 19:47:31Z INFO GitHubActionsService] AAD Correlation ID for this token request: Unknown
+[2024-12-02 19:47:31Z INFO MessageListener] Session created.
+[2024-12-02 19:47:31Z INFO Terminal] WRITE LINE: Current runner version: '2.321.0'
+[2024-12-02 19:47:31Z INFO Terminal] WRITE LINE: 2024-12-02 19:47:31Z: Listening for Jobs
+[2024-12-02 19:47:31Z INFO JobDispatcher] Set runner/worker IPC timeout to 30 seconds.
+[2024-12-02 19:47:31Z INFO RSAFileKeyManager] Loading RSA key parameters from file /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_rsaparams
+[2024-12-02 19:47:31Z INFO GitHubActionsService] AAD Correlation ID for this token request: Unknown
+[2024-12-02 19:55:43Z INFO MessageListener] Message '3892571247106744498' received from session '1a3f63e6-3c32-45a4-b111-4c719a658dd4'.
+[2024-12-02 19:55:43Z INFO ConfigurationStore] HasCredentials()
+[2024-12-02 19:55:43Z INFO ConfigurationStore] stored True
+[2024-12-02 19:55:43Z INFO CredentialManager] GetCredentialProvider
+[2024-12-02 19:55:43Z INFO CredentialManager] Creating type OAuth
+[2024-12-02 19:55:43Z INFO CredentialManager] Creating credential type: OAuth
+[2024-12-02 19:55:43Z INFO RSAFileKeyManager] Loading RSA key parameters from file /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_rsaparams
+[2024-12-02 19:55:43Z INFO ActionsRunServer] EstablishVssConnection
+[2024-12-02 19:55:43Z INFO ActionsRunServer] Establish connection with 100 seconds timeout.
+[2024-12-02 19:55:43Z INFO GitHubActionsService] Starting operation Location.GetConnectionData
+[2024-12-02 19:55:43Z INFO GitHubActionsService] Finished operation Location.GetConnectionData
+[2024-12-02 19:55:43Z INFO RSAFileKeyManager] Loading RSA key parameters from file /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_rsaparams
+[2024-12-02 19:55:43Z INFO RSAFileKeyManager] Loading RSA key parameters from file /Users/ranadubauskas/vandy-class-connect/actions-runner/.credentials_rsaparams
+[2024-12-02 19:55:43Z INFO GitHubActionsService] AAD Correlation ID for this token request: Unknown
+[2024-12-02 19:55:43Z INFO JobDispatcher] Job request 7 for plan c285fa5f-5db7-4e02-aba2-52fa37762771 job 2adc075f-e663-5f4b-ac83-c7badf1f7575 received.
+[2024-12-02 19:55:43Z INFO JobDispatcher] Pull OrchestrationId c285fa5f-5db7-4e02-aba2-52fa37762771.run-course-scraper.__default from JWT claims
+[2024-12-02 19:55:43Z INFO MessageListener] Received job status event. JobState: Busy
+[2024-12-02 19:55:43Z INFO MessageListener] _getMessagesTokenSource is already disposed.
+[2024-12-02 19:55:43Z INFO Terminal] WRITE LINE: 2024-12-02 19:55:43Z: Running job: run-course-scraper
+[2024-12-02 19:55:43Z INFO JobDispatcher] Start renew job request 7 for job 2adc075f-e663-5f4b-ac83-c7badf1f7575.
+[2024-12-02 19:55:44Z INFO JobDispatcher] Successfully renew job request 7, job is valid till 12/2/2024 8:05:44 PM
+[2024-12-02 19:55:44Z INFO HostContext] Well known directory 'Bin': '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper] Starting process:
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   File name: '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin/Runner.Worker'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   Arguments: 'spawnclient 151 154'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   Working directory: '/Users/ranadubauskas/vandy-class-connect/actions-runner/bin'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   Require exit code zero: 'False'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   Encoding web name:  ; code page: ''
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   Force kill process on cancellation: 'True'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   Redirected STDIN: 'False'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   Persist current code page: 'False'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   Keep redirected STDIN open: 'False'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper]   High priority process: 'True'
+[2024-12-02 19:55:44Z INFO ProcessInvokerWrapper] Process started with process id 52293, waiting for process exit.
+[2024-12-02 19:55:44Z INFO JobDispatcher] Send job request message to worker for job 2adc075f-e663-5f4b-ac83-c7badf1f7575.
+[2024-12-02 19:55:44Z INFO ProcessChannel] Sending message of length 24621, with hash '30be5c39af23ee569eeceb638563e2d0317c88a823ba586af6b7bb17c0cc3730'
+[2024-12-02 19:55:44Z INFO JobNotification] Entering JobStarted Notification
+[2024-12-02 19:55:44Z INFO JobNotification] Entering StartMonitor
+[2024-12-02 19:56:29Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2024-12-02 19:56:29Z INFO ProcessInvokerWrapper] STDOUT/STDERR stream read finished.
+[2024-12-02 19:56:29Z INFO ProcessInvokerWrapper] Finished process 52293 with exit code 102, and elapsed time 00:00:45.3778350.
+[2024-12-02 19:56:29Z INFO JobDispatcher] Worker finished for job 2adc075f-e663-5f4b-ac83-c7badf1f7575. Code: 102
+[2024-12-02 19:56:29Z INFO JobDispatcher] finish job request for job 2adc075f-e663-5f4b-ac83-c7badf1f7575 with result: Failed
+[2024-12-02 19:56:29Z INFO Terminal] WRITE LINE: 2024-12-02 19:56:29Z: Job run-course-scraper completed with result: Failed
+[2024-12-02 19:56:29Z INFO JobDispatcher] Stop renew job request for job 2adc075f-e663-5f4b-ac83-c7badf1f7575.
+[2024-12-02 19:56:29Z INFO JobDispatcher] job renew has been cancelled, stop renew job request 7.
+[2024-12-02 19:56:29Z INFO JobNotification] Entering JobCompleted Notification
+[2024-12-02 19:56:29Z INFO JobNotification] Entering EndMonitor
+[2024-12-02 19:56:29Z INFO MessageListener] Received job status event. JobState: Online

@@ -107,7 +107,7 @@ export default function Ratings() {
                             />
                         ))
                     ) : (
-                        <p className="text-center col-span-full">No reviews available.</p>
+                        <div className="text-center col-span-full text-white text-2xl">No reviews available.</div>
                     )}
                 </div>
             )}
