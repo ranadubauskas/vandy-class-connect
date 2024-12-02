@@ -21,7 +21,10 @@ export default function Admin() {
         const response = await pb.collection('reviewReports').getList(1, 50, {
           expand: 'review,reporter,reviewCreator',
         });
-        setReports(response.items);
+        const validReports = response.items
+          .filter((report) => report.expand?.review?.id)
+          .sort((a, b) => (b.expand?.reporter?.length || 0) - (a.expand?.reporter?.length || 0));
+        setReports(validReports);
       } catch (error) {
         console.error("Failed to fetch review reports:", error);
       }
@@ -33,9 +36,7 @@ export default function Admin() {
     const fetchCookies = async () => {
       try {
         const cookies = await getUserCookies();
-        if (cookies) {
-          console.log('cookies', cookies);
-        } else {
+        if (!cookies) {
           console.log("No user cookies found");
         }
       } catch (error) {
@@ -84,6 +85,9 @@ export default function Admin() {
                 <div className="flex space-x-2">
                   <Tooltip title="Approve Review">
                     <button
+                      aria-label="Approve Review"
+                      data-testid="approve-button"
+                      data-report-id={report.id}
                       onClick={() => approveReview(report.id)}
                       className="text-green-500 hover:text-green-700 transition duration-300"
                     >
@@ -92,6 +96,9 @@ export default function Admin() {
                   </Tooltip>
                   <Tooltip title="Delete Review">
                     <button
+                      aria-label="Delete Review"
+                      data-testid="delete-button"
+                      data-review-id={report.expand.review.id}
                       onClick={() => deleteReview(report.expand.review.id)}
                       className="text-red-500 hover:text-red-700 transition duration-300"
                     >
@@ -126,12 +133,12 @@ export default function Admin() {
                 <strong>Reporter Names:</strong>{" "}
                 {report.expand?.reporter && report.expand.reporter.length > 0
                   ? report.expand.reporter.map((rep) => (
-                      <Link key={rep.id} href={`/profile/${rep.id}`}>
-                        <span className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
-                          {`${rep.firstName} ${rep.lastName}`}
-                        </span>
-                      </Link>
-                    ))
+                    <Link key={rep.id} href={`/profile/${rep.id}`}>
+                      <span className="font-semibold hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
+                        {`${rep.firstName} ${rep.lastName}`}
+                      </span>
+                    </Link>
+                  ))
                     .reduce((prev, curr) => [prev, ", ", curr])
                   : "Unknown"}
               </p>
@@ -183,12 +190,12 @@ export default function Admin() {
                   <td className="py-2 px-4 border-b text-center">
                     {report.expand?.reporter && report.expand.reporter.length > 0
                       ? report.expand.reporter.map((rep) => (
-                          <Link key={rep.id} href={`/profile/${rep.id}`}>
-                            <span className="hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
-                              {`${rep.firstName} ${rep.lastName}`}
-                            </span>
-                          </Link>
-                        ))
+                        <Link key={rep.id} href={`/profile/${rep.id}`}>
+                          <span className="hover:text-blue-700 transform hover:scale-110 hover:underline transition-transform duration-200">
+                            {`${rep.firstName} ${rep.lastName}`}
+                          </span>
+                        </Link>
+                      ))
                         .reduce((prev, curr) => [prev, ", ", curr])
                       : "Unknown"}
                   </td>
@@ -199,6 +206,9 @@ export default function Admin() {
                     <div className="flex justify-center items-center space-x-2">
                       <Tooltip title="Approve Review">
                         <button
+                          aria-label="Approve Review"
+                          data-report-id={report.id}
+                          data-testid="approve-button"
                           onClick={() => approveReview(report.id)}
                           className="text-green-500 hover:text-green-700 transition duration-300"
                         >
@@ -207,6 +217,9 @@ export default function Admin() {
                       </Tooltip>
                       <Tooltip title="Delete Review">
                         <button
+                          aria-label="Delete Review"
+                          data-testid="delete-button"
+                          data-review-id={report.expand.review.id}
                           onClick={() => deleteReview(report.expand.review.id)}
                           className="text-red-500 hover:text-red-700 transition duration-300"
                         >

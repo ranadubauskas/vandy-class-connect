@@ -105,10 +105,7 @@ export default {
           //  Important: A timeout is needed to prevent 429
           setTimeout(async () => {
             try {
-              console.log(`Saving course: ${course.name}`);
-
               await client.collection("courses").create(course);
-
               resolve();
             } catch (error) {
               console.error(JSON.stringify(error, null, 2));

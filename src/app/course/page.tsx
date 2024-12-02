@@ -1,9 +1,10 @@
 'use client';
 import { Tooltip } from "@mui/material";
+import localforage from 'localforage';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import { FaChalkboardTeacher, FaFileDownload, FaFlag, FaUsers } from 'react-icons/fa';
+import { FaBookmark, FaChalkboardTeacher, FaFileDownload, FaFlag, FaRegBookmark, FaUsers } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
 import Loading from "../components/Loading";
 import RatingBox from '../components/ratingBox';
@@ -12,6 +13,11 @@ import { useAuth } from "../lib/contexts";
 import pb from "../lib/pocketbaseClient";
 
 pb.autoCancellation(false);
+
+interface CachedData {
+  savedCourses: { id: string }[];
+  cachedAt: number;
+}
 
 function CourseDetailPageComponent() {
 
@@ -31,54 +37,164 @@ function CourseDetailPageComponent() {
   const [selectedProfessor, setSelectedProfessor] = useState("");
   const [copiedEmailMessage, setCopiedEmailMessage] = useState('');
   const [selectedRating, setSelectedRating] = useState(0);
+  const [hasSyllabus, setHasSyllabus] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const currentUserId = userData?.id;
 
   useEffect(() => {
-    if (!code) return; // Fetch course details even if not logged in
+    if (!code) return;
     const fetchCourse = async () => {
+      const cacheExpiry = 5 * 60 * 1000; // 5 minutes in milliseconds
+      const now = Date.now();
+      let foundCourse = null;
+
       try {
+        foundCourse = await localforage.getItem(`course_${code}`);
+        if (foundCourse && now - foundCourse.cachedAt < cacheExpiry) {
+          initializeState(foundCourse);
+          // Use the cached course data
+          setCourse(foundCourse);
+          setLoading(false);
+          return;
+        }
         const fetchedCourse = await pb.collection('courses').getFirstListItem(
           `code = "${code}"`, // Use a filter to match the course code
           {
             expand: 'reviews.user,reviews.professors,professors', // Expand relationships as needed
           }
         );
-        setCourse(fetchedCourse);
-
         if (fetchedCourse.syllabus) {
           fetchedCourse.syllabus = pb.files.getUrl(fetchedCourse, fetchedCourse.syllabus);
         }
-
-        const fetchedReviews = fetchedCourse.expand?.reviews || [];
-        setReviews(fetchedReviews);
-
-        const totalRating = fetchedReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-        const avgRating = fetchedReviews.length ? totalRating / fetchedReviews.length : fetchedCourse.averageRating || 0;
-        setAverageRating(avgRating);
-
-        const fetchedTutors = fetchedCourse.tutors || [];
-        const currentTutor = currentUserId ? fetchedTutors.includes(currentUserId) : false;
-        setIsTutor(currentTutor);
-
-        // Fetch tutor user details
-        const tutorPromises = fetchedTutors.map(async (userId) => {
-          const user = await pb.collection('users').getOne(userId);
-          return user;
-        });
-        const fetchedTutorDetails = await Promise.all(tutorPromises);
-        setTutorDetails(fetchedTutorDetails);
-
-        const professorList = fetchedCourse.expand?.professors || [];
-        setProfessors(professorList);
+        fetchedCourse.cachedAt = now;
+        await localforage.setItem(`course_${code}`, fetchedCourse);
+        initializeState(fetchedCourse);
       } catch (error) {
         console.error('Error fetching course:', error);
       } finally {
         setLoading(false);
       }
     };
+    const initializeState = async (courseData) => {
+      setCourse(courseData);
+      setReviews(courseData.expand?.reviews || []);
+      setProfessors(courseData.expand?.professors || []);
+
+      const totalRating = courseData.expand?.reviews.reduce(
+        (sum, review) => sum + (review.rating || 0),
+        0
+      );
+      const avgRating = courseData.expand?.reviews.length
+        ? totalRating / courseData.expand?.reviews.length
+        : courseData.averageRating || 0;
+      setAverageRating(avgRating);
+
+      const fetchedTutors = courseData.tutors || [];
+      const currentTutor = currentUserId ? fetchedTutors.includes(currentUserId) : false;
+      setIsTutor(currentTutor);
+
+      // Fetch tutor user details
+      const fetchedTutorDetails = await fetchTutorDetails(fetchedTutors);
+      setTutorDetails(fetchedTutorDetails);
+    };
+
     fetchCourse();
   }, [code, currentUserId]);
+
+
+  const fetchTutorDetails = async (tutors) => {
+    if (!tutors.length) return [];
+    const tutorPromises = tutors.map(async (userId) => {
+      try {
+        return await pb.collection('users').getOne(userId);
+      } catch (error) {
+        console.error('Error fetching tutor details:', error);
+        return null;
+      }
+    });
+    return (await Promise.all(tutorPromises)).filter(Boolean);
+  };
+
+  const toggleSaveCourse = async (courseId) => {
+    if (!currentUserId) {
+      setPopupMessage('You must be logged in to save this course.');
+      return;
+    }
+
+    try {
+      // Fetch the user's current saved courses from PocketBase
+      const userRecord = await pb.collection('users').getOne(currentUserId, { autoCancellation: false });
+
+      let updatedSavedCourses;
+
+      if (isSaved) {
+        // Remove the course from savedCourses
+        updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
+      } else {
+        // Add the course to savedCourses
+        updatedSavedCourses = [...(userRecord.savedCourses || []), courseId];
+      }
+
+      // Update the user's saved courses in PocketBase
+      await pb.collection('users').update(currentUserId, {
+        savedCourses: updatedSavedCourses,
+      });
+
+      // Update the saved courses in localforage
+      const cacheKey = `saved_courses_${currentUserId}`;
+      const now = Date.now();
+
+      // Fetch current cached data if available
+      let cachedData: CachedData | null = await localforage.getItem(cacheKey);
+      if (!cachedData) {
+        cachedData = { savedCourses: [], cachedAt: now };
+      }
+
+      let updatedCachedCourses;
+      if (isSaved) {
+        // Remove course from cache
+        updatedCachedCourses = cachedData.savedCourses.filter(course => course.id !== courseId);
+      } else {
+        // Fetch course details to add to cache
+        const newCourse = await pb.collection('courses').getOne(courseId, { autoCancellation: false });
+        updatedCachedCourses = [...cachedData.savedCourses, { id: newCourse.id }];
+      }
+
+      // Update the cache in localforage
+      await localforage.setItem(cacheKey, {
+        savedCourses: updatedCachedCourses,
+        cachedAt: now,
+      });
+
+      // Update the isSaved state
+      setIsSaved(!isSaved);
+
+    } catch (error) {
+      console.error('Error toggling save state:', error);
+    }
+  };
+
+
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (!currentUserId || !course?.id) return;
+
+      try {
+        // Fetch the user's saved courses from PocketBase
+        const userRecord = await pb.collection('users').getOne(currentUserId, { autoCancellation: false });
+        const savedCourses = userRecord.savedCourses || [];
+
+        // Update isSaved state
+        setIsSaved(savedCourses.includes(course.id));
+
+      } catch (error) {
+        console.error('Error checking if course is saved:', error);
+      }
+    };
+
+    checkIfSaved();
+  }, [currentUserId, course]);
 
   const reportReview = async (reviewId, userId) => {
     if (!currentUserId) {
@@ -161,7 +277,10 @@ function CourseDetailPageComponent() {
       : true;
 
     const matchesRating = selectedRating > 0 ? review.rating >= selectedRating : true;
-    return matchesProfessor && matchesRating;
+
+
+  const matchesSyllabus = hasSyllabus ? !!review.syllabus : true;
+    return matchesProfessor && matchesRating && matchesSyllabus;
   });
 
   // Determine grid classes based on the number of reviews
@@ -187,43 +306,59 @@ function CourseDetailPageComponent() {
         </div>
 
         {/* Course Code and Name as Title */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 course-details">
-          <h1 className="text-white text-3xl font-semibold mb-4 md:mb-0">
-            {course.code}: {course.name}
-          </h1>
+        <div className="flex flex-wrap items-start justify-between mb-6 course-details">
+          {/* Title and Bookmark */}
+          <div className="flex items-start flex-shrink mr-4 mb-2">
+            <h1 className="text-white text-3xl md:text-4xl font-semibold mb-4 md:mb-0">
+              {course.code}: {course.name}
+            </h1>
+            {/* Bookmark Button */}
+            <Tooltip title={isSaved ? "Unsave Course" : "Save Course"}>
+              <button
+                data-testid={`save-button-${course.id}`}
+                onClick={() => toggleSaveCourse(course.id)}
+                className="text-black-500 hover:text-black-700 transition duration-300 text-3xl md:text-4xl ml-2 mt-1"
+              >
+                {isSaved ? (
+                  <FaBookmark style={{ color: 'white' }} />
+                ) : (
+                  <FaRegBookmark style={{ color: 'white' }} />
+                )}
+              </button>
+            </Tooltip>
+          </div>
 
           {/* Buttons Section */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full sm:w-auto">
-            <div className="flex flex-wrap sm:flex-nowrap gap-4 w-full">
-              {course.syllabus && (
-                <button
-                  className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
-                  onClick={() => window.open(course.syllabus, '_blank')}
-                  title="Download Syllabus"
-                >
-                  Download Syllabus
-                </button>
-              )}
+          <div className="flex flex-wrap sm:flex-nowrap gap-4 mt-4 md:mt-0 flex-shrink-0">
+            {course.syllabus && (
               <button
+                aria-label="Download Syllabus"
                 className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
-                onClick={() => router.push(`/addReview?code=${course.code}&id=${course.id}`)}
+                onClick={() => window.open(course.syllabus, '_blank')}
+                title="Download Syllabus"
               >
-                Add a Review
+                Download Syllabus
               </button>
-              <button
-                className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
-                onClick={toggleTutors}
-              >
-                Find a Tutor
-              </button>
+            )}
+            <button
+              className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
+              onClick={() => router.push(`/addReview?code=${course.code}&id=${course.id}`)}
+            >
+              Add a Review
+            </button>
+            <button
+              className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
+              onClick={toggleTutors}
+            >
+              Find a Tutor
+            </button>
 
-              <button
-                className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
-                onClick={addTutor}
-              >
-                Tutor this Course
-              </button>
-            </div>
+            <button
+              className="flex-grow bg-white text-black py-2 px-4 rounded-full shadow-lg hover:bg-gray-300 transition duration-300 text-center"
+              onClick={addTutor}
+            >
+              Tutor this Course
+            </button>
           </div>
         </div>
 
@@ -269,11 +404,25 @@ function CourseDetailPageComponent() {
               <option value={5}>5 </option>
             </select>
           </div>
+
+          <div className="flex items-center">
+            <label htmlFor="syllabusFilter" className="text-white text-lg">
+              Filter by Has Syllabus
+            </label>
+            <input
+              type="checkbox"
+              id="syllabusFilter"
+              checked={hasSyllabus}
+              onChange={(e) => setHasSyllabus(e.target.checked)}
+              className="ml-2 transform scale-150"
+            />
+            
+          </div>
         </div>
 
         {/* Popup Message */}
         {popupMessage && (
-          <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg">
+          <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded shadow-lg z-50">
             <p>{popupMessage}</p>
             <button
               className="mt-2 text-sm underline"
@@ -420,8 +569,8 @@ function CourseDetailPageComponent() {
                   const displayName = isAnonymous
                     ? 'Anonymous'
                     : user.firstName && user.lastName
-                    ? `${user.firstName} ${user.lastName}`
-                    : 'Anonymous';
+                      ? `${user.firstName} ${user.lastName}`
+                      : 'Anonymous';
 
                   return (
                     <div key={index} className="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
@@ -470,7 +619,7 @@ function CourseDetailPageComponent() {
                                 {syllabusUrl && (
                                   <Tooltip title="Download Syllabus">
                                     <button
-                                      title="Download Syllabus"
+                                      aria-label="Download Syllabus"
                                       className="download-syllabus bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-300 flex items-center justify-center"
                                       onClick={() => window.open(syllabusUrl, '_blank')}
                                     >

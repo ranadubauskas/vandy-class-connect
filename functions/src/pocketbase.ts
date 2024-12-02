@@ -49,7 +49,6 @@ export async function authenticateClient(clientInstance = client) {
   const { username, password } = settings.pocketbase; // Access credentials at runtime
   try {
     await clientInstance.collection("users").authWithPassword(username, password);
-    console.log("Authenticated successfully");
   } catch (error) {
     console.error("Authentication failed", error);
     throw error; // Propagate the error if authentication fails

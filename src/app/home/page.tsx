@@ -1,15 +1,21 @@
 'use client';
 import { Tooltip } from "@mui/material";
+import localforage from 'localforage';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import { IoIosSearch } from "react-icons/io";
-import { IoClose, IoFilterOutline } from "react-icons/io5";
+import { IoChevronDown, IoClose } from "react-icons/io5";
 import RatingBox from "../components/ratingBox";
 import { getUserCookies } from '../lib/functions';
 import pb from "../lib/pocketbaseClient";
 import { getAllCourses } from '../server';
 import './styles.css';
+
+interface CachedData {
+  savedCourses: { id: string }[]; // Array of course objects with at least an id
+  cachedAt: number;
+}
 
 
 export default function Home() {
@@ -17,15 +23,14 @@ export default function Home() {
   const [savedCourses, setSavedCourses] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [subjectFilters, setSubjectFilters] = useState<string[]>([]);
-  const [tempSubjectFilters, setTempSubjectFilters] = useState<string[]>([]);
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [courseSubjects, setCourseSubjects] = useState<string[]>([]);
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
-  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [isSubjectDropdownOpen, setIsSubjectDropdownOpen] = useState(false);
   const router = useRouter();
+  const subjectDropdownRef = useRef(null);
 
   useEffect(() => {
     const fetchCookies = async () => {
@@ -33,8 +38,6 @@ export default function Home() {
         const cookies = await getUserCookies();
         if (cookies) {
           setUserCookies(cookies);
-        } else {
-          console.log("No user cookies found");
         }
       } catch (error) {
         console.error('Error fetching cookies:', error);
@@ -51,8 +54,6 @@ export default function Home() {
         const userRecord = await pb.collection('users').getOne(userCookies.id, { autoCancellation: false });
         if (userRecord && userRecord.savedCourses) {
           setSavedCourses(userRecord.savedCourses);
-        } else {
-          console.log("No save courses found");
         }
       } catch (error) {
         console.error('Error fetching saved courses:', error);
@@ -62,14 +63,35 @@ export default function Home() {
   }, [userCookies]);
 
   useEffect(() => {
-    setTempSubjectFilters(subjectFilters);
-  }, [subjectFilters]);
-
-  useEffect(() => {
     const fetchCourses = async () => {
       try {
+        const cachedCoursesData = localStorage.getItem('courses');
+        if (cachedCoursesData) {
+          const { courses: cachedCourses, cachedAt } = JSON.parse(cachedCoursesData);
+
+          // Check if the cache is still valid (within 5 minutes)
+          const cacheAge = Date.now() - cachedAt;
+          const cacheValidity = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+          if (cacheAge < cacheValidity) {
+            setCourses(cachedCourses);
+            setCourseSubjects(Array.from(new Set(cachedCourses.map(course => course.subject))));
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Fetch new courses if cache is expired or not available
         const courses = await getAllCourses();
         setCourses(courses);
+
+        // Cache courses with timestamp
+        const cacheData = {
+          courses,
+          cachedAt: Date.now(),
+        };
+        localStorage.setItem('courses', JSON.stringify(cacheData));
+
         const subjects = Array.from(new Set(courses.map(course => course.subject)));
         setCourseSubjects(subjects);
         setLoading(false);
@@ -78,6 +100,7 @@ export default function Home() {
         setLoading(false);
       }
     };
+
     fetchCourses();
   }, []);
 
@@ -107,40 +130,58 @@ export default function Home() {
     filterCourses();
   }, [subjectFilters, ratingFilter, searchQuery, courses]);
 
-  const applyFilter = () => {
-    setSubjectFilters(tempSubjectFilters);
-    setShowFilterModal(false);
-  };
-
-  const toggleTempFilter = (subject: string) => {
-    setTempSubjectFilters((prevFilters) =>
-      prevFilters.includes(subject)
-        ? prevFilters.filter((filter) => filter !== subject)
-        : [...prevFilters, subject]
-    );
-  };
-
   const updateSaved = async (userId, courseId, isSaved) => {
     try {
-      const userRecord = await pb.collection('users').getOne(userId, {autocancellation: false});
-
+      const userRecord = await pb.collection('users').getOne(userId, { autoCancellation: false });
+  
       let updatedSavedCourses;
-
-      if (isSaved) { //Remove course from savedCourses
+  
+      if (isSaved) {
+        // Remove course from savedCourses
         updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
-      } else { //Add course to savedCourses
+      } else {
+        // Add course to savedCourses
         updatedSavedCourses = [...userRecord.savedCourses, courseId];
       }
-
-      //Update user record in database
+  
+      // Update user record in database
       await pb.collection('users').update(userId, {
         savedCourses: updatedSavedCourses,
       });
+  
+      // Update saved courses in localforage
+      const cacheKey = `saved_courses_${userId}`;
+      const now = Date.now();
+  
+      // Fetch current cached data if available
+      const cachedData = (await localforage.getItem<CachedData>(cacheKey)) || {
+        savedCourses: [],
+        cachedAt: now,
+      };
+  
+      let updatedCachedCourses;
+      if (isSaved) {
+        // Remove course from cache
+        updatedCachedCourses = cachedData.savedCourses.filter(course => course.id !== courseId);
+      } else {
+        // Fetch course details to add to cache
+        const newCourse = await pb.collection('courses').getOne(courseId, { autoCancellation: false });
+        updatedCachedCourses = [...cachedData.savedCourses, { id: newCourse.id }];
+      }
+  
+      await localforage.setItem(cacheKey, {
+        savedCourses: updatedCachedCourses,
+        cachedAt: now,
+      });
+  
+      // Update the state
       setSavedCourses(updatedSavedCourses);
     } catch (error) {
       console.error("Error saving course:", error);
     }
   };
+  
+  
   const toggleSaveCourse = (courseId) => {
     const isSaved = savedCourses.includes(courseId);
 
@@ -157,6 +198,22 @@ export default function Home() {
       prevFilters.filter((filter) => filter !== filterToRemove)
     );
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        subjectDropdownRef.current &&
+        !subjectDropdownRef.current.contains(event.target)
+      ) {
+        setIsSubjectDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen p-4 sm:p-6">
@@ -179,14 +236,6 @@ export default function Home() {
           placeholder="Search for a course"
         />
         <button
-          className="bg-gray-200 p-3 rounded-full hover:bg-gray-300 transition duration-300 shadow-lg"
-          onClick={() => setShowFilterModal(true)}
-          aria-label="Open filter"
-          title="Filter by Subject"
-        >
-          <IoFilterOutline size={20} />
-        </button>
-        <button
           className="bg-gray-200 px-6 py-3 rounded-full flex items-center justify-center hover:bg-gray-300 transition duration-300 w-full sm:w-auto shadow-lg"
           onClick={() => setSearchQuery(searchQuery)}
         >
@@ -194,49 +243,62 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Filter dropdowns */}
-      <div className="flex space-x-4 items-center mb-2">
+      {/* Filter section */}
+      <div className="flex flex-wrap items-center space-x-4 mb-4">
         {/* Subject Filter */}
-        <div className="flex items-center space-x-1">
-          <label htmlFor="subjectFilter" className="text-white text-lg font-bold">Filter by Subject:</label>
-          {courseSubjects.length > 0 ? (
-            <select
-              id="subjectFilter"
-              value={tempSubjectFilters[0] || ""}
-              onChange={(e) => {
-                const subject = e.target.value;
-                if (subject === "") {
-                  setSubjectFilters([]); // Clear all filters if "All Subjects" is selected
-                } else {
-                  setSubjectFilters((prevFilters) =>
-                    prevFilters.includes(subject)
-                      ? prevFilters
-                      : [...prevFilters, subject]
-                  );
-                }
-              }}
-              className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+        <div className="flex items-center space-x-2">
+          <label
+            id="subjectFilterLabel"
+            className="text-white text-lg font-bold"
+          >
+            Filter by Subject:</label>
+          <div className="relative" ref={subjectDropdownRef}>
+            <button
+              aria-label="Open subject filter"
+              aria-labelledby="subjectFilterLabel"
+              onClick={() => setIsSubjectDropdownOpen(!isSubjectDropdownOpen)}
+              className="p-2 rounded border bg-gray-200 px-2 py-2 rounded-full shadow-md hover:bg-gray-300 transition flex items-center"
             >
-              <option value="" className="text-gray-700">All Subjects</option>
-              {courseSubjects.map((subject, index) => (
-                <option key={index} value={subject}>
-                  {subject}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <p className="text-gray-400 inline text-white text-lg">No Subjects Found</p>
-          )}
+              <span className="text-black text-left">
+                {subjectFilters.length > 0 ? `${subjectFilters.length} selected` : 'All Subjects'}
+              </span>
+              <IoChevronDown size={20} className="ml-2" />
+            </button>
+            {isSubjectDropdownOpen && (
+              <div
+                role="listbox"
+                className="absolute mt-2 bg-white border rounded shadow-lg max-h-60 overflow-auto z-10 w-40"
+              >
+                {courseSubjects.map((subject, index) => (
+                  <label key={index} className="flex items-center p-2 hover:bg-gray-100">
+                    <input
+                      type="checkbox"
+                      checked={subjectFilters.includes(subject)}
+                      onChange={() => {
+                        setSubjectFilters((prevFilters) =>
+                          prevFilters.includes(subject)
+                            ? prevFilters.filter((filter) => filter !== subject)
+                            : [...prevFilters, subject]
+                        );
+                      }}
+                      className="mr-2"
+                    />
+                    <span>{subject}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Rating Filter */}
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-2">
           <label htmlFor="ratingFilter" className="text-white text-lg font-bold">Filter by Rating:</label>
           <select
             id="ratingFilter"
             value={ratingFilter || ""}
             onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
-            className="p-2 rounded border bg-gray-200 px-3 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
+            className="p-2 rounded border bg-gray-200 px-2 py-2 rounded-full shadow-md hover:bg-gray-300 transition"
           >
             <option value="" className="text-gray-700">All Ratings</option>
             <option value="1">1+</option>
@@ -247,7 +309,6 @@ export default function Home() {
           </select>
         </div>
       </div>
-
 
       {/* Display Selected Filters */}
       <div className="mb-4 flex flex-wrap gap-2">
@@ -281,69 +342,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      {/* Filter Modal */}
-      {
-        showFilterModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-72 sm:w-80 relative">
-              <h2 className="text-xl sm:text-2xl font-semibold mb-4">Select Filters</h2>
-              <button
-                className="absolute top-2 right-2 text-gray-600"
-                onClick={() => setShowFilterModal(false)}
-                aria-label="Close filter"
-              >
-                <IoClose size={20} />
-              </button>
-
-              {/* Subject Filters */}
-              <div className="mb-2">
-                <label
-                  title="Filter by Subject"
-                  aria-label="Filter by Subject"
-                  className="flex items-center space-x-2 font-bold">Filter by Subject:</label>
-                {courseSubjects.map((subject) => (
-                  <label key={subject} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={tempSubjectFilters.includes(subject)}
-                      onChange={() => toggleTempFilter(subject)}
-                      aria-label={subject}
-                    />
-                    <span>{subject}</span>
-                  </label>
-                ))}
-              </div>
-
-              {/* Rating Filter */}
-              <div className="mb-4">
-                <label className="block mb-2 font-bold">Minimum Rating:</label>
-                <select
-                  id="ratingFilterSelect"
-                  aria-label="Minimum Rating:"
-                  value={ratingFilter || ''}
-                  onChange={(e) => setRatingFilter(e.target.value ? parseFloat(e.target.value) : null)}
-                  className="p-2 rounded border border-gray-300 w-full"
-                >
-                  <option value="">All Ratings</option>
-                  <option value="1">1+</option>
-                  <option value="2">2+</option>
-                  <option value="3">3+</option>
-                  <option value="4">4+</option>
-                  <option value="5">5</option>
-                </select>
-              </div>
-
-              <button
-                className="mt-4 w-full bg-blue-500 text-white py-2 rounded-full"
-                onClick={applyFilter}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        )
-      }
 
       {/* Search Results */}
       <div className="text-white text-center mb-6 text-lg sm:text-2xl">
@@ -379,7 +377,7 @@ export default function Home() {
                   <button
                     className="view-course bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300 shadow-lg text-base whitespace-nowrap"
                     onClick={() => router.push(`/course?code=${course.code}&id=${course.id}`)}
-                    >
+                  >
                     View Course
                   </button>
                   <Tooltip title={isSaved ? "Unsave Course" : "Save Course"}>
@@ -396,9 +394,7 @@ export default function Home() {
             );
           })}
         </div>
-
-
       )}
-    </div >
+    </div>
   );
 }

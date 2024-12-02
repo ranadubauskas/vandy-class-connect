@@ -1,5 +1,6 @@
 'use client';
 
+import localforage from 'localforage';
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
@@ -45,27 +46,20 @@ export default function Profile() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
+                // const cachedUser = await localforage.getItem(`user_${userId}`);
+                // if (cachedUser) {
+                //     initializeUserData(cachedUser);
+                //     setLoading(false);
+                //     return;
+                // }
+                // Fetch user from server
                 const fetchedUser = await getUserByID(userId as string);
-                await setTutorDetails(fetchedUser.expand.courses_tutored)
-                console.log(tutorDetails)
-                const isProfileMine = userId === userData?.id;
-                setIsMyProfile(isProfileMine);
-
-                setFirstName(isProfileMine ? userData?.firstName : fetchedUser.firstName);
-                setLastName(isProfileMine ? userData?.lastName : fetchedUser.lastName);
-                setEmail(isProfileMine ? userData?.email : fetchedUser.email);
-                setGraduationYear(isProfileMine ? userData?.graduationYear : fetchedUser.graduationYear);
-
-                const profilePicId = isProfileMine ? userData?.id : fetchedUser.id;
-                const profilePicName = isProfileMine ? userData?.profilePic : fetchedUser.profilePic;
-
-                if (profilePicName) {
-                    setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
-                } else {
-                    setProfilePicPreviewURL(defaultProfilePic);
+                if(fetchedUser.expand.courses_tutored) {
+                    await setTutorDetails(fetchedUser.expand.courses_tutored)
                 }
-
-                setOtherUser(fetchedUser);
+                console.log(tutorDetails)                // Cache the fetched user data
+                await localforage.setItem(`user_${userId}`, fetchedUser);
+                initializeUserData(fetchedUser);
             } catch (error) {
                 console.error('Error fetching user:', error);
                 setError('Failed to load profile data.');
@@ -74,6 +68,25 @@ export default function Profile() {
             }
         };
 
+        const initializeUserData = (user) => {
+            const isProfileMine = userId === userData?.id;
+            setIsMyProfile(isProfileMine);
+
+            setFirstName(user.firstName);
+            setLastName(user.lastName);
+            setEmail(user.email);
+            setGraduationYear(user.graduationYear);
+
+            const profilePicId = isProfileMine ? userData?.id : user.id;
+            const profilePicName = isProfileMine ? userData?.profilePic : user.profilePic;
+
+            if (profilePicName) {
+                setProfilePicPreviewURL(`${NEXT_PUBLIC_POCKETBASE_URL}/api/files/users/${profilePicId}/${profilePicName}`);
+            } else {
+                setProfilePicPreviewURL(defaultProfilePic);
+            }
+            setOtherUser(user);
+        };
         if (userVal && userData && userId) {
             fetchUser();
         }
@@ -81,7 +94,6 @@ export default function Profile() {
 
     const handleViewRatings = () => {
         if (typeof window !== 'undefined') {
-
             router.push(`/ratings/${otherUser.id}`);
         }
     };
@@ -115,7 +127,6 @@ export default function Profile() {
                 setFirstName(updatedUser.firstName);
                 setLastName(updatedUser.lastName);
                 setGraduationYear(updatedUser.graduationYear);
-
                 // Update the profile picture preview URL
                 if (updatedUser.profilePic) {
                     setProfilePicPreviewURL(
@@ -124,13 +135,12 @@ export default function Profile() {
                 } else {
                     setProfilePicPreviewURL(defaultProfilePic);
                 }
-
                 // Refresh the user data in context
                 if (getUser) {
                     await getUser();
                 }
-
                 setIsEditing(false);
+                await localforage.setItem(`user_${userData.id}`, updatedUser);
             } else {
                 console.error('Failed to update user');
                 setError('Failed to update profile. Please try again.');
@@ -164,11 +174,11 @@ export default function Profile() {
 
     if (loading || !userVal || !userData) {
         return (
-          <div data-testid="loading-indicator" className="text-center text-2xl mt-10 text-white">
-            Loading...
-          </div>
+            <div data-testid="loading-indicator" className="text-center text-2xl mt-10 text-white">
+                Loading...
+            </div>
         );
-      }
+    }
 
     return (
         <div>
@@ -264,14 +274,14 @@ export default function Profile() {
                             />
                         </div>
                         <div>
-                            <label htmlFor="graduationYear" className="block text-gray-700">Grade</label>
+                            <label htmlFor="graduationYear" className="block text-gray-700">Graduation Year</label>
                             <select
                                 id="graduationYear"
                                 value={graduationYear}
                                 onChange={(e) => setGraduationYear(e.target.value)}
                                 className="border border-gray-300 rounded p-2 w-full mt-1"
                             >
-                                <option value="" disabled hidden>Select Grade</option>
+                                <option value="" disabled hidden>Select Year</option>
                                 {years.map(year => (
                                     <option key={year} value={year}>
                                         {year}
@@ -339,25 +349,26 @@ export default function Profile() {
                                 className="flex flex-col sm:flex-row items-center justify-between mb-4"
                             >
                 
-                                <div className="flex items-center">
+                                <div className="flex items-center transform hover:scale-110 transition-transform duration-200" onClick={() => router.push(`/course?code=${tutor.code}&id=${tutor.id}`)}>
                                     <RatingBox rating={tutor.averageRating} size="large"/>
                                     <div className="flex-grow ml-2">
-                                    <span className="font-semibold">
+                                    <span className="font-semibold hover:text-blue-700 hover:underline">
                                         {tutor.code}
                                     </span>
-                                    </div>
+                                </div>
 
                                 </div>
-                                <button
+                                {isMyProfile ? <button
                                 onClick={() => {handleResign(tutor.id)}}
                                 className="mt-2 sm:mt-0 text-red-500 hover:text-blue-900 transition duration-300"
                                 >
                                 Resign
-                                </button>
+                                </button> : <></> }
+                                
                             </div>
                             ))
                         ) : (
-                            <p>No tutors available for this course</p>
+                            <p>Nothing here. Sign up to be a tutor!</p>
                         )}
                         {/* Display copied message */}
                             {resigning && (

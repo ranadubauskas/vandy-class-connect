@@ -5,5 +5,21 @@
     "react-hooks/rules-of-hooks": "off",
     "react-hooks/exhaustive-deps": "off",
     "@next/next/no-img-element": "off"
-  }
+  },
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "overrides": [
+    {
+      "files": ["cypress/**/*.ts", "cypress/**/*.js"],
+      "parserOptions": {
+        "project": "./cypress/tsconfig.json"
+      },
+      "env": {
+        "cypress/globals": true
+      },
+      "plugins": ["cypress"], 
+      "extends": ["plugin:cypress/recommended"] 
+    }
+  ]
 }

@@ -73,10 +73,7 @@ export default {
          //  Important: A timeout is needed to prevent 429
           const timeout = setTimeout(async () => {
             try {
-              console.log(`Saving subject: ${subject.name}`)
-              
               await client.collection('subjects').create(subject)
-              
               resolve()
             } catch (error) {
               console.error(JSON.stringify(error, null, 2))

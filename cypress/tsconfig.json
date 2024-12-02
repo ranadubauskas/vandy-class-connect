@@ -1,0 +1,11 @@
+{
+  "module": "commonjs",
+  "moduleResolution": "node",
+  "preserveValueImports": false,
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["es5", "dom"],
+    "types": ["cypress", "node"]
+  },
+  "include": ["**/*.ts",  "cypress/support/*.ts", "e2e/loginTest.cy.js", "e2e/aboutTest.cy.js", "e2e/addReviewTest.cy.js", "e2e/adminTest.cy.js", "e2e/courseDetailTest.cy.js", "e2e/homeTest.cy.js", "e2e/profileTest.cy.js", "e2e/registerTest.cy.js", "e2e/savedCoursesTest.cy.js", "e2e/userReviewsTest.cy.js"]
+}

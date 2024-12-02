@@ -1,10 +1,12 @@
 'use client';
+import localforage from 'localforage';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import Loading from "../components/Loading";
 import StarRating from '../components/StarRating';
 import { useAuth } from '../lib/contexts';
 import pb from "../lib/pocketbaseClient";
+
 
 function AddReviewComponent() {
     const router = useRouter();
@@ -39,8 +41,28 @@ function AddReviewComponent() {
     };
 
     useEffect(() => {
-        if (!courseId) return;
-        const fetchCourse = async () => {
+        if (!courseId) {
+            setLoading(false);
+            return;
+        }
+
+        const fetchCourseFromCache = async () => {
+            try {
+                const cachedCourse = await localforage.getItem(`course_${code}`);
+                if (cachedCourse) {
+                    setCourse(cachedCourse);
+                } else {
+                    await fetchCourseFromServer();
+                }
+            } catch (error) {
+                console.error('Error fetching course from cache:', error);
+                await fetchCourseFromServer();
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const fetchCourseFromServer = async () => {
             try {
                 const fetchedCourse = await pb.collection('courses').getFirstListItem(
                     `code="${code}"`,
@@ -50,16 +72,15 @@ function AddReviewComponent() {
                     }
                 );
                 setCourse(fetchedCourse);
+                // Cache the course data
+                await localforage.setItem(`course_${code}`, fetchedCourse);
             } catch (error) {
                 console.error('Error fetching course:', error);
-            } finally {
-                setLoading(false);
             }
         };
+        fetchCourseFromCache();
 
-        fetchCourse();
-
-    }, [courseId]);
+    }, [courseId, code]);
 
     // Adjust star size based on screen width
     useEffect(() => {
@@ -91,17 +112,14 @@ function AddReviewComponent() {
             setError('Course data is still loading. Please wait a moment and try again.');
             return;
         }
-
         if (wordCount > maxWordCount) {
             setError(`Your comment exceeds the maximum word limit of ${maxWordCount} words.`);
             return;
         }
-
         if (!rating || rating <= 0) {
             setError('Please provide a valid rating.');
             return;
         }
-
         if (!comment.trim()) {
             setError('Please provide a comment.');
             return;
@@ -184,7 +202,20 @@ function AddReviewComponent() {
                 reviews: userReviews
             });
 
-            router.push(`/course?id=${courseId}&code=${code}`);
+            const cachedCourse = await localforage.getItem(`course_${code}`);
+            if (cachedCourse) {
+                // Fetch the updated course data with expansions
+                const updatedCourse = await pb.collection('courses').getFirstListItem(
+                    `code="${code}"`,
+                    {
+                        expand: 'reviews.user,reviews.professors,professors',
+                        autoCancellation: false,
+                    }
+                );
+                // Update the cache
+                await localforage.setItem(`course_${code}`, updatedCourse);
+            }
+            router.push(`/course?code=${code}&id=${courseId}`);
         } catch (error) {
             console.error('Error saving review:', error);
             setError('Error saving review.');
@@ -208,7 +239,7 @@ function AddReviewComponent() {
             <div className="mb-8">
                 <button
                     className="text-white text-lg"
-                    onClick={() => router.push(`/course?id=${courseId}`)}
+                    onClick={() => router.back()}
                     aria-label="Back to Course Page"
                 >
                     ← Back to Course Page

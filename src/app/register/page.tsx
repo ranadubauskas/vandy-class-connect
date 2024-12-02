@@ -8,6 +8,8 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
 
 
+
+
 export default function Register() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -20,7 +22,52 @@ export default function Register() {
     const router = useRouter();
     const { loginUser } = useAuth();
 
+    const validateRegisterInfo = async (formData: FormData) => {
+        const username = formData.get("username");
+        const email = formData.get("email");
+        const password = formData.get("password");
+        const passwordConfirm = formData.get("passwordConfirm");
+        const firstName = formData.get("firstName");
+        const lastName = formData.get("lastName");
+        const graduationYear = formData.get("graduationYear");
 
+        if (
+            typeof username !== 'string' || username == "" ||
+            typeof email !== 'string' || email == "" ||
+            typeof password !== 'string' || password == "" ||
+            typeof passwordConfirm !== 'string' || passwordConfirm == "" ||
+            typeof firstName !== 'string' || firstName == "" ||
+            typeof lastName !== 'string' || lastName == "" ||
+            typeof graduationYear !== 'string' || graduationYear == ""
+        ) {
+            setError("Invalid input. Please provide all required fields.");
+            return;
+        }
+
+        if (!email.endsWith('@vanderbilt.edu')) {
+            setError("Only Vanderbilt email addresses are allowed.");
+            return;
+        }
+
+        if (password.length < 8) {
+            setError("Password must be at least 8 characters long.");
+            return;
+        }
+
+        if (password !== passwordConfirm) {
+            setError("Passwords do not match.");
+            return;
+        }
+        try {
+            const user = await register(formData);
+            loginUser(user);
+            if (router && router.push) {
+                router.push('/home');
+            }
+        } catch (err) {
+            setError(err.message);
+        }
+    }
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,12 +81,8 @@ export default function Register() {
             formData.append('firstName', firstName);
             formData.append('lastName', lastName);
             formData.append('graduationYear', graduationYear);
-            const user = await register(formData);
-            console.log('User registered:', user);
-            loginUser(user);
-            router.push('/home');
+            await validateRegisterInfo(formData);
         } catch (err) {
-            console.log(err);
             setError(err.message);
         }
     };
@@ -51,42 +94,42 @@ export default function Register() {
                 <form onSubmit={handleRegister} className="space-y-4">
                     <input
                         type="text"
-                        placeholder="First Name"
+                        placeholder="First Name*"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="text"
-                        placeholder="Last Name"
+                        placeholder="Last Name*"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="email"
-                        placeholder="Vanderbilt Email"
+                        placeholder="Vanderbilt Email*"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="text"
-                        placeholder="Username"
+                        placeholder="Username*"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="password"
-                        placeholder="Password"
+                        placeholder="Password*"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="password"
-                        placeholder="Confirm Password"
+                        placeholder="Confirm Password*"
                         value={passwordConfirm}
                         onChange={(e) => setPasswordConfirm(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -96,7 +139,7 @@ export default function Register() {
                         onChange={(e) => setGraduationYear(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-400"
                     >
-                        <option value="" disabled className="text-gray-500">Select Graduation Year</option>
+                        <option value="" disabled className="text-gray-500">Select Graduation Year*</option>
                         {years.map(year => (
                             <option key={year} value={year}>
                                 {year}
@@ -110,7 +153,13 @@ export default function Register() {
                         Register
                     </button>
                 </form>
-                {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
+                {
+                    error && (
+                        <p className="mt-4 text-red-500 text-center font-bold bg-white p-1 rounded">
+                            {error}
+                        </p>
+                    )
+                }
                 <p className="mt-4 text-center text-white">
                     <span>
                         Already have an account? <a href="/login" className="text-white-500 underline hover:text-blue-500">Login </a>

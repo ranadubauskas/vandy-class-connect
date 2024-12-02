@@ -7,7 +7,7 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
-    setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+    setupFilesAfterEnv: ['<rootDir>/setupTests.js', '<rootDir>/jest.setup.js'],
     testEnvironment: 'jsdom',
     transformIgnorePatterns: [
         'node_modules/(?!pocketbase).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
@@ -16,7 +16,8 @@ const customJestConfig = {
         '^next/navigation$': '<rootDir>/__mocks__/next-navigation.ts',
         '^pocketbase$': '<rootDir>/__mocks__/pocketbase.ts',
         '^@/(.*)$': '<rootDir>/src/$1',
-        '^(.*)\\.ts$': '$1.ts'
+        '^(.*)\\.ts$': '$1.ts',
+        '^.+\\.module\\.(css|sass|scss)$': 'identity-obj-proxy',
     },
     diagnostics: false,
     globals: {
