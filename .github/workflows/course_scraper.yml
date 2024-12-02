@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: '0 2 15 8 *'   # August 15th at 2:00 AM UTC
     - cron: '0 2 15 12 *'  # December 15th at 2:00 AM UTC
+  workflow_dispatch:       # Allows manual triggering of the workflow
 
 jobs:
   run-course-scraper:
@@ -22,8 +23,8 @@ jobs:
 
       - name: Run Course Scraper
         env:
-          POCKETBASE_ADMIN_USERNAME: ${{ secrets.POCKETBASE_EMAIL }}
-          POCKETBASE_ADMIN_PASSWORD: ${{ secrets.POCKETBASE_PASSWORD }}
+          POCKETBASE_EMAIL: ${{ secrets.POCKETBASE_EMAIL }}
+          POCKETBASE_PASSWORD: ${{ secrets.POCKETBASE_PASSWORD }}
         run: |
           bun src/index.ts --function=courses --save --batchSize=100 --offset=0 --term=1040
           bun src/index.ts --function=courses --save --batchSize=100 --offset=100 --term=1040
@@ -34,4 +35,3 @@ jobs:
           bun src/index.ts --function=courses --save --batchSize=100 --offset=600 --term=1040
           bun src/index.ts --function=courses --save --batchSize=100 --offset=700 --term=1040
           bun src/index.ts --function=courses --save --batchSize=100 --offset=800 --term=1040
-
