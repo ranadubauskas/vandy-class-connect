@@ -9,6 +9,7 @@ https://vandy-class-connect-ls4a.vercel.app
 ## Run Course Scraper:
 1. Navigate to 'Actions Tab'
 2. Click 'Run Course Scraper' workflow
+
 **Course scraper is scheduled to run 2x a year before the start of each semester**
 
 ## Testing the Application:
