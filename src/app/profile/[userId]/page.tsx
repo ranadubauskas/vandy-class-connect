@@ -1,7 +1,7 @@
+
 'use client';
 
 import RatingBox from '@/app/components/ratingBox';
-import localforage from 'localforage';
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
@@ -9,20 +9,11 @@ import { Course, User } from '../../lib/interfaces';
 import { deleteTutor, editUser, getUserByID } from '../../server';
 import './style.css';
 
-
-interface CacheEntry {
-    data: User;
-    timestamp: number;
-}
-
-
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
 const defaultProfilePic = '/images/user.png'; // Default picture path
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 5 }, (_, index) => currentYear + index);
-
-const CACHE_EXPIRATION_TIME = 5 * 60 * 1000;
 
 export default function Profile() {
     const router = useRouter();
@@ -52,36 +43,10 @@ export default function Profile() {
     const [resigning, setResigning] = useState<string>('');
 
     useEffect(() => {
-        let intervalId: NodeJS.Timeout | undefined;
-
         const fetchUser = async () => {
             try {
-                const cacheKey = `user_${userId}`;
-                const now = Date.now();
-
-                // Check if Cached Data Exists and is Valid
-                const cachedEntry = await localforage.getItem<CacheEntry>(cacheKey);
-
-                if (cachedEntry) {
-                    const { data: cachedUser, timestamp } = cachedEntry;
-
-                    // If Cached Data is Not Expired, Use It
-                    if (now - timestamp < CACHE_EXPIRATION_TIME) {
-                        initializeUserData(cachedUser);
-                        setLoading(false);
-                        return;
-                    }
-                }
-
-                // Fetch User from Server if No Valid Cache
+                // Fetch User from Server
                 const fetchedUser = await getUserByID(userId as string);
-
-                // Cache the Fetched User Data with Timestamp
-                const cacheEntry: CacheEntry = {
-                    data: fetchedUser,
-                    timestamp: now,
-                };
-                await localforage.setItem(cacheKey, cacheEntry);
 
                 initializeUserData(fetchedUser);
             } catch (error) {
@@ -120,16 +85,12 @@ export default function Profile() {
             // Initial fetch
             fetchUser();
 
-            // Set up interval to fetch data every 5 minutes (300,000 milliseconds)
-            intervalId = setInterval(fetchUser, CACHE_EXPIRATION_TIME);
-        }
+            // Optional: Set up interval to periodically fetch data
+            // const intervalId = setInterval(fetchUser, 5 * 60 * 1000);
 
-        // Clean up the interval when the component unmounts or dependencies change
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
+            // Clean up the interval if you decide to use it
+            // return () => clearInterval(intervalId);
+        }
     }, [userVal, userData, userId]);
 
     const handleViewRatings = () => {
@@ -166,6 +127,7 @@ export default function Profile() {
                 setFirstName(updatedUser.firstName);
                 setLastName(updatedUser.lastName);
                 setGraduationYear(updatedUser.graduationYear);
+
                 // Update the profile picture preview URL
                 if (updatedUser.profilePic) {
                     setProfilePicPreviewURL(
@@ -174,20 +136,14 @@ export default function Profile() {
                 } else {
                     setProfilePicPreviewURL(defaultProfilePic);
                 }
+
                 // Refresh the user data in context
                 if (getUser) {
                     await getUser();
                 }
                 setIsEditing(false);
 
-                const fetchedUser = await getUserByID(userId as string);
-
-                // Update Cache with New Data and Timestamp
-                const cacheEntry: CacheEntry = {
-                    data: fetchedUser,
-                    timestamp: Date.now(),
-                };
-                await localforage.setItem(`user_${userData.id}`, cacheEntry);
+                // No need to update cache since caching is removed
             } else {
                 console.error('Failed to update user');
                 setError('Failed to update profile. Please try again.');
@@ -196,7 +152,7 @@ export default function Profile() {
             console.error('Error updating user:', error);
             setError('Failed to update profile. Please try again.');
         }
-    }
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {

@@ -3,6 +3,7 @@ import { Tooltip } from "@mui/material";
 import localforage from 'localforage';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { RecordModel } from 'pocketbase';
 import { Suspense, useEffect, useState } from 'react';
 import { FaBookmark, FaChalkboardTeacher, FaFileDownload, FaFlag, FaRegBookmark, FaUsers } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
@@ -10,7 +11,6 @@ import Loading from "../components/Loading";
 import RatingBox from '../components/ratingBox';
 import StarRating from '../components/StarRating';
 import { useAuth } from "../lib/contexts";
-import { User } from "../lib/interfaces";
 import pb from "../lib/pocketbaseClient";
 
 pb.autoCancellation(false);
@@ -19,7 +19,6 @@ interface CachedData {
   savedCourses: { id: string }[];
   cachedAt: number;
 }
-
 
 interface Professor {
   id: string;
@@ -51,6 +50,25 @@ interface CourseData {
   syllabus?: string;
   averageRating?: number;
   cachedAt?: number;
+}
+
+interface User extends RecordModel {
+  username: string;
+  email: string;
+  verified: boolean;
+  emailVisibility: boolean;
+  firstName: string;
+  lastName: string;
+  profilePicture?: string;
+  courses_tutored?: string[];
+  expand?: {
+    courses_tutored?: CourseData[];
+  };
+}
+
+interface CacheEntry {
+  data: User;
+  timestamp: number;
 }
 
 
@@ -275,36 +293,32 @@ function CourseDetailPageComponent() {
       return;
     }
     try {
-      // Update course to include new tutor
+      // Use the array append operator '+' to add the current user to the course's tutors array
       await pb.collection('courses').update(course.id, {
-        tutors: [...(course.tutors || []), currentUserId]
+        'tutors+': [currentUserId],
       });
-
-      // Update user to include course tutored
+  
+      // Use the array append operator '+' to add the course to the user's courses_tutored array
       await pb.collection('users').update(currentUserId, {
-        courses_tutored: [...(userData.courses_tutored || []), course.id]
+        'courses_tutored+': [course.id],
       });
-
+  
       setIsTutor(true);
       setPopupMessage('Successfully added as a tutor for this course.');
-
-      // **Fetch the updated course data**
+  
+      // Fetch the updated course data
       const updatedCourse = await pb.collection('courses').getOne(course.id, {
         expand: 'reviews.user,reviews.professors,professors',
       });
-
-      // **Update the cachedAt timestamp and cache**
-      const now = Date.now();
-      updatedCourse.cachedAt = now;
-      await localforage.setItem(`course_${code}`, updatedCourse);
-
-      // **Initialize state with the updated course data**
+  
+      // Initialize state with the updated course data
       initializeState(updatedCourse);
-
     } catch (error) {
       console.error('Error adding tutor:', error);
+      setPopupMessage('An error occurred while adding you as a tutor. Please try again.');
     }
-  };
+  };  
+
 
   const initializeState = async (courseData) => {
     setCourse(courseData);

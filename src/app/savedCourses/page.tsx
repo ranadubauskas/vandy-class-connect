@@ -176,7 +176,7 @@ export default function SavedCourses() {
                     <div className="flex items-center space-x-2">
                       <button
                         className="bg-gray-200 px-2 py-2 rounded-lg hover:bg-gray-300 transition duration-300 whitespace-nowrap text-xs sm:text-sm"
-                        onClick={() => router.push(`/course?id=${course.id}`)}
+                        onClick={() => router.push(`/course?code=${course.code}&id=${course.id}`)}
                       >
                         View Course
                       </button>
