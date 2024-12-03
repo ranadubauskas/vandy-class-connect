@@ -5,8 +5,15 @@ import localforage from 'localforage';
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../lib/contexts";
+import { Course, User } from '../../lib/interfaces';
 import { deleteTutor, editUser, getUserByID } from '../../server';
 import './style.css';
+
+
+interface CacheEntry {
+    data: User;
+    timestamp: number;
+}
 
 
 const NEXT_PUBLIC_POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL;
@@ -27,39 +34,38 @@ export default function Profile() {
 
     const { userData, getUser } = userVal || {};
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [graduationYear, setGraduationYear] = useState('');
-    const [profilePicPreviewURL, setProfilePicPreviewURL] = useState(defaultProfilePic);
+    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [firstName, setFirstName] = useState<string>('');
+    const [lastName, setLastName] = useState<string>('');
+    const [email, setEmail] = useState<string>('');
+    const [graduationYear, setGraduationYear] = useState<string>('');
+    const [profilePicPreviewURL, setProfilePicPreviewURL] = useState<string>(defaultProfilePic);
     const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>('');
+    const [loading, setLoading] = useState<boolean>(true);
 
-    const [otherUser, setOtherUser] = useState(null);
+    const [otherUser, setOtherUser] = useState<User | null>(null);
 
-    const [isMyProfile, setIsMyProfile] = useState(false);
-    const [showTutors, setShowTutors] = useState(false);
-    const [tutorDetails, setTutorDetails] = useState([]);
-    const [resigning, setResigning] = useState('');
-
+    const [isMyProfile, setIsMyProfile] = useState<boolean>(false);
+    const [showTutors, setShowTutors] = useState<boolean>(false);
+    const [tutorDetails, setTutorDetails] = useState<Course[]>([]);
+    const [resigning, setResigning] = useState<string>('');
 
     useEffect(() => {
-        let intervalId;
+        let intervalId: NodeJS.Timeout | undefined;
 
         const fetchUser = async () => {
             try {
                 const cacheKey = `user_${userId}`;
                 const now = Date.now();
 
-                // **Check if Cached Data Exists and is Valid**
-                const cachedEntry = await localforage.getItem(cacheKey);
+                // Check if Cached Data Exists and is Valid
+                const cachedEntry = await localforage.getItem<CacheEntry>(cacheKey);
 
                 if (cachedEntry) {
-                    const { data: cachedUser, timestamp } = cachedEntry as { data: any; timestamp: number };
+                    const { data: cachedUser, timestamp } = cachedEntry;
 
-                    // **If Cached Data is Not Expired, Use It**
+                    // If Cached Data is Not Expired, Use It
                     if (now - timestamp < CACHE_EXPIRATION_TIME) {
                         initializeUserData(cachedUser);
                         setLoading(false);
@@ -67,11 +73,11 @@ export default function Profile() {
                     }
                 }
 
-                // **Fetch User from Server if No Valid Cache**
+                // Fetch User from Server if No Valid Cache
                 const fetchedUser = await getUserByID(userId as string);
 
-                // **Cache the Fetched User Data with Timestamp**
-                const cacheEntry = {
+                // Cache the Fetched User Data with Timestamp
+                const cacheEntry: CacheEntry = {
                     data: fetchedUser,
                     timestamp: now,
                 };
@@ -86,7 +92,7 @@ export default function Profile() {
             }
         };
 
-        const initializeUserData = (user) => {
+        const initializeUserData = (user: User) => {
             const isProfileMine = userId === userData?.id;
             setIsMyProfile(isProfileMine);
 
@@ -105,8 +111,8 @@ export default function Profile() {
             }
             setOtherUser(user);
 
-            // **Set Tutor Details if Available**
-            const coursesTutored = user?.expand?.courses_tutored || [];
+            // Set Tutor Details if Available
+            const coursesTutored = user.expand?.courses_tutored || [];
             setTutorDetails(coursesTutored);
         };
 
@@ -125,19 +131,17 @@ export default function Profile() {
             }
         };
     }, [userVal, userData, userId]);
-    
-    
 
     const handleViewRatings = () => {
-        if (typeof window !== 'undefined') {
+        if (otherUser && typeof window !== 'undefined') {
             router.push(`/ratings/${otherUser.id}`);
         }
     };
 
     const handleResign = async (tutorId: string) => {
-        setTutorDetails(tutorDetails.filter((tutor) => tutor.id !== tutorId))
+        setTutorDetails(tutorDetails.filter((tutor) => tutor.id !== tutorId));
         await deleteTutor(userId, tutorId);
-    }
+    };
 
     const handleSave = async () => {
         try {
@@ -176,9 +180,11 @@ export default function Profile() {
                 }
                 setIsEditing(false);
 
-                // **Update Cache with New Data and Timestamp**
-                const cacheEntry = {
-                    data: updatedUser,
+                const fetchedUser = await getUserByID(userId as string);
+
+                // Update Cache with New Data and Timestamp
+                const cacheEntry: CacheEntry = {
+                    data: fetchedUser,
                     timestamp: Date.now(),
                 };
                 await localforage.setItem(`user_${userData.id}`, cacheEntry);
@@ -190,7 +196,7 @@ export default function Profile() {
             console.error('Error updating user:', error);
             setError('Failed to update profile. Please try again.');
         }
-    };
+    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -227,7 +233,7 @@ export default function Profile() {
                 <div className="flex mb-4 max-w-5xl w-full">
                     <div className="w-1/3 flex justify-start pl-2">
                         <button
-                            onClick={() => {setShowTutors(true)}}
+                            onClick={() => { setShowTutors(true) }}
                             className="bg-white text-blue-600 py-2 px-4 rounded-lg shadow-lg hover:bg-gray-200 transition-all duration-300 ease-in-out">
                             View {isMyProfile ? "My" : otherUser?.firstName + "'s"} Tutored Courses
                         </button>
@@ -365,60 +371,60 @@ export default function Profile() {
                 <>
                     {/* Backdrop Overlay */}
                     <div
-                    className="fixed inset-0 bg-black opacity-50 z-40"
-                    onClick={() => setShowTutors(false)} // Clicking outside closes the modal
+                        className="fixed inset-0 bg-black opacity-50 z-40"
+                        onClick={() => setShowTutors(false)} // Clicking outside closes the modal
                     />
 
                     {/* Popup Modal */}
                     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-                    <div className="relative bg-white w-full max-w-lg p-6 rounded-lg shadow-lg overflow-auto">
-                        <div className="flex justify-between">
-                        <h3 className="font-semibold text-lg">{isMyProfile ? "My" : firstName + "'s"} Tutored Courses</h3>
-                        <button
-                            aria-label="Close"
-                            onClick={() => setShowTutors(false)}
-                            className="text-gray-600 hover:text-gray-900 transition duration-300"
-                        >
-                            X
-                        </button>
-                        </div>
-                        <div className="p-4">
-                        {tutorDetails.length > 0 ? (
-                            tutorDetails.map((tutor, index) => (
-                            <div
-                                key={index}
-                                className="flex flex-col sm:flex-row items-center justify-between mb-4"
-                            >
-                
-                                <div className="flex items-center transform hover:scale-110 transition-transform duration-200" onClick={() => router.push(`/course?code=${tutor.code}&id=${tutor.id}`)}>
-                                    <RatingBox rating={tutor.averageRating} size="small"/>
-                                    <div className="flex-grow ml-2">
-                                    <span className="font-semibold hover:text-blue-700 hover:underline">
-                                        {tutor.code}
-                                    </span>
-                                </div>
-
-                                </div>
-                                {isMyProfile ? <button
-                                onClick={() => {handleResign(tutor.id)}}
-                                className="mt-2 sm:mt-0 text-red-500 hover:text-blue-900 transition duration-300"
+                        <div className="relative bg-white w-full max-w-lg p-6 rounded-lg shadow-lg overflow-auto">
+                            <div className="flex justify-between">
+                                <h3 className="font-semibold text-lg">{isMyProfile ? "My" : firstName + "'s"} Tutored Courses</h3>
+                                <button
+                                    aria-label="Close"
+                                    onClick={() => setShowTutors(false)}
+                                    className="text-gray-600 hover:text-gray-900 transition duration-300"
                                 >
-                                Resign
-                                </button> : <></> }
-                                
+                                    X
+                                </button>
                             </div>
-                            ))
-                        ) : (
-                            <p>Nothing here. Sign up to be a tutor!</p>
-                        )}
-                        {/* Display copied message */}
-                            {resigning && (
-                            <p className="text-green-500 mt-2 text-center">
-                            {resigning}
-                            </p>
-                        )}
+                            <div className="p-4">
+                                {tutorDetails.length > 0 ? (
+                                    tutorDetails.map((tutor, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex flex-col sm:flex-row items-center justify-between mb-4"
+                                        >
+
+                                            <div className="flex items-center transform hover:scale-110 transition-transform duration-200" onClick={() => router.push(`/course?code=${tutor.code}&id=${tutor.id}`)}>
+                                                <RatingBox rating={tutor.averageRating} size="small" />
+                                                <div className="flex-grow ml-2">
+                                                    <span className="font-semibold hover:text-blue-700 hover:underline">
+                                                        {tutor.code}
+                                                    </span>
+                                                </div>
+
+                                            </div>
+                                            {isMyProfile ? <button
+                                                onClick={() => { handleResign(tutor.id) }}
+                                                className="mt-2 sm:mt-0 text-red-500 hover:text-blue-900 transition duration-300"
+                                            >
+                                                Resign
+                                            </button> : <></>}
+
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>Nothing here. Sign up to be a tutor!</p>
+                                )}
+                                {/* Display copied message */}
+                                {resigning && (
+                                    <p className="text-green-500 mt-2 text-center">
+                                        {resigning}
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                    </div>
                     </div>
                 </>
             )}

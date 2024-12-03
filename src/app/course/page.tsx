@@ -10,6 +10,7 @@ import Loading from "../components/Loading";
 import RatingBox from '../components/ratingBox';
 import StarRating from '../components/StarRating';
 import { useAuth } from "../lib/contexts";
+import { User } from "../lib/interfaces";
 import pb from "../lib/pocketbaseClient";
 
 pb.autoCancellation(false);
@@ -18,6 +19,40 @@ interface CachedData {
   savedCourses: { id: string }[];
   cachedAt: number;
 }
+
+
+interface Professor {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  syllabus?: string;
+  anonymous?: boolean;
+  expand?: {
+    user?: User;
+    professors?: Professor[];
+  };
+}
+
+interface CourseData {
+  id: string;
+  code: string;
+  name: string;
+  expand?: {
+    reviews?: Review[];
+    professors?: Professor[];
+  };
+  tutors?: string[];
+  syllabus?: string;
+  averageRating?: number;
+  cachedAt?: number;
+}
+
 
 function CourseDetailPageComponent() {
 

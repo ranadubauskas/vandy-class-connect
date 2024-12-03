@@ -1,6 +1,4 @@
 export interface User {
-     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expand: any;
     id: string;
     collectionId: string;
     collectionName: string;
@@ -12,16 +10,19 @@ export interface User {
     updated: string;
     firstName: string;
     lastName: string;
-    graduationYear: number;
+    graduationYear: string;
     profilePic?: string;
     reviews: string[]; // Array of review IDs
     courses_tutored: string[]; // Array of course IDs
     savedCourses: string[]; // Array of course IDs
     admin: boolean;
-};
+    expand?: {
+        courses_tutored?: Course[]; // Array of Course objects
+    };
+}
 
 export interface Course {
-    id: string;
+    id: string;gr
     collectionId: string;
     collectionName: string;
     created: string;

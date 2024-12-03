@@ -39,7 +39,16 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "scraper/jest.config.ts",
-    "setupTests.js", "cypress/e2e/aboutTest.cy.js", "cypress/e2e/addReviewTest.cy.js", "cypress/e2e/adminTest.cy.js", "cypress/e2e/courseDetailTest.cy.js", "cypress/e2e/homeTest.cy.js", "cypress/e2e/profileTest.cy.js", "cypress/e2e/registerTest.cy.js", "cypress/e2e/savedCoursesTest.cy.js", "cypress/e2e/userReviewsTest.cy.js",
+    "setupTests.js",
+    "cypress/e2e/aboutTest.cy.js",
+    "cypress/e2e/addReviewTest.cy.js",
+    "cypress/e2e/adminTest.cy.js",
+    "cypress/e2e/courseDetailTest.cy.js",
+    "cypress/e2e/homeTest.cy.js",
+    "cypress/e2e/profileTest.cy.js",
+    "cypress/e2e/registerTest.cy.js",
+    "cypress/e2e/savedCoursesTest.cy.js",
+    "cypress/e2e/userReviewsTest.cy.js",
   ],
   "exclude": [
     "../cypress.config.ts",
@@ -47,6 +56,8 @@
     "**/*.cy.ts",
     "node_modules",
     "cypress/**/*",
-    "scraper"
+    "scraper",
+    "actions-runner",
+    "**/actions-runner/**/*"
   ]
 }

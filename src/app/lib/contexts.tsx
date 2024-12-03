@@ -15,6 +15,7 @@ interface UserInfoType {
   graduationYear: string;
   profilePic: string;
   admin?: boolean;
+  courses_tutored?: string[];
 }
 
 /**

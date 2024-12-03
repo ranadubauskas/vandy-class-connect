@@ -14,6 +14,7 @@ type UserInfoType = {
     graduationYear: string;
     profilePic: string;
     admin: boolean;
+    courses_tutored?:string[];
 };
 
 /**
@@ -340,7 +341,7 @@ export async function getCourseByID(courseID: string) {
  * @return {Promise<object|null>} A promise that resolves to the user data, or null if not found.
  * @throws Will throw an error if fetching the user fails.
  */
-export async function getUserByID(userId) {
+export async function getUserByID(userId) : Promise<User> {
     try {
         const user = await pb.collection('users').getOne<User>(userId, {
             expand: 'courses_tutored',
