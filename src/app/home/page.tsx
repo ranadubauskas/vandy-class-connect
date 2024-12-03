@@ -130,12 +130,13 @@ export default function Home() {
     filterCourses();
   }, [subjectFilters, ratingFilter, searchQuery, courses]);
 
+  // In the Home component
   const updateSaved = async (userId, courseId, isSaved) => {
     try {
       const userRecord = await pb.collection('users').getOne(userId, { autoCancellation: false });
-  
+
       let updatedSavedCourses;
-  
+
       if (isSaved) {
         // Remove course from savedCourses
         updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
@@ -143,22 +144,22 @@ export default function Home() {
         // Add course to savedCourses
         updatedSavedCourses = [...userRecord.savedCourses, courseId];
       }
-  
+
       // Update user record in database
       await pb.collection('users').update(userId, {
         savedCourses: updatedSavedCourses,
       });
-  
+
       // Update saved courses in localforage
       const cacheKey = `saved_courses_${userId}`;
       const now = Date.now();
-  
+
       // Fetch current cached data if available
       const cachedData = (await localforage.getItem<CachedData>(cacheKey)) || {
         savedCourses: [],
         cachedAt: now,
       };
-  
+
       let updatedCachedCourses;
       if (isSaved) {
         // Remove course from cache
@@ -166,22 +167,22 @@ export default function Home() {
       } else {
         // Fetch course details to add to cache
         const newCourse = await pb.collection('courses').getOne(courseId, { autoCancellation: false });
-        updatedCachedCourses = [...cachedData.savedCourses, { id: newCourse.id }];
+        updatedCachedCourses = [...cachedData.savedCourses, newCourse]; // Store the full course object
       }
-  
+
       await localforage.setItem(cacheKey, {
         savedCourses: updatedCachedCourses,
         cachedAt: now,
       });
-  
+
       // Update the state
       setSavedCourses(updatedSavedCourses);
     } catch (error) {
       console.error("Error saving course:", error);
     }
   };
-  
-  
+
+
   const toggleSaveCourse = (courseId) => {
     const isSaved = savedCourses.includes(courseId);
 

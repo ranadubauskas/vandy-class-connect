@@ -35,20 +35,26 @@ export default function Ratings() {
                 // Check if data is in cache
                 const cachedData = await localforage.getItem<CachedReviews>(cacheKey);
 
+                let fetchedReviews: Review[] = [];
                 if (cachedData && now - cachedData.cachedAt < cacheExpiry) {
                     // Use cached data
-                    setReviews(cachedData.reviews);
-                    setLoading(false);
-                    return;
+                    fetchedReviews = cachedData.reviews;
+                } else {
+                    // Fetch data from server
+                    fetchedReviews = await getUserReviews(userId as string);
+                    // Cache the data
+                    await localforage.setItem<CachedReviews>(cacheKey, { reviews: fetchedReviews, cachedAt: now });
                 }
 
-                // Fetch data from server
-                const revs = await getUserReviews(userId as string);
-                setReviews(revs);
+                // Filter reviews if necessary
+                let filteredReviews = fetchedReviews;
+                const isOwnProfile = userVal && userVal.id === userId;
+                if (!isOwnProfile) {
+                    // If not viewing own profile, filter out anonymous reviews
+                    filteredReviews = fetchedReviews.filter(review => !review.anonymous);
+                }
 
-                // Cache the data
-                await localforage.setItem<CachedReviews>(cacheKey, { reviews: revs, cachedAt: now });
-
+                setReviews(filteredReviews);
                 setLoading(false);
             } catch (err) {
                 console.error(err);

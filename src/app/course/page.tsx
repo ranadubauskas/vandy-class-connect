@@ -117,6 +117,7 @@ function CourseDetailPageComponent() {
             expand: 'reviews.user,reviews.professors,professors', // Expand relationships as needed
           }
         );
+        console.log('fetched course: ', fetchedCourse);
         if (fetchedCourse.syllabus) {
           fetchedCourse.syllabus = pb.files.getUrl(fetchedCourse, fetchedCourse.syllabus);
         }
@@ -178,9 +179,7 @@ function CourseDetailPageComponent() {
     try {
       // Fetch the user's current saved courses from PocketBase
       const userRecord = await pb.collection('users').getOne(currentUserId, { autoCancellation: false });
-
       let updatedSavedCourses;
-
       if (isSaved) {
         // Remove the course from savedCourses
         updatedSavedCourses = userRecord.savedCourses.filter(id => id !== courseId);
@@ -188,6 +187,8 @@ function CourseDetailPageComponent() {
         // Add the course to savedCourses
         updatedSavedCourses = [...(userRecord.savedCourses || []), courseId];
       }
+      // Update the isSaved state
+      setIsSaved(!isSaved);
 
       // Update the user's saved courses in PocketBase
       await pb.collection('users').update(currentUserId, {
@@ -199,10 +200,10 @@ function CourseDetailPageComponent() {
       const now = Date.now();
 
       // Fetch current cached data if available
-      let cachedData: CachedData | null = await localforage.getItem(cacheKey);
-      if (!cachedData) {
-        cachedData = { savedCourses: [], cachedAt: now };
-      }
+      const cachedData = (await localforage.getItem<CachedData>(cacheKey)) || {
+        savedCourses: [],
+        cachedAt: now,
+      };
 
       let updatedCachedCourses;
       if (isSaved) {
@@ -211,7 +212,7 @@ function CourseDetailPageComponent() {
       } else {
         // Fetch course details to add to cache
         const newCourse = await pb.collection('courses').getOne(courseId, { autoCancellation: false });
-        updatedCachedCourses = [...cachedData.savedCourses, { id: newCourse.id }];
+        updatedCachedCourses = [...cachedData.savedCourses, newCourse];
       }
 
       // Update the cache in localforage
@@ -219,10 +220,6 @@ function CourseDetailPageComponent() {
         savedCourses: updatedCachedCourses,
         cachedAt: now,
       });
-
-      // Update the isSaved state
-      setIsSaved(!isSaved);
-
     } catch (error) {
       console.error('Error toggling save state:', error);
     }

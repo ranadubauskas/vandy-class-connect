@@ -23,7 +23,7 @@ const RatingBox: React.FC<RatingBoxProps> = ({ rating, size = 'large' }) => {
           : "bg-green-300"; // Green for [4, 5]
 
   return (
-    <div className={`rating-box text-lg p-2 rounded-lg font-bold shadow-lg ${ratingColorClass} ${sizeClass}`}
+    <div className={`rating-box text-lg p-2 rounded-lg font-bold shadow-lg flex ${ratingColorClass} ${sizeClass}`}
       aria-label={`Rating: ${displayRating}`}
     >
       {displayRating}

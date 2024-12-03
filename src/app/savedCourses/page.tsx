@@ -137,6 +137,18 @@ export default function SavedCourses() {
     setConfirmationOpen(true);
   };
 
+  // Compute grid classes based on the number of saved courses
+  let gridClasses = "grid grid-cols-1 gap-4";
+
+  if (savedCourses.length === 1) {
+    // Only one saved course, keep it in one column
+    // No additional classes needed
+  } else if (savedCourses.length === 2) {
+    gridClasses += " md:grid-cols-2";
+  } else if (savedCourses.length >= 3) {
+    gridClasses += " md:grid-cols-2 lg:grid-cols-3";
+  }
+
   return (
     <div className="min-h-screen p-6 sm:p-8 lg:p-10">
       {/* Header */}
@@ -153,7 +165,7 @@ export default function SavedCourses() {
         {loading ? (
           <div className="text-gray-600 text-center text-2xl mt-8">Loading...</div>
         ) : savedCourses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={gridClasses}>
             {savedCourses.map((course) => {
               const rating = course.averageRating ?? 'N/A';
               return (

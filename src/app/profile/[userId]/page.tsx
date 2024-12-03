@@ -4,6 +4,7 @@
 import RatingBox from '@/app/components/ratingBox';
 import { useParams, useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
+import { MdCancel } from "react-icons/md";
 import { AuthContext } from "../../lib/contexts";
 import { Course, User } from '../../lib/interfaces';
 import { deleteTutor, editUser, getUserByID } from '../../server';
@@ -84,12 +85,6 @@ export default function Profile() {
         if (userVal && userData && userId) {
             // Initial fetch
             fetchUser();
-
-            // Optional: Set up interval to periodically fetch data
-            // const intervalId = setInterval(fetchUser, 5 * 60 * 1000);
-
-            // Clean up the interval if you decide to use it
-            // return () => clearInterval(intervalId);
         }
     }, [userVal, userData, userId]);
 
@@ -335,14 +330,14 @@ export default function Profile() {
                     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
                         <div className="relative bg-white w-full max-w-lg p-6 rounded-lg shadow-lg overflow-auto">
                             <div className="flex justify-between">
-                                <h3 className="font-semibold text-lg">{isMyProfile ? "My" : firstName + "'s"} Tutored Courses</h3>
-                                <button
+                                <h3 className="font-semibold text-lg">
+                                    {isMyProfile ? "My" : firstName + "'s"} Tutored Courses
+                                </h3>
+                                <MdCancel
                                     aria-label="Close"
                                     onClick={() => setShowTutors(false)}
-                                    className="text-gray-600 hover:text-gray-900 transition duration-300"
-                                >
-                                    X
-                                </button>
+                                    className="text-gray-600 hover:text-gray-900 transition duration-300 cursor-pointer text-2xl sm:text-3xl"
+                                />
                             </div>
                             <div className="p-4">
                                 {tutorDetails.length > 0 ? (

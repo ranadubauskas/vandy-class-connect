@@ -194,15 +194,13 @@ function AddReviewComponent() {
                 await pb.collection('courses').update(courseId, formData);
             }
 
-            const fetchedUserReviews = await pb.collection('users').getOne(userId, {
-                expand: 'reviews'
+            const fetchedUserReviews = await pb.collection('reviews').getFullList({
+                filter: `user="${userId}"`,
+                autoCancellation: false,
             });
 
-            const userReviews = [...(fetchedUserReviews.reviews || []), newReview.id];
-
-            await pb.collection('users').update(userId, {
-                reviews: userReviews
-            });
+            const updatedUserReviews = [...fetchedUserReviews, newReview];
+            await localforage.setItem(`user_reviews_${userId}`, updatedUserReviews);
 
             const cachedCourse = await localforage.getItem(`course_${code}`);
             if (cachedCourse) {
@@ -223,6 +221,13 @@ function AddReviewComponent() {
             setError('Error saving review.');
         } finally {
             setSaving(false);
+        }
+    };
+    const cleanupCache = async () => {
+        try {
+            await localforage.removeItem(`user_reviews_${userId}`);
+        } catch (error) {
+            console.error('Error cleaning up user reviews cache:', error);
         }
     };
 
