@@ -1,43 +1,45 @@
-import React, { useState } from 'react';
+// components/StarRating.jsx
+import React from 'react';
 
 interface StarRatingProps {
-  rating: number;
+  rating: number; // Current rating to display
   onRatingChange?: (newRating: number) => void;
+  onHover?: (newHoverRating: number) => void;
+  onLeave?: () => void;
   readOnly?: boolean;
   size?: number;
 }
 
-const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnly = false, size = 24 }) => {
-  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
-  const [selectedRating, setSelectedRating] = useState<number>(rating);
-
-  const handleMouseEnter = (event: React.MouseEvent, star: number) => {
-    if (!readOnly) {
-      const { offsetX } = event.nativeEvent;
-      const isHalf = offsetX < size / 2; // Check if cursor is in the left half of the star
-      setHoveredRating(isHalf ? star - 0.5 : star);
-    }
-  };
-
-  const handleClick = (star: number, isHalf: boolean) => {
-    if (!readOnly && onRatingChange) {
-      const newRating = isHalf ? star - 0.5 : star;
-      setSelectedRating(newRating);
-      onRatingChange(newRating);
-    }
-  };
-
+const StarRating: React.FC<StarRatingProps> = ({
+  rating,
+  onRatingChange,
+  onHover,
+  onLeave,
+  readOnly = false,
+  size = 24,
+}) => {
   const renderStar = (star: number) => {
-    const activeRating = hoveredRating !== null ? hoveredRating : selectedRating;
-    const fillPercentage = Math.min(Math.max(activeRating - star + 1, 0), 1);
+    const fillPercentage = Math.min(Math.max(rating - star + 1, 0), 1); // Determines how much the star is filled
 
     return (
       <span
         key={star}
-        className={`star ${fillPercentage > 0 ? 'filled' : ''}`} 
-        onMouseMove={(e) => handleMouseEnter(e, star)} // Handle hover with half-star detection
-        onClick={() => handleClick(star, fillPercentage < 1)} // Set rating with half-star precision
-        onMouseLeave={() => !readOnly && setHoveredRating(null)} // Reset hover on mouse leave
+        className={`star ${fillPercentage > 0 ? 'filled' : ''}`}
+        onMouseMove={(e) => {
+          if (!readOnly && onHover) {
+            const { offsetX } = e.nativeEvent;
+            const isHalf = offsetX < size / 2;
+            const newHoverRating = isHalf ? star - 0.5 : star;
+            onHover(newHoverRating);
+          }
+        }}
+        onClick={() => {
+          if (!readOnly && onRatingChange) {
+            // Determine if click was on half or full star
+            // Note: This simplistic approach assumes entire star is clickable
+            onRatingChange(star);
+          }
+        }}
         style={{
           cursor: readOnly ? 'default' : 'pointer',
           fontSize: size,
@@ -46,7 +48,17 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
         }}
       >
         {/* Full star background */}
-        <span style={{ color: '#ccc', position: 'absolute', left: 0, width: '100%', overflow: 'hidden' }}>★</span>
+        <span
+          style={{
+            color: '#ccc',
+            position: 'absolute',
+            left: 0,
+            width: '100%',
+            overflow: 'hidden',
+          }}
+        >
+          ★
+        </span>
 
         {/* Partial star fill based on active rating */}
         <span
@@ -66,15 +78,21 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, readOnl
     );
   };
 
-  return <div 
-            aria-label="Star Rating" 
-            className="star-rating"
-            data-testid="star-rating"
-            data-size={size}
-            >
-              {[1, 2, 3, 4, 5].map(renderStar)}
-          </div>;
+  return (
+    <div
+      aria-label="Star Rating"
+      className="star-rating"
+      data-testid="star-rating"
+      data-size={size}
+      onMouseLeave={() => {
+        if (!readOnly && onLeave) {
+          onLeave();
+        }
+      }}
+    >
+      {[1, 2, 3, 4, 5].map(renderStar)}
+    </div>
+  );
 };
-
 
 export default StarRating;

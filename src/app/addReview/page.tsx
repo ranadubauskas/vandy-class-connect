@@ -7,7 +7,6 @@ import StarRating from '../components/StarRating';
 import { useAuth } from '../lib/contexts';
 import pb from "../lib/pocketbaseClient";
 
-
 function AddReviewComponent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -16,7 +15,7 @@ function AddReviewComponent() {
     const { userData } = useAuth();
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [rating, setRating] = useState(0);
+    const [rating, setRating] = useState(0); // Initialize to 0
     const [comment, setComment] = useState('');
     const [professorFirstName, setProfessorFirstName] = useState('');
     const [professorLastName, setProfessorLastName] = useState('');
@@ -24,6 +23,9 @@ function AddReviewComponent() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [wordCount, setWordCount] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [isEditingRating, setIsEditingRating] = useState(false);
+    const [inputValue, setInputValue] = useState(''); // Initialize to '' instead of '0'
     const maxWordCount = 400;
     const userId = userData?.id;
 
@@ -116,7 +118,7 @@ function AddReviewComponent() {
             setError(`Your comment exceeds the maximum word limit of ${maxWordCount} words.`);
             return;
         }
-        if (!rating || rating <= 0) {
+        if (rating === null || isNaN(rating) || rating <= 0) {
             setError('Please provide a valid rating.');
             return;
         }
@@ -230,8 +232,16 @@ function AddReviewComponent() {
     }
 
     const handleRatingChange = (newRating) => {
-        setRating(newRating);
+        setRating(newRating); // Update the rating state
+        setInputValue(newRating.toString());
+        setIsEditingRating(false);
+        setHoverRating(0);
     };
+
+    // Compute the displayRating based on current state
+    const displayRating = isEditingRating
+        ? (inputValue === '' ? 0 : parseFloat(inputValue) || 0)
+        : (hoverRating > 0 ? hoverRating : rating);
 
     return (
         <div className="min-h-screen p-6">
@@ -270,23 +280,42 @@ function AddReviewComponent() {
                             max="5"
                             min="0"
                             step="0.1"
-                            value={rating}
+                            value={isEditingRating ? inputValue : (hoverRating > 0 ? hoverRating : rating)}
                             aria-label="Rating Input"
                             onChange={(e) => {
-                                const value = parseFloat(e.target.value);
-                                if (!isNaN(value) && value <= 5) {
-                                    setRating(value);
-                                } else if (value > 5) {
-                                    setRating(5);
-                                } else {
-                                    setRating(0);
+                                if (isEditingRating) {
+                                    setInputValue(e.target.value);
                                 }
                             }}
                             placeholder="Rating"
+                            onFocus={() => {
+                                setIsEditingRating(true);
+                                setInputValue(''); // Clear the input field on focus
+                            }}
+                            onBlur={() => {
+                                if (isEditingRating) {
+                                    const parsedValue = parseFloat(inputValue);
+                                    if (!isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 5) {
+                                        setRating(parsedValue);
+                                        setError('');
+                                    } else {
+                                        setError('Please provide a valid rating between 0 and 5.');
+                                        // Reset inputValue to previous rating
+                                        setInputValue(rating.toString());
+                                    }
+                                    setIsEditingRating(false);
+                                }
+                            }}
                         />
                         {/* Dynamically render larger stars based on the input */}
                         <div className="flex-shrink-0">
-                            <StarRating rating={rating} onRatingChange={handleRatingChange} size={starSize} />
+                            <StarRating
+                                rating={displayRating}
+                                onRatingChange={handleRatingChange}
+                                onHover={(newHoverRating) => setHoverRating(newHoverRating)}
+                                onLeave={() => setHoverRating(0)}
+                                size={starSize}
+                            />
                         </div>
                     </div>
 
