@@ -48,7 +48,7 @@ export default function Ratings() {
 
                 // Filter reviews if necessary
                 let filteredReviews = fetchedReviews;
-                const isOwnProfile = userVal && userVal.id === userId;
+                const isOwnProfile = userVal && userVal.userData.id === userId;
                 if (!isOwnProfile) {
                     // If not viewing own profile, filter out anonymous reviews
                     filteredReviews = fetchedReviews.filter(review => !review.anonymous);
