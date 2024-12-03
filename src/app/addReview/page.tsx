@@ -25,7 +25,7 @@ function AddReviewComponent() {
     const [wordCount, setWordCount] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [isEditingRating, setIsEditingRating] = useState(false);
-    const [inputValue, setInputValue] = useState(''); // Initialize to '' instead of '0'
+    const [inputValue, setInputValue] = useState('');
     const maxWordCount = 400;
     const userId = userData?.id;
 
