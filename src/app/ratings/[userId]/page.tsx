@@ -48,7 +48,7 @@ export default function Ratings() {
 
                 // Filter reviews if necessary
                 let filteredReviews = fetchedReviews;
-                const isOwnProfile = userVal && userVal.userData.id === userId;
+                const isOwnProfile = userVal?.userData?.id === userId;
                 if (!isOwnProfile) {
                     // If not viewing own profile, filter out anonymous reviews
                     filteredReviews = fetchedReviews.filter(review => !review.anonymous);
@@ -63,7 +63,7 @@ export default function Ratings() {
         };
 
         fetchData();
-    }, [userId]);
+    }, [userId, userVal]);
 
     const handleDeleteReview = async (reviewId: string) => {
         const updatedReviews = reviews.filter((review) => review.id !== reviewId);
